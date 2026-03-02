@@ -160,7 +160,7 @@ Vercel — Next.js web frontend (static + SSR)
 - Session management compatible with Supabase RLS (JWT with `sub` claim)
 - Subscription status in JWT or accessible server-side
 
-### Better Auth (Recommended)
+### Better Auth (Phase 2+ — after MVP)
 
 **What it is:** Open-source TypeScript auth library that runs on any framework, launched in late 2024 and rapidly became community-preferred in 2025.
 
@@ -682,7 +682,8 @@ Publish `@pomofocus/mcp-server` to npm. Users install it via `npx` (zero install
 │ Auth (MVP)       │ Supabase Auth                             │
 │ Auth (later)     │ Better Auth (self-hosted on Railway)      │
 ├──────────────────┼──────────────────────────────────────────┤
-│ Real-time Sync   │ Cloudflare Workers + Durable Objects      │
+│ Real-time (MVP)  │ Supabase Realtime (direct)                │
+│ Real-time (later)│ Cloudflare Workers + Durable Objects      │
 │ Long-running     │ Railway (BLE gateway, bg jobs; skip MVP)  │
 │ Web Frontend     │ Vercel (Next.js)                          │
 ├──────────────────┼──────────────────────────────────────────┤

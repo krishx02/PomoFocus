@@ -32,20 +32,26 @@ For PomoFocus with multiple platforms, the recommended monorepo layout is:
 ```
 pomofocus/
   apps/
-    web/              # Next.js / React + Cloudflare Pages
-    ios/              # Xcode project / Swift
-    android/          # Gradle / Kotlin
+    web/              # Next.js / React + Vercel
+    mobile/           # Expo / React Native (iOS + Android)
     vscode-extension/ # VS Code extension
-    mac-widget/       # WidgetKit / Swift
+    mcp-server/       # Claude Code MCP extension (published to npm)
+    ble-gateway/      # Node.js BLE/MQTT gateway (Phase 3, Railway)
   packages/
-    shared/           # Shared types, utilities
-    supabase/         # Supabase client, schema, migrations
-    ui/               # Shared UI components
+    core/             # Timer state machine, models — pure TypeScript
+    api-client/       # Supabase SDK + auth helpers
+    ui-components/    # Shared React components (web, VS Code, Expo)
+    ble-client/       # BLE abstraction layer
+    config/           # Shared ESLint, TypeScript configs
+  native/
+    mac-widget/       # Xcode project — Swift, outside Nx task graph
   .github/
     workflows/
   nx.json
-  package.json        # pnpm/npm workspace root
+  package.json        # pnpm workspace root
 ```
+
+> **Note:** `native/mac-widget` is a Swift Xcode project and lives outside the Nx/pnpm workspace. It is built and distributed separately via Xcode Cloud or a dedicated macOS runner. `apps/mobile` is a single Expo project that produces both the iOS and Android builds.
 
 Path filtering ensures each platform's workflow only triggers on relevant changes:
 
@@ -56,29 +62,45 @@ on:
     branches: [main]
     paths:
       - 'apps/web/**'
-      - 'packages/shared/**'
-      - 'packages/supabase/**'
-      - 'packages/ui/**'
+      - 'packages/core/**'
+      - 'packages/api-client/**'
+      - 'packages/ui-components/**'
   pull_request:
     paths:
       - 'apps/web/**'
-      - 'packages/shared/**'
-      - 'packages/supabase/**'
-      - 'packages/ui/**'
+      - 'packages/core/**'
+      - 'packages/api-client/**'
+      - 'packages/ui-components/**'
 ```
 
 ```yaml
-# .github/workflows/ios.yml
+# .github/workflows/mobile.yml
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/ios/**'
-      - 'apps/mac-widget/**'
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - 'packages/api-client/**'
+      - 'packages/ble-client/**'
   pull_request:
     paths:
-      - 'apps/ios/**'
-      - 'apps/mac-widget/**'
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - 'packages/api-client/**'
+      - 'packages/ble-client/**'
+```
+
+```yaml
+# .github/workflows/mac-widget.yml
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'native/mac-widget/**'
+  pull_request:
+    paths:
+      - 'native/mac-widget/**'
 ```
 
 ---
@@ -228,7 +250,7 @@ jobs:
 Fastlane is the industry standard for iOS CI. The key pieces are Match (code signing), Gym (build), and Deliver/Pilot (submission).
 
 ```ruby
-# apps/ios/fastlane/Fastfile
+# apps/mobile/ios/fastlane/Fastfile
 default_platform(:ios)
 
 platform :ios do
@@ -280,7 +302,7 @@ name: iOS — Build & Deploy
 on:
   push:
     branches: [main]
-    paths: ['apps/ios/**']
+    paths: ['apps/mobile/**']
   workflow_dispatch:
     inputs:
       lane:
@@ -293,7 +315,7 @@ jobs:
     runs-on: macos-latest             # Must be macOS for Xcode
     defaults:
       run:
-        working-directory: apps/ios
+        working-directory: apps/mobile/ios
 
     steps:
       - uses: actions/checkout@v4
@@ -303,13 +325,13 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true          # Caches gems
-          working-directory: apps/ios
+          working-directory: apps/mobile/ios
 
       - name: Cache Derived Data
         uses: actions/cache@v4
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: derived-data-${{ runner.os }}-${{ hashFiles('apps/ios/**/*.xcodeproj/project.pbxproj') }}
+          key: derived-data-${{ runner.os }}-${{ hashFiles('apps/mobile/ios/**/*.xcodeproj/project.pbxproj') }}
 
       - name: Run Tests
         run: bundle exec fastlane test
@@ -336,7 +358,7 @@ jobs:
 ## 5. Android Google Play Automated Deployment (Fastlane)
 
 ```ruby
-# apps/android/fastlane/Fastfile
+# apps/mobile/android/fastlane/Fastfile
 default_platform(:android)
 
 platform :android do
@@ -388,7 +410,7 @@ name: Android — Build & Deploy
 on:
   push:
     branches: [main]
-    paths: ['apps/android/**']
+    paths: ['apps/mobile/**']
   workflow_dispatch:
 
 jobs:
@@ -396,7 +418,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/android
+        working-directory: apps/mobile/android
 
     steps:
       - uses: actions/checkout@v4
@@ -411,7 +433,7 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
-          working-directory: apps/android
+          working-directory: apps/mobile/android
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -419,7 +441,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('apps/android/**/*.gradle*', 'apps/android/gradle-wrapper.properties') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('apps/mobile/android/**/*.gradle*', 'apps/mobile/android/gradle-wrapper.properties') }}
 
       - name: Decode keystore
         run: |
@@ -436,11 +458,11 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: bundle exec fastlane beta
         env:
-          KEYSTORE_PATH: ${{ github.workspace }}/apps/android/keystore.jks
+          KEYSTORE_PATH: ${{ github.workspace }}/apps/mobile/android/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          GOOGLE_PLAY_JSON_KEY_PATH: ${{ github.workspace }}/apps/android/google-play-key.json
+          GOOGLE_PLAY_JSON_KEY_PATH: ${{ github.workspace }}/apps/mobile/android/google-play-key.json
 ```
 
 **Required secrets:**
@@ -519,7 +541,217 @@ jobs:
 
 ---
 
-## 7. Claude Code / AI Agent Runs from GitHub Actions
+## 7. Vercel Web Frontend Deployment
+
+Vercel is the decided web hosting platform for PomoFocus. Use the Vercel CLI in GitHub Actions — it handles preview deployments on every PR and production deployments on merge to `main`.
+
+```yaml
+# .github/workflows/deploy-web.yml
+name: Deploy — Vercel
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/web/**', 'packages/core/**', 'packages/api-client/**', 'packages/ui-components/**']
+  pull_request:
+    paths: ['apps/web/**', 'packages/core/**', 'packages/api-client/**', 'packages/ui-components/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write    # To post preview URL as PR comment
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm nx run web:build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Deploy Preview to Vercel
+        if: github.event_name == 'pull_request'
+        id: vercel-preview
+        run: |
+          DEPLOY_URL=$(vercel deploy --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd apps/web \
+            --env NEXT_PUBLIC_SUPABASE_URL=${{ vars.SUPABASE_URL }} \
+            --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }})
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment preview URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview deployed to: ${{ steps.vercel-preview.outputs.url }}'
+            })
+
+      - name: Deploy Production to Vercel
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/web
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+```
+
+**Required secrets:**
+- `VERCEL_TOKEN` — from Vercel dashboard → Account Settings → Tokens
+- `VERCEL_ORG_ID` — from `.vercel/project.json` after running `vercel link` locally (use as a secret)
+- `VERCEL_PROJECT_ID` — from `.vercel/project.json` after `vercel link` (use as a secret)
+
+**One-time setup:** Run `vercel link` in `apps/web/` locally. This creates `.vercel/project.json` with your `orgId` and `projectId`. Add these values as GitHub secrets, then delete `.vercel/project.json` from the repo (or add to `.gitignore`).
+
+---
+
+## 8. MCP Server Publishing to npm
+
+The Claude Code MCP extension (`apps/mcp-server/`) is distributed as an npm package. Publish on every version tag.
+
+```yaml
+# .github/workflows/mcp-server.yml
+name: MCP Server — Publish to npm
+
+on:
+  push:
+    tags:
+      - 'mcp-server-v*'        # Trigger on tags like mcp-server-v1.2.3
+  pull_request:
+    paths: ['apps/mcp-server/**', 'packages/core/**', 'packages/api-client/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm nx run mcp-server:test
+      - run: pnpm nx run mcp-server:build
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/mcp-server-v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm nx run mcp-server:build
+      - name: Publish to npm
+        run: npm publish --access public
+        working-directory: apps/mcp-server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+**Required secrets:**
+- `NPM_TOKEN` — npm access token with publish scope (create at npmjs.com → Access Tokens)
+
+**Tagging convention:** `git tag mcp-server-v1.0.0 && git push --tags` triggers the publish. Keeps MCP server versioned independently from the rest of the monorepo.
+
+---
+
+## 9. Mac Widget / macOS App Distribution
+
+The SwiftUI Mac widget lives in `native/mac-widget/` outside the Nx workspace. Build and distribute via a dedicated macOS runner.
+
+```yaml
+# .github/workflows/mac-widget.yml
+name: Mac Widget — Build & Distribute
+
+on:
+  push:
+    branches: [main]
+    paths: ['native/mac-widget/**']
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: 'Fastlane lane (test|beta|release)'
+        required: true
+        default: beta
+
+jobs:
+  build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: native/mac-widget
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby + Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: native/mac-widget
+
+      - name: Cache Derived Data
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: mac-derived-${{ runner.os }}-${{ hashFiles('native/mac-widget/**/*.xcodeproj/project.pbxproj') }}
+
+      - name: Run tests
+        run: bundle exec fastlane test
+
+      - name: Deploy to TestFlight (macOS)
+        if: github.ref == 'refs/heads/main' || github.event.inputs.lane == 'beta'
+        run: bundle exec fastlane beta
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+```
+
+**Distribution notes:**
+- Mac App Store requires a separate App Store Connect app entry (different bundle ID from iOS)
+- Mac widgets use the same App Store Connect API key as iOS — no extra setup
+- If distributing outside the Mac App Store (direct download), use `Developer ID Application` cert instead of `Apple Distribution` and export a notarized `.dmg`
+- The SwiftUI app connects to Supabase Realtime via `supabase-swift` — it reads state only, never writes timer events
+
+**Required secrets:** Same App Store Connect API key secrets as iOS (`APP_STORE_CONNECT_API_KEY_*`, `MATCH_*`).
+
+---
+
+## 10. Claude Code / AI Agent Runs from GitHub Actions
 
 The official integration is `anthropics/claude-code-action@v1`. It runs Claude Code in headless mode inside the GitHub Actions runner and can make commits, open PRs, and respond to review comments.
 
@@ -672,7 +904,7 @@ If you want finer control, call the `claude` CLI directly:
 
 ---
 
-## 8. Branch Protection + PR Workflows for Agentic PRs
+## 11. Branch Protection + PR Workflows for Agentic PRs
 
 ### Recommended Branch Protection Configuration (main)
 
@@ -750,7 +982,7 @@ The recommended setup for agent-generated PRs:
 
 ---
 
-## 9. Full Multi-Platform CI Matrix Example
+## 12. Full Multi-Platform CI Matrix Example
 
 ```yaml
 # .github/workflows/ci-matrix.yml
@@ -779,10 +1011,10 @@ jobs:
               - 'apps/web/**'
               - 'packages/**'
             ios:
-              - 'apps/ios/**'
+              - 'apps/mobile/ios/**'
               - 'apps/mac-widget/**'
             android:
-              - 'apps/android/**'
+              - 'apps/mobile/android/**'
             vscode:
               - 'apps/vscode-extension/**'
 
@@ -819,9 +1051,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
-          working-directory: apps/ios
+          working-directory: apps/mobile/ios
       - name: Run iOS tests
-        working-directory: apps/ios
+        working-directory: apps/mobile/ios
         run: bundle exec fastlane test
 
   # Android: build and test
@@ -839,9 +1071,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
-          working-directory: apps/android
+          working-directory: apps/mobile/android
       - name: Run Android tests
-        working-directory: apps/android
+        working-directory: apps/mobile/android
         run: bundle exec fastlane test
 
   # VS Code Extension: test and package
@@ -884,7 +1116,7 @@ jobs:
 
 ---
 
-## 10. Supabase CI Integration
+## 13. Supabase CI Integration
 
 Supabase migrations and types should be validated in CI:
 
@@ -895,7 +1127,7 @@ name: Supabase — Validate Migrations
 on:
   pull_request:
     paths:
-      - 'packages/supabase/**'
+      - 'packages/api-client/**'
       - 'supabase/**'
 
 jobs:
@@ -923,16 +1155,16 @@ jobs:
         run: supabase db push --local
 
       - name: Generate TypeScript types
-        run: supabase gen types typescript --local > packages/supabase/types.ts
+        run: supabase gen types typescript --local > packages/api-client/src/database.types.ts
 
       - name: Check for type drift
-        run: git diff --exit-code packages/supabase/types.ts
+        run: git diff --exit-code packages/api-client/src/database.types.ts
         # Fails if committed types don't match generated types
 ```
 
 ---
 
-## 11. Recommended Secrets Strategy
+## 14. Recommended Secrets Strategy
 
 | Secret Name | Scope | Used In |
 |---|---|---|
@@ -951,18 +1183,22 @@ jobs:
 | `GOOGLE_PLAY_JSON_KEY` | Repo | Android release |
 | `VSCE_PAT` | Repo | VS Code marketplace |
 | `OPEN_VSX_TOKEN` | Repo | Open VSX Registry |
+| `NPM_TOKEN` | Repo | MCP server npm publish |
+| `VERCEL_TOKEN` | Repo | Vercel web deployment |
+| `VERCEL_ORG_ID` | Repo | Vercel web deployment |
+| `VERCEL_PROJECT_ID` | Repo | Vercel web deployment |
 | `NX_CLOUD_AUTH_TOKEN` | Repo | Nx Cloud remote cache (free tier) |
 
 Use **GitHub Environments** (`production`, `staging`) with environment-level secrets and required reviewers for App Store and Play Store releases. This creates a manual approval gate before production deployment.
 
 ---
 
-## 12. Actionable CI/CD Recommendations for PomoFocus
+## 15. Actionable CI/CD Recommendations for PomoFocus
 
 ### Priority 1 — Foundation (Set up first)
 1. **Adopt pnpm workspaces + Nx** as the monorepo orchestrator. Add `nx.json` with target defaults for `build`, `test`, `lint` tasks and `project.json` in each app/package.
 2. **Create `.github/workflows/detect-changes.yml`** using `dorny/paths-filter@v3` as a reusable step that all other workflows depend on via `needs:`.
-3. **Set up Cloudflare Pages** deploy first — it is the fastest win. One action, posts preview URLs to every PR automatically.
+3. **Set up Vercel deployment** first — run `vercel link` in `apps/web/`, add three secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`), and you get automatic preview URLs on every PR.
 4. **Add the `ci-complete` success gate job** to every workflow and configure it as the single required check in branch protection.
 
 ### Priority 2 — Mobile (After web CI is solid)
