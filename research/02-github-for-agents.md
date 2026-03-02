@@ -8,7 +8,7 @@
 
 ## TL;DR
 
-AI agents like Claude Code can execute GitHub Issues autonomously — but only if the issue contains everything the agent needs to start without asking follow-up questions. The key shifts are: (1) issues become agent prompts, not human notes; (2) GitHub Projects v2 becomes the work queue agents poll and update; (3) CLAUDE.md becomes the standing context that eliminates issue-by-issue repetition; (4) the GitHub MCP server and `gh` CLI close the loop between ticket and code session. Done right, the workflow is: Claude reads issue → updates status to "In Progress" → implements → opens PR → links back to issue — fully autonomously.
+AI agents like Claude Code can execute GitHub Issues autonomously — but only if the issue contains everything the agent needs to start without asking follow-up questions. The key shifts are: (1) issues become agent prompts, not human notes; (2) GitHub Projects v2 becomes the work queue agents poll and update; (3) CLAUDE.md becomes the standing context that eliminates issue-by-issue repetition; (4) the GitHub MCP server and `gh` CLI close the loop between ticket and code session. Done right, the workflow is: Claude reads issue → if `effort:large`, decomposes into sub-issues automatically → otherwise implements → opens PR → links back to issue — fully autonomously.
 
 ---
 
@@ -242,7 +242,7 @@ Create `.claude/skills/fix-issue/SKILL.md` — this becomes `/fix-issue 42` in a
 ```yaml
 ---
 name: fix-issue
-description: Pick up a GitHub issue by number and implement it autonomously. Creates a branch, implements the fix, runs tests, and opens a PR.
+description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. Otherwise creates a branch, implements, runs tests, and opens a PR.
 user-invocable: true
 context: fork
 isolation: worktree
@@ -257,33 +257,146 @@ Issue number: $ARGUMENTS
 ### Step 1 — Read the Issue
 !`gh issue view $ARGUMENTS --json number,title,body,labels,assignees`
 
-### Step 2 — Create a Branch
+### Step 2 — Check Effort Label
+Look at the labels returned. If the issue has label `effort:large`:
+- DO NOT implement anything
+- Run the decomposition workflow in Step 2a instead
+- Stop after decomposition — do not proceed to Step 3
+
+**Step 2a — Decompose (only if effort:large)**
+See the `/decompose-issue` skill. Execute that workflow now for issue $ARGUMENTS.
+
+### Step 3 — Create a Branch
+(Only reached if issue does NOT have `effort:large`)
 Create a branch named `fix/issue-$ARGUMENTS-{short-description}` derived from the issue title.
 
-### Step 3 — Plan Before Acting
-Enter plan mode mentally: read all files listed under "Affected Files" in the issue.
+### Step 4 — Plan Before Acting
+Read all files listed under "Affected Files" in the issue.
 Understand the acceptance criteria fully before writing a single line of code.
 
-### Step 4 — Implement
+### Step 5 — Implement
 Make the changes required to satisfy all acceptance criteria.
 Do NOT change files outside the scope listed in "Out of Scope".
 
-### Step 5 — Verify
+### Step 6 — Verify
 Run the test plan specified in the issue.
 If tests fail, fix them before proceeding.
 
-### Step 6 — Open PR
+### Step 7 — Open PR
 `gh pr create --title "{type}: {issue title} (#{number})" --body "Closes #$ARGUMENTS\n\n## Changes\n{summary}"`
 
-### Step 7 — Update Labels
+### Step 8 — Update Labels
 `gh issue edit $ARGUMENTS --remove-label "in-progress" --add-label "in-review"`
 
 Report a summary of what was changed and the PR URL.
 ```
 
-**Usage:** In any Claude Code session, type `/fix-issue 42` and Claude handles the rest.
+**Usage:** In any Claude Code session, type `/fix-issue 42` and Claude handles the rest. If the issue is labeled `effort:large`, it decomposes automatically — you review the new sub-issues and move them to "Agent-Ready" when ready.
 
-### 4. Set Up GitHub MCP Server
+### 4. Add a `decompose-issue` Skill for Large Ticket Breakdown
+
+When an issue is too large to implement in one session, the agent should break it down rather than attempt it and produce incomplete work. Create `.claude/skills/decompose-issue/SKILL.md`:
+
+```yaml
+---
+name: decompose-issue
+description: Break a large GitHub issue into 3-5 smaller, agent-ready sub-issues. Called automatically by fix-issue when effort:large is detected, or invoked directly.
+user-invocable: true
+allowed-tools: Bash(gh *), Read, Grep, Glob
+argument-hint: "[issue number]"
+---
+
+## Decomposition Workflow
+
+Issue number: $ARGUMENTS
+
+### Step 1 — Read the Parent Issue
+!`gh issue view $ARGUMENTS --json number,title,body,labels`
+
+### Step 2 — Explore the Codebase
+Read the files listed in "Affected Files". Understand the full scope of the work — what needs to change, in how many places, across how many layers.
+
+### Step 3 — Draft Sub-Issues
+Break the work into 3-5 sub-issues following these rules:
+- Each sub-issue must be completable in a single Claude Code session (roughly < 1 hour of work)
+- Each sub-issue must be independently testable (has its own passing test)
+- Sub-issues that depend on each other must be numbered in order and note their dependency
+- Each sub-issue gets labeled `effort:small` and `agent-ready` (if fully specified) or `needs-human` (if you need a decision)
+- Sub-issues must follow the agent-ready ticket format: goal, context, affected files, acceptance criteria, out of scope, test plan, platform
+
+**Split pattern for PomoFocus:** When in doubt, split by layer:
+- Sub-issue A: Data/state layer (store, model, types)
+- Sub-issue B: Service/logic layer (hooks, utils, API client)
+- Sub-issue C: UI layer (component, screen) — depends on A and B
+- Sub-issue D: Tests and documentation
+
+### Step 4 — Create Sub-Issues
+For each sub-issue, run:
+```
+gh issue create \
+  --title "{short title}" \
+  --body "## Goal
+{one-sentence verifiable goal}
+
+## Context
+Part {N} of #{parent_number} — {parent title}.
+{depends on: #{sibling} if applicable}
+
+## Affected Files
+{specific files}
+
+## Acceptance Criteria
+- [ ] {automatable criterion}
+
+## Out of Scope
+Do not implement other parts of #{parent_number} in this issue.
+
+## Test Plan
+{exact command}
+
+## Platform
+{platform}" \
+  --label "agent-ready,effort:small,{platform-label}"
+```
+
+### Step 5 — Update the Parent Issue
+Add a task list to the parent issue body that tracks the sub-issues:
+```
+gh issue comment $ARGUMENTS --body "## Decomposed into sub-issues
+
+This issue has been broken into smaller pieces:
+
+- [ ] #{sub1} — {title}
+- [ ] #{sub2} — {title}
+- [ ] #{sub3} — {title}
+
+Implement these in order. This issue will close automatically when all sub-issues are merged."
+```
+
+Then relabel the parent:
+```
+gh issue edit $ARGUMENTS \
+  --remove-label "effort:large,agent-ready" \
+  --add-label "decomposed"
+```
+
+### Step 6 — Report
+Output a summary:
+- Number and titles of sub-issues created
+- Any dependency ordering
+- Any sub-issues that could not be fully specified and were labeled `needs-human` instead of `agent-ready`
+- Recommended order of implementation
+```
+
+**Usage:** `/decompose-issue 42` — or triggered automatically by `/fix-issue 42` when `effort:large` is detected.
+
+**What "too large" means in practice:**
+- The issue requires changes to more than ~10 files
+- The issue spans multiple layers (data + logic + UI together)
+- The acceptance criteria list is longer than 8 items
+- The issue includes phrases like "refactor X", "migrate Y", or "redesign Z" without a narrow scope
+
+### 5. Set Up GitHub MCP Server
 
 ```bash
 # Add the GitHub MCP server to Claude Code
@@ -400,10 +513,13 @@ Use labels to signal issue readiness and route to the right agent:
 | `ios-only` | Only the iOS platform subagent should handle |
 | `android-only` | Only the Android platform subagent should handle |
 | `cross-platform` | Affects shared/ or all platforms |
-| `effort:small` | < 1 hour estimated (use Sonnet) |
-| `effort:large` | > 4 hours estimated (use Opus, plan mode mandatory) |
+| `effort:small` | < 1 hour estimated — agent implements directly |
+| `effort:large` | Too big for a single session — agent **decomposes into sub-issues** instead of implementing |
+| `decomposed` | Parent issue that has been broken up; tracks progress via task list |
 
 The `needs-human` label is critical: it lets agents signal blockers without stalling silently.
+
+The `effort:large` → decompose flow is key: rather than attempting a large issue and running out of context or producing a partial implementation, the agent creates properly-scoped sub-issues and moves those to "Agent-Ready." Each sub-issue is small enough to complete in one session.
 
 ### 7. Platform Subagents for PomoFocus
 
@@ -540,12 +656,13 @@ This ticket can be handed to Claude Code with `/fix-issue 42` and executed witho
 - [ ] Create `.github/ISSUE_TEMPLATE/bug-agent.yml`
 - [ ] Create `CLAUDE.md` at repo root (follow structure above)
 - [ ] Create `.claude/skills/fix-issue/SKILL.md`
+- [ ] Create `.claude/skills/decompose-issue/SKILL.md`
 - [ ] Create `.claude/agents/ios-developer.md`
 - [ ] Create `.claude/agents/android-developer.md`
 - [ ] Create `.claude/agents/shared-developer.md`
 - [ ] Configure `.claude/settings.json` with GitHub MCP server and allowed Bash commands
 - [ ] Set up GitHub Project v2 with Backlog / Agent-Ready / In Progress / In Review / Done columns
-- [ ] Add label set: `agent-ready`, `in-progress`, `in-review`, `needs-human`, `ios-only`, `android-only`, `cross-platform`, `effort:small`, `effort:large`
+- [ ] Add label set: `agent-ready`, `in-progress`, `in-review`, `needs-human`, `ios-only`, `android-only`, `cross-platform`, `effort:small`, `effort:large`, `decomposed`
 - [ ] Write a shell script wrapping the Projects v2 GraphQL mutation for status updates
 
 ---
