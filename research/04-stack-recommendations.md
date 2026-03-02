@@ -774,7 +774,7 @@ Safari does not support Web Bluetooth (by design — Apple prefers native apps f
 
 ### 6. Monorepo Complexity
 Managing 8+ apps in a monorepo increases build complexity.
-- **Mitigation:** Turborepo handles this well. The key discipline: keep `packages/core` dependency-free (no React, no Supabase). Build layers upward.
+- **Mitigation:** Nx handles this well via enforced module boundaries (ESLint rules). The key discipline: keep `packages/core` dependency-free (no React, no Supabase). Build layers upward.
 
 ---
 
