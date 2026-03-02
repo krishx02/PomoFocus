@@ -13,14 +13,14 @@ Modern GitHub Actions supports the entire PomoFocus platform delivery surface �
 
 ## Key Findings
 
-- **Monorepo path filtering** via `on.push.paths` and `on.pull_request.paths` is the primary mechanism to avoid running all pipelines on every commit. Turborepo's `--filter=...[HEAD^1]` finds affected packages and is idiomatic for JS/TS workspaces.
+- **Monorepo path filtering** via `on.push.paths` and `on.pull_request.paths` is the primary mechanism to avoid running all pipelines on every commit. Nx's `nx affected --base=origin/main` finds affected packages and is idiomatic for Nx workspaces.
 - **Matrix builds** (`strategy.matrix`) handle multi-platform jobs (iOS/Android/web) in one workflow file with platform-specific runners (`macos-latest` for Apple targets, `ubuntu-latest` for web/Android).
 - **Cloudflare Pages** and **Cloudflare Workers** each have official GitHub Actions (`cloudflare/pages-action` and `cloudflare/wrangler-action`) that deploy preview environments on PR open and production on merge to `main`.
 - **Fastlane** is the gold-standard for both iOS App Store and Android Google Play automation; it handles code signing, version bumping, changelog generation, and API submission entirely from the CLI, making it GitHub-Actions-friendly.
 - **VS Code extension publishing** uses the `vsce` (Visual Studio Code Extensions) CLI via `@vscode/vsce` npm package; the `HaaLeo/publish-vscode-extension@v1` action wraps it cleanly with token management.
 - **Claude Code Action** (`anthropics/claude-code-action@v1`) runs Claude as a GitHub Actions step. It responds to `@claude` mentions in PR comments and can be triggered on `workflow_dispatch`, `issue_comment`, or `pull_request` events. It commits fixes back to the PR branch.
 - **Branch protection** must allow the GitHub App or bot user that Claude Code operates as to push to protected branches; the cleanest pattern is requiring all checks pass on PRs but letting Claude push to the feature branch, never directly to `main`.
-- **Turborepo's remote caching** (Vercel or self-hosted) dramatically reduces CI build times in JS monorepos by skipping tasks whose inputs haven't changed since the last cached run.
+- **Nx Cloud remote caching** (free for solo developers) dramatically reduces CI build times in JS monorepos by skipping tasks whose inputs haven't changed since the last cached run. Set `NX_CLOUD_AUTH_TOKEN` in repo secrets.
 - **Required status checks** should be defined per-platform so a failing iOS build doesn't block a web-only change; use `if: contains(github.event.pull_request.labels, 'ios')` or path filters to make checks conditional and required only when their platform changes.
 
 ---
@@ -43,7 +43,7 @@ pomofocus/
     ui/               # Shared UI components
   .github/
     workflows/
-  turbo.json
+  nx.json
   package.json        # pnpm/npm workspace root
 ```
 
@@ -83,9 +83,9 @@ on:
 
 ---
 
-## 2. Turborepo Affected Package Detection in GitHub Actions
+## 2. Nx Affected Package Detection in GitHub Actions
 
-Turborepo's `--filter` flag combined with `[HEAD^1]` tells it to run only packages that changed relative to the previous commit. In CI, you compare against the base branch instead:
+Nx's `nx affected` command compares the current branch against the base branch and runs tasks only for projects that have changed (including their dependents). `fetch-depth: 0` is required so Nx can compute the full diff.
 
 ```yaml
 # .github/workflows/ci.yml
@@ -96,39 +96,12 @@ on:
     branches: [main]
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      affected: ${{ steps.turbo.outputs.affected }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0        # Full history needed for Turborepo diff
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      # Dry-run to find affected packages, output as JSON
-      - id: turbo
-        run: |
-          AFFECTED=$(pnpm turbo run build --filter=...[origin/main] --dry=json | jq -c '.packages')
-          echo "affected=$AFFECTED" >> $GITHUB_OUTPUT
-
   lint-and-test:
-    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0        # Full history needed for Nx affected diff
 
       - uses: pnpm/action-setup@v3
         with:
@@ -141,30 +114,41 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Only lint/test affected packages
+      # Only lint/test/build packages affected by this PR
       - name: Lint affected
-        run: pnpm turbo run lint --filter=...[origin/main]
+        run: pnpm nx affected --target=lint --base=origin/main --head=HEAD
 
       - name: Test affected
-        run: pnpm turbo run test --filter=...[origin/main]
+        run: pnpm nx affected --target=test --base=origin/main --head=HEAD
 
-      # Cache Turborepo artifacts between runs (remote cache alternative)
+      # Cache Nx local compute cache between runs
       - uses: actions/cache@v4
         with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ github.sha }}
-          restore-keys: turbo-${{ runner.os }}-
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ github.sha }}
+          restore-keys: nx-${{ runner.os }}-
 ```
 
-**Turborepo Remote Cache** (optional, dramatically speeds up CI):
+**List affected projects as JSON** (useful for conditional matrix jobs):
 
 ```yaml
-      - name: Build with remote cache
-        run: pnpm turbo run build --filter=...[origin/main]
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+      - name: Get affected projects
+        id: affected
+        run: |
+          AFFECTED=$(pnpm nx show projects --affected --base=origin/main --head=HEAD --json)
+          echo "projects=$AFFECTED" >> $GITHUB_OUTPUT
 ```
+
+**Nx Cloud Remote Cache** (free for solo developers — eliminates the need for the local cache action above):
+
+```yaml
+      - name: Lint affected (with Nx Cloud cache)
+        run: pnpm nx affected --target=lint --base=origin/main --head=HEAD
+        env:
+          NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
+```
+
+Set up Nx Cloud once with `npx nx connect` — it configures `nx.json` automatically. The free tier covers solo developers generously.
 
 ---
 
@@ -206,7 +190,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build web app
-        run: pnpm turbo run build --filter=web
+        run: pnpm nx run web:build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -615,7 +599,7 @@ jobs:
       - name: Get lint errors
         id: lint
         run: |
-          pnpm turbo run lint --filter=...[origin/main] 2>&1 | head -200 > lint-output.txt || true
+          pnpm nx affected --target=lint --base=origin/main --head=HEAD 2>&1 | head -200 > lint-output.txt || true
 
       - name: Run Claude to fix lint errors
         uses: anthropics/claude-code-action@v1
@@ -815,7 +799,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run lint test build --filter=web...
+      - run: pnpm nx run-many --targets=lint,test,build --projects=web
       - uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -967,7 +951,7 @@ jobs:
 | `GOOGLE_PLAY_JSON_KEY` | Repo | Android release |
 | `VSCE_PAT` | Repo | VS Code marketplace |
 | `OPEN_VSX_TOKEN` | Repo | Open VSX Registry |
-| `TURBO_TOKEN` | Repo | Turborepo remote cache |
+| `NX_CLOUD_AUTH_TOKEN` | Repo | Nx Cloud remote cache (free tier) |
 
 Use **GitHub Environments** (`production`, `staging`) with environment-level secrets and required reviewers for App Store and Play Store releases. This creates a manual approval gate before production deployment.
 
@@ -976,7 +960,7 @@ Use **GitHub Environments** (`production`, `staging`) with environment-level sec
 ## 12. Actionable CI/CD Recommendations for PomoFocus
 
 ### Priority 1 — Foundation (Set up first)
-1. **Adopt pnpm workspaces + Turborepo** as the monorepo orchestrator. Add `turbo.json` with pipeline definitions for `build`, `test`, `lint` tasks.
+1. **Adopt pnpm workspaces + Nx** as the monorepo orchestrator. Add `nx.json` with target defaults for `build`, `test`, `lint` tasks and `project.json` in each app/package.
 2. **Create `.github/workflows/detect-changes.yml`** using `dorny/paths-filter@v3` as a reusable step that all other workflows depend on via `needs:`.
 3. **Set up Cloudflare Pages** deploy first — it is the fastest win. One action, posts preview URLs to every PR automatically.
 4. **Add the `ci-complete` success gate job** to every workflow and configure it as the single required check in branch protection.
@@ -992,7 +976,7 @@ Use **GitHub Environments** (`production`, `staging`) with environment-level sec
 10. **Add auto-lint-fix** as a `workflow_run` trigger so failing lint checks on PRs automatically trigger Claude to fix and re-push.
 
 ### Priority 4 — Optimization
-11. **Enable Turborepo remote caching** via Vercel (free for hobby). JS build times drop dramatically once remote cache warms up.
+11. **Connect Nx Cloud** via `npx nx connect` (free for solo developers). JS build times drop dramatically once remote cache warms — `NX_CLOUD_AUTH_TOKEN` in repo secrets is all that's needed.
 12. **Add Supabase migration validation** to catch type drift between schema and generated TypeScript types before it reaches `main`.
 13. **Create `CLAUDE.md`** at monorepo root with build commands for each platform. Claude Code needs this to understand how to run tasks in each app subdirectory during agentic CI runs.
 
@@ -1010,7 +994,9 @@ The following sources informed this document (based on knowledge through August 
 - **Fastlane Match** — https://docs.fastlane.tools/actions/match/
 - **VS Code Publishing Extensions** — https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 - **HaaLeo/publish-vscode-extension Action** — https://github.com/HaaLeo/publish-vscode-extension
-- **Turborepo GitHub Actions Guide** — https://turbo.build/repo/docs/ci/github-actions
+- **Nx GitHub Actions Guide** — https://nx.dev/ci/intro/ci-with-github-actions
+- **Nx Affected Command** — https://nx.dev/nx-api/nx/documents/affected
+- **Nx Cloud** — https://nx.app
 - **dorny/paths-filter Action** — https://github.com/dorny/paths-filter
 - **Anthropic Claude Code Action** — https://docs.anthropic.com/en/docs/claude-code/github-actions
 - **Supabase CLI GitHub Actions** — https://github.com/supabase/setup-cli
