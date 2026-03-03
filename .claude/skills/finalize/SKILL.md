@@ -124,21 +124,31 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
 
 - **If Verdict = "LGTM"** → proceed to Step 5.
 
-- **If Critical > 0 AND REVIEW_PASS < MAX_REVIEW_PASSES:**
+- **If Critical > 0 AND REVIEW_PASS <= MAX_REVIEW_PASSES:**
   1. Report to the user: `"Review pass [REVIEW_PASS]: Found [Critical] critical issue(s). Attempting auto-fix..."`
-  2. Spawn a `general-purpose` agent to fix the critical findings:
+  2. Fetch the critical inline comments via the GitHub API:
+     ```bash
+     REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+     gh api repos/$REPO/pulls/[PR_NUMBER]/comments \
+       --jq '.[] | select(.body | startswith("🔴")) | {body, path, original_line}'
      ```
-     You are a code fixer. Read all open review comments on PR #[PR_NUMBER]:
-       gh pr view [PR_NUMBER] --json reviewComments --jq '.reviewComments[] | {body, path, line}'
-     Fix every comment marked 🔴 CRITICAL. Do not change anything else.
-     After fixing, stage only the changed files (do not use git add -A), then commit:
-       git commit -m "fix: address critical review comments (pass [REVIEW_PASS])"
-     Push with: git push -u origin [BRANCH_NAME]
+  3. Use the Agent tool with `subagent_type: general-purpose` to fix the critical findings.
+     Provide this prompt (substituting real values for bracketed placeholders):
      ```
-  3. Increment `REVIEW_PASS`.
-  4. Return to the top of the review loop (re-launch code-reviewer).
+     You are a code fixer. You have been given the following 🔴 CRITICAL review comments
+     from a code review of branch [BRANCH_NAME]. Fix each one. Do not change anything else.
 
-- **If Critical > 0 AND REVIEW_PASS >= MAX_REVIEW_PASSES:**
+     [paste the JSON output from the gh api command above]
+
+     After fixing all issues:
+     - Stage only the changed files by name (do NOT use git add -A)
+     - Run: git commit -m "fix: address critical review comments (pass [REVIEW_PASS])"
+     - Run: git push -u origin [BRANCH_NAME]
+     ```
+  4. Increment `REVIEW_PASS`.
+  5. Return to the top of the review loop (re-launch code-reviewer).
+
+- **If Critical > 0 AND REVIEW_PASS > MAX_REVIEW_PASSES:**
   1. If ISSUE_NUMBER is not "none":
      ```bash
      gh issue edit $ISSUE_NUMBER --add-label "needs-human"

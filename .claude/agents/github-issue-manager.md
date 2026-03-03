@@ -106,9 +106,9 @@ Then write the PR body to a uniquely named temp file (avoids heredoc injection f
 
 ```bash
 PR_BODY_FILE=$(mktemp /tmp/pr-body.XXXXXX.md)
-cat > "$PR_BODY_FILE" << 'ENDOFBODY'
+cat > "$PR_BODY_FILE" << 'POMOFOCUS_PR_BODY_SENTINEL'
 [PR body from Step 3]
-ENDOFBODY
+POMOFOCUS_PR_BODY_SENTINEL
 ```
 
 Derive the type prefix from the issue or commits: bugs → `fix:`, new features → `feat:`, refactors → `refactor:`, tests → `test:`, docs → `docs:`.
@@ -126,6 +126,10 @@ PR_URL=$(gh pr create \
   --title "[type]: [branch summary]" \
   --body-file "$PR_BODY_FILE")
 
+if [ -z "$PR_URL" ]; then
+  echo "ERROR: gh pr create failed. PR body preserved at: $PR_BODY_FILE"
+  exit 1
+fi
 echo "$PR_URL"
 rm -f "$PR_BODY_FILE"
 ```
