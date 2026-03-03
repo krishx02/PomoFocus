@@ -17,10 +17,24 @@ Your review is inspired by Cursor's BugBot approach: agentic, multi-pass, aggres
 
 ## Step 1 — Load Context
 
+First, fetch to ensure `origin/main` is current before diffing:
+```bash
+git fetch origin main
+```
+
+**If ISSUE_NUMBER is "none", "N/A", or not provided:**
+- Skip the `gh issue view` command
+- Set Out of Scope = (none) and Test Plan = "N/A — no issue context"
+- Note in the final summary: "No issue context available — reviewed diff only"
+
+**Otherwise:**
 ```bash
 # The original issue (acceptance criteria, out of scope, test plan)
 gh issue view $ISSUE_NUMBER --json number,title,body,labels
+```
 
+Then load the diff:
+```bash
 # Full diff to review
 git diff origin/main..HEAD
 

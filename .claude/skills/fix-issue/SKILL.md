@@ -48,13 +48,20 @@ Read the full output. Identify:
 Derive the branch slug from the issue title (lowercase, hyphens, max 40 chars).
 
 For bugs:
-```
-git checkout -b fix/issue-$ARGUMENTS-<slug>
+```bash
+git checkout -b fix/issue-$ARGUMENTS-<slug> 2>/dev/null \
+  || git checkout fix/issue-$ARGUMENTS-<slug>
 ```
 
 For features:
+```bash
+git checkout -b feature/issue-$ARGUMENTS-<slug> 2>/dev/null \
+  || git checkout feature/issue-$ARGUMENTS-<slug>
 ```
-git checkout -b feature/issue-$ARGUMENTS-<slug>
+
+If the branch already existed (second command ran), verify you are on the correct branch before continuing:
+```bash
+git branch --show-current
 ```
 
 Update the issue label to `in-progress`:
@@ -86,6 +93,13 @@ Rules:
 - Do NOT add dependencies without noting them prominently in the PR
 - Follow the existing patterns in each file you modify — read before editing
 - Write tests for any new business logic (tests go alongside implementation, not after PR)
+
+After all changes are made, stage and commit:
+```bash
+git add -A
+git commit -m "[type]: [short description] (#$ARGUMENTS)"
+```
+Use the conventional commit prefix matching the issue type: `feat`, `fix`, `refactor`, `test`, or `docs`.
 
 ## Step 7 — The Ralph Loop (Verify Until Pass)
 

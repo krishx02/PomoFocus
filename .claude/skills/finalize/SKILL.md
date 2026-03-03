@@ -17,19 +17,28 @@ Do NOT implement any code. Do NOT read or modify source files. You are a coordin
 
 ## Step 1 — Detect Issue Number and Branch
 
-If `$ARGUMENTS` is provided, use it as the issue number.
-
-If `$ARGUMENTS` is empty, parse the issue number from the current branch name:
-
+Get the current branch:
 ```bash
 git branch --show-current
 ```
 
-Branch format is `feature/issue-N-<slug>` or `fix/issue-N-<slug>`. Extract `N`.
+Store as `BRANCH_NAME`.
 
-If no issue number can be determined, stop and ask the user: "Which issue number should I finalize?"
+**Determine `ISSUE_NUMBER` using this priority order:**
 
-Store: `ISSUE_NUMBER`, `BRANCH_NAME`.
+1. If `$ARGUMENTS` is provided and is a number, use it.
+2. Parse from branch name — format is `feature/issue-N-<slug>` or `fix/issue-N-<slug>`. Extract `N`.
+3. Scan recent commit messages for an issue reference:
+   ```bash
+   git log --oneline origin/main..HEAD | grep -oP '(?<=#)\d+' | head -1
+   ```
+4. If still unresolved, ask the user:
+   ```
+   "I'm on branch '[BRANCH_NAME]' and cannot find an issue number in the branch name or recent commits.
+   Which GitHub issue number does this branch implement? (type 'none' if there is no associated issue)"
+   ```
+
+Store `ISSUE_NUMBER` (a number, or the string `"none"`).
 
 ---
 
@@ -39,8 +48,19 @@ Store: `ISSUE_NUMBER`, `BRANCH_NAME`.
 gh pr list --head $BRANCH_NAME --json number,url,state
 ```
 
-If a PR already exists (state: OPEN): record `PR_URL` and `PR_NUMBER`, skip Step 3.
-If no PR exists: proceed to Step 3.
+**If a PR already exists (state: OPEN):**
+- Record `PR_URL` and `PR_NUMBER` from this output.
+- If `ISSUE_NUMBER` is not "none", run the label update inline (since github-issue-manager will be skipped):
+  ```bash
+  CURRENT_LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name')
+  if echo "$CURRENT_LABELS" | grep -q "in-progress"; then
+    gh issue edit $ISSUE_NUMBER --remove-label "in-progress"
+  fi
+  gh issue edit $ISSUE_NUMBER --add-label "in-review"
+  ```
+- Skip to Step 4.
+
+**If no open PR exists:** proceed to Step 3.
 
 ---
 
@@ -50,15 +70,26 @@ Launch the `github-issue-manager` subagent with this context:
 
 ```
 You are the github-issue-manager subagent.
-ISSUE_NUMBER: [issue number]
+ISSUE_NUMBER: [issue number or "none"]
 BRANCH_NAME: [branch name]
 
 Follow your agent instructions completely.
-Return the PR URL and PR number on the last line in the format:
-  PR created: [URL] | Issue #N updated: in-progress → in-review
+Your final output line must match exactly:
+  PR: [URL] (#[PR_NUMBER]) | Issue #N: in-progress → in-review
+  or for no-issue branches:
+  PR: [URL] (#[PR_NUMBER]) | No issue — infrastructure branch
 ```
 
-Wait for the agent to complete. Parse `PR_URL` and `PR_NUMBER` from its output.
+Wait for the agent to complete.
+
+**Parse the output:**
+- Look for a line starting with `PR: https://`
+- Extract `PR_URL` (the URL) and `PR_NUMBER` (the integer inside `(#...)`)
+
+**If the output does not contain a line starting with `PR: https://`:**
+- Stop immediately
+- Report to the user: `"github-issue-manager failed to create the PR. Raw output: [output]"`
+- Do not proceed to Step 4.
 
 ---
 
@@ -69,12 +100,12 @@ Launch the `code-reviewer` subagent with this context:
 ```
 You are the code-reviewer subagent.
 PR_NUMBER: [PR number]
-ISSUE_NUMBER: [issue number]
+ISSUE_NUMBER: [issue number or "none"]
 BRANCH_NAME: [branch name]
 
 Follow your agent instructions completely.
-Return your findings summary on the last line in the format:
-  Review complete on PR #N
+Your final output must include:
+  Review complete on PR #[N]
   🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
   Verdict: [LGTM / Needs Changes / Critical Fixes Required]
 ```
