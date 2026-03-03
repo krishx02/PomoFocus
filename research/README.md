@@ -2,7 +2,7 @@
 
 > **Purpose:** Set up the entire PomoFocus development workflow — optimized for AI agents to work as autonomously as possible — before writing any app code.
 >
-> **Context:** PomoFocus is a multi-platform Pomodoro productivity app targeting iOS, Android, Mac widget, VS Code extension, Claude Code extension, web, and a physical BLE device. Cloud sync is a paid subscription feature. Stack: Supabase + Cloudflare + Supabase Auth (MVP) → Better Auth (later) + Nx monorepo + Vercel.
+> **Context:** PomoFocus is a multi-platform Pomodoro productivity app targeting iOS, iOS home screen widget, Apple Watch (watchOS), macOS menu bar widget, Android, web, VS Code extension, Claude Code extension, and a physical BLE device. Cloud sync is a paid subscription feature. Stack: Supabase + Cloudflare + Supabase Auth (MVP) → Better Auth (later) + Nx monorepo + Vercel.
 
 ---
 
@@ -12,7 +12,7 @@
 |------|-------|-------|
 | [01-agent-workflow-experts.md](./01-agent-workflow-experts.md) | AI-Assisted Development: Expert Synthesis | Five universal patterns from Boris Cherny, Karpathy, Simon Willison, swyx, and others. CLAUDE.md is the single highest-leverage investment. Tests are the agent's feedback loop. |
 | [02-github-for-agents.md](./02-github-for-agents.md) | GitHub Issues & Projects for AI Agent Workflows | How to write tickets that agents can execute without hand-holding. GitHub MCP server, Projects v2 API, issue templates, `fix-issue` skill, and label strategy. **Updated Mar 2026:** AGENTS.md convention, GitHub Agentic Workflows, WRAP framework, Claude Code Action v1.0 GA, Copilot coding agent updates, Playwright MCP, failure patterns. |
-| [03-github-actions-ci-cd.md](./03-github-actions-ci-cd.md) | GitHub Actions CI/CD for Multi-Platform Apps | Full delivery surface (web, iOS, Android, VS Code, Mac widget) from one monorepo. Claude Code Action for AI-assisted auto-fix loops. Cloudflare, App Store, and Play Store pipelines. |
+| [03-github-actions-ci-cd.md](./03-github-actions-ci-cd.md) | GitHub Actions CI/CD for Multi-Platform Apps | Full delivery surface (web, iOS, iOS widget, watchOS, Android, VS Code, Mac widget) from one monorepo. Claude Code Action for AI-assisted auto-fix loops. Cloudflare, App Store, and Play Store pipelines. |
 | [04-stack-recommendations.md](./04-stack-recommendations.md) | Tech Stack Recommendations 2025-2026 | Supabase + CF Durable Objects + Supabase Auth (MVP→Better Auth) + Expo + SwiftUI widget + Nx + Vercel + MCP server. MVP cost: $0/month. |
 | [05-startups-and-oss-solving-this.md](./05-startups-and-oss-solving-this.md) | Startups & OSS Solving Agent Dev Workflows | Landscape of tools for "agent picks up Issue and ships PR." Aider + Sweep AI + OpenHands are the install-today picks. Devin is powerful but $500/month. Height is shut down. |
 
@@ -28,7 +28,9 @@
 | Web hosting | **Vercel** | Next.js deployment |
 | Auth | **Supabase Auth (MVP)** → Better Auth (later) | Zero extra cost/infra for MVP; migrate when vendor lock-in is a concern |
 | Mobile | **Expo / React Native** | Code sharing with web + VS Code, BLE via react-native-ble-plx |
-| Mac widget | **SwiftUI + WidgetKit** | Only real option for a native menu bar widget |
+| Mac widget | **SwiftUI + WidgetKit + MenuBarExtra** | Only real option for a native menu bar widget |
+| iOS widget | **SwiftUI + WidgetKit** (iOS 17+) | Home screen + Smart Stack; shares timer state via App Group |
+| Apple Watch | **SwiftUI + WatchKit** (watchOS 10+) | Companion app + Complications; `WKExtendedRuntimeSession` for background timer |
 | VS Code extension | **VS Code Extension API** + shared `@pomofocus/core` | WebView renders same React UI as web |
 | BLE | **react-native-ble-plx** + Web Bluetooth | Platform-appropriate, mature libraries |
 | Monorepo | **Nx + pnpm** | Generators, affected detection, prior experience |

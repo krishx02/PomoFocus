@@ -2,7 +2,7 @@
 
 ## Project Context
 
-Multi-platform Pomodoro productivity app. Targets: iOS, macOS menu bar, Android, web, VS Code extension, Claude Code (MCP), physical BLE device. Cloud sync = paid subscription. Stack: Expo/React Native, SwiftUI, Turborepo/pnpm monorepo, Supabase, Cloudflare Workers, Better Auth.
+Multi-platform Pomodoro productivity app. Targets: iOS, iOS home screen widget, Apple Watch (watchOS), macOS menu bar, Android, web, VS Code extension, Claude Code (MCP), physical BLE device. Cloud sync = paid subscription. Stack: Expo/React Native, SwiftUI/WatchKit, Turborepo/pnpm monorepo, Supabase, Cloudflare Workers, Better Auth.
 
 **Current status:** Pre-code. No app code exists yet. Setting up dev workflow.
 

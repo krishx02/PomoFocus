@@ -34,8 +34,12 @@ pnpm nx affected --target=lint --base=origin/main --head=HEAD
 # Run the web dev server
 pnpm nx dev @pomofocus/web
 
-# macOS widget (Swift — outside Nx)
-xcodebuild test -scheme PomoFocus -destination "platform=macOS"
+# macOS menu bar widget (Swift — outside Nx)
+xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"
+# iOS home screen widget
+xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16"
+# Apple Watch app
+xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,name=Apple Watch Series 9 - 45mm"
 ```
 
 ---
@@ -58,7 +62,10 @@ pomofocus/
 │   ├── ble-client/           # BLE abstraction (react-native-ble-plx + Web Bluetooth)
 │   └── config/               # Shared ESLint, TypeScript, Vitest configs
 ├── native/
-│   └── mac-widget/           # SwiftUI + WidgetKit (Xcode project, outside Nx)
+│   └── apple/                # SwiftUI Xcode workspace (outside Nx)
+│       ├── mac-widget/       # macOS menu bar target (MenuBarExtra + WidgetKit)
+│       ├── ios-widget/       # iOS home screen widget target (WidgetKit, iOS 17+)
+│       └── watchos-app/      # Apple Watch app target (SwiftUI, watchOS 10+)
 ├── .github/
 │   ├── ISSUE_TEMPLATE/       # Agent-ready issue templates (feature + bug)
 │   └── workflows/            # CI/CD (Nx affected + platform-specific)
@@ -85,7 +92,9 @@ pomofocus/
 | Web hosting | Vercel | Latest |
 | Auth | Better Auth | Latest |
 | Mobile | Expo / React Native | SDK 51+ |
-| Mac widget | SwiftUI + WidgetKit | iOS/macOS 16+ |
+| Mac widget | SwiftUI + WidgetKit + MenuBarExtra | macOS 13+ |
+| iOS widget | SwiftUI + WidgetKit | iOS 17+ |
+| Apple Watch | SwiftUI + WatchKit | watchOS 10+ |
 | VS Code extension | VS Code Extension API | Latest |
 | BLE | react-native-ble-plx + Web Bluetooth | Latest |
 | Test (TS) | Vitest | Latest |

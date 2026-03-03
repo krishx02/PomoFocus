@@ -127,6 +127,8 @@ body:
         - Android (mobile)
         - Web
         - macOS widget
+        - iOS widget (home screen)
+        - watchOS (Apple Watch)
         - VS Code extension
         - MCP server
         - All platforms
