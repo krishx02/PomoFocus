@@ -626,7 +626,7 @@ Related: Apple docs on background execution — https://developer.apple.com/docu
 - `ios/PomoFocusTests/TimerManagerTests.swift` — add a regression test here
 
 ## Acceptance Criteria
-- [ ] `xcodebuild test -scheme PomoFocus` passes with no new failures
+- [ ] `xcodebuild test -scheme PomoFocusiOSWidget` passes with no new failures
 - [ ] New test `TimerManagerTests.testTimerContinuesInBackground` exists and passes
 - [ ] Timer does not reset when app is backgrounded for 30–60 seconds (verified in simulator)
 - [ ] `git log --oneline -1` shows a commit message starting with "fix:"
@@ -636,7 +636,7 @@ Do NOT modify `ios/PomoFocus/AppDelegate.swift` or any file in `android/` or `we
 Do NOT change the shared `TimerState` model in `shared/`.
 
 ## Test Plan
-1. `xcodebuild test -scheme PomoFocus -destination "platform=iOS Simulator,name=iPhone 15"`
+1. `xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16,OS=latest"`
 2. Confirm `testTimerContinuesInBackground` is listed as passed in the output
 
 ## Platform

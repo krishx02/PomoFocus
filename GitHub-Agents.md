@@ -128,7 +128,7 @@ for up to 10 minutes on iOS 17+.
 
 ## Out of Scope
 [Mandatory. Agents over-reach. List what must NOT change.]
-Do NOT modify `apps/web/` or `native/mac-widget/`.
+Do NOT modify `apps/web/` or `native/apple/mac-widget/`.
 Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 
 ## Test Plan
@@ -198,7 +198,7 @@ which causes it to stop firing when app enters background.
 - [ ] Commit message starts with "fix:"
 
 ## Out of Scope
-Do NOT modify `apps/web/`, `native/mac-widget/`, or any Android files.
+Do NOT modify `apps/web/`, `native/apple/mac-widget/`, or any Android files.
 Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 
 ## Test Plan
@@ -492,7 +492,7 @@ Auto-enforce agent-ready format on every new issue. See `.github/ISSUE_TEMPLATE/
 | `.github/workflows/claude.yml` | `@claude` comment | Any |
 | `.github/workflows/deploy-web.yml` | Push to main, `apps/web/**` changes | Web → Vercel |
 | `.github/workflows/mobile.yml` | Push to main, `apps/mobile/**` changes | iOS + Android → EAS |
-| `.github/workflows/mac-widget.yml` | Push to main, `native/mac-widget/**` | macOS → Xcode Cloud |
+| `.github/workflows/mac-widget.yml` | Push to main, `native/apple/mac-widget/**` | macOS → Xcode Cloud |
 | `.github/workflows/vscode.yml` | Tag push (`v*`) | VS Code Marketplace |
 
 ### What Agents Must Know About CI

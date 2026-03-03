@@ -452,10 +452,10 @@ let endDate = Date(timeIntervalSince1970: sharedDefaults?.double(forKey: "endDat
 let session = WKExtendedRuntimeSession()
 session.delegate = self
 session.start()
-// Session stays active until invalidated or 30-minute limit
+// Session stays active until invalidated — duration limits vary by session type
 ```
 
-For sessions longer than 30 minutes (break tracking), schedule a local notification and resume on next foreground.
+For long break sessions, verify the applicable duration limit in the Apple docs linked above and schedule a local notification if the session needs to extend beyond it.
 
 ### Complications (watchOS 10+ Smart Stack)
 
