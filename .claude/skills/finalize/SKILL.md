@@ -1,6 +1,6 @@
 ---
 name: finalize
-description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches the code-reviewer subagent to post inline review comments. Call this after all tests pass. Can also be called manually to finalize any branch.
+description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches the code-reviewer subagent to post inline review comments. Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Call this after all tests pass. Can also be called manually to finalize any branch.
 user-invocable: true
 context: fork
 allowed-tools: Bash(gh *), Bash(git *), Agent
@@ -28,9 +28,9 @@ Store as `BRANCH_NAME`.
 
 1. If `$ARGUMENTS` is provided and is a number, use it.
 2. Parse from branch name — format is `feature/issue-N-<slug>` or `fix/issue-N-<slug>`. Extract `N`.
-3. Scan recent commit messages for an issue reference:
+3. Scan recent commit messages for an issue reference (requires GNU grep):
    ```bash
-   git log --oneline origin/main..HEAD | grep -oP '(?<=#)\d+' | head -1
+   git log --oneline origin/main..HEAD | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1
    ```
 4. If still unresolved, ask the user:
    ```
@@ -50,6 +50,10 @@ gh pr list --head $BRANCH_NAME --json number,url,state
 
 **If a PR already exists (state: OPEN):**
 - Record `PR_URL` and `PR_NUMBER` from this output.
+- Push any new commits so the remote branch is up to date:
+  ```bash
+  git push -u origin $BRANCH_NAME
+  ```
 - If `ISSUE_NUMBER` is not "none", run the label update inline (since github-issue-manager will be skipped):
   ```bash
   CURRENT_LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name')
@@ -93,7 +97,11 @@ Wait for the agent to complete.
 
 ---
 
-## Step 4 — Launch code-reviewer
+## Step 4 — Launch code-reviewer (with auto-fix loop)
+
+Set `REVIEW_PASS = 1` and `MAX_REVIEW_PASSES = 3`.
+
+**Review loop** — repeat until verdict is LGTM or max passes exceeded:
 
 Launch the `code-reviewer` subagent with this context:
 
@@ -110,7 +118,42 @@ Your final output must include:
   Verdict: [LGTM / Needs Changes / Critical Fixes Required]
 ```
 
-Wait for the agent to complete. Parse the findings summary from its output.
+Wait for the agent to complete. Parse `Critical` count and `Verdict` from its output.
+
+**After the reviewer returns:**
+
+- **If Verdict = "LGTM"** → proceed to Step 5.
+
+- **If Critical > 0 AND REVIEW_PASS < MAX_REVIEW_PASSES:**
+  1. Report to the user: `"Review pass [REVIEW_PASS]: Found [Critical] critical issue(s). Attempting auto-fix..."`
+  2. Spawn a `general-purpose` agent to fix the critical findings:
+     ```
+     You are a code fixer. Read all open review comments on PR #[PR_NUMBER]:
+       gh pr view [PR_NUMBER] --json reviewComments --jq '.reviewComments[] | {body, path, line}'
+     Fix every comment marked 🔴 CRITICAL. Do not change anything else.
+     After fixing, stage only the changed files (do not use git add -A), then commit:
+       git commit -m "fix: address critical review comments (pass [REVIEW_PASS])"
+     Push with: git push -u origin [BRANCH_NAME]
+     ```
+  3. Increment `REVIEW_PASS`.
+  4. Return to the top of the review loop (re-launch code-reviewer).
+
+- **If Critical > 0 AND REVIEW_PASS >= MAX_REVIEW_PASSES:**
+  1. If ISSUE_NUMBER is not "none":
+     ```bash
+     gh issue edit $ISSUE_NUMBER --add-label "needs-human"
+     gh issue comment $ISSUE_NUMBER --body "$(cat <<'EOF'
+     ## Review Loop Exhausted — Needs Human
+
+     Critical issues found by the code-reviewer persist after 3 auto-fix passes.
+     Please review the PR comments and resolve the critical findings manually.
+     EOF
+     )"
+     ```
+  2. Stop. Report to user: `"Critical issues persist after 3 review passes. Needs human review. PR: [PR_URL]"`
+
+- **If Critical == 0 (only Warnings/Info)** → proceed to Step 5.
+  Warnings are informational — the human reviewer decides whether to fix them before merging.
 
 ---
 
@@ -119,10 +162,16 @@ Wait for the agent to complete. Parse the findings summary from its output.
 Output a clean summary to the user:
 
 ```
+[If ISSUE_NUMBER is not "none":]
 ✅ Finalize complete for issue #[ISSUE_NUMBER]
+[If ISSUE_NUMBER is "none":]
+✅ Finalize complete — infrastructure branch
 
 📝 PR: [PR_URL]
+[If ISSUE_NUMBER is not "none":]
 🏷️  Labels: in-progress → in-review
+[If ISSUE_NUMBER is "none":]
+🏷️  Labels: N/A — no associated issue
 
 🔍 Code Review Results:
    🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N

@@ -36,8 +36,13 @@ Read the full output. Identify:
 - DO NOT implement anything
 - Read the existing comments to understand what decision is needed
 - Post a comment explaining the specific blocker:
-  ```
-  gh issue comment $ARGUMENTS --body "## Blocked — Needs Human Decision\n\n[Explain exactly what decision is needed and why the agent cannot proceed without it]"
+  ```bash
+  gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+  ## Blocked — Needs Human Decision
+
+  [Explain exactly what decision is needed and why the agent cannot proceed without it]
+  EOF
+  )"
   ```
 - Stop
 
@@ -46,6 +51,10 @@ Read the full output. Identify:
 ## Step 3 — Create a Branch
 
 Derive the branch slug from the issue title (lowercase, hyphens, max 40 chars).
+
+Determine branch type from the issue labels:
+- If the issue has label `bug` → use the `fix/` prefix
+- Otherwise → use the `feature/` prefix
 
 For bugs:
 ```bash
@@ -94,12 +103,7 @@ Rules:
 - Follow the existing patterns in each file you modify — read before editing
 - Write tests for any new business logic (tests go alongside implementation, not after PR)
 
-After all changes are made, stage and commit:
-```bash
-git add -A
-git commit -m "[type]: [short description] (#$ARGUMENTS)"
-```
-Use the conventional commit prefix matching the issue type: `feat`, `fix`, `refactor`, `test`, or `docs`.
+Do NOT commit yet — the commit happens after tests and type-check pass in Step 7.
 
 ## Step 7 — The Ralph Loop (Verify Until Pass)
 
@@ -115,6 +119,22 @@ If tests fail:
 3. Run tests again
 4. Repeat until all tests pass
 
+**Iteration limit:** If tests are still failing after 5 attempts, stop the loop:
+```bash
+gh issue edit $ARGUMENTS --add-label "needs-human"
+gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+## Ralph Loop Exhausted — Needs Human
+
+Tests are still failing after 5 fix attempts. The failure may require
+infrastructure unavailable in this environment, involve a pre-existing flake,
+or need a deeper design decision.
+
+Please review the test failure output and resolve the root cause manually.
+EOF
+)"
+```
+Stop — do not open a PR.
+
 Do NOT open a PR with failing tests.
 
 Also run:
@@ -124,9 +144,22 @@ pnpm type-check
 
 If type errors exist, fix them before proceeding.
 
+After tests pass AND type-check is clean, stage and commit:
+```bash
+# Stage only files from the issue's Affected Files list + any new test files written.
+# Do NOT use git add -A — it can accidentally include generated files or debugging artifacts.
+git add [each file from Affected Files list, plus any new test files]
+
+# Verify what's staged before committing — unstage anything unexpected:
+git status
+
+git commit -m "[type]: [short description] (#$ARGUMENTS)"
+```
+Use the conventional commit prefix matching the issue type: `feat`, `fix`, `refactor`, `test`, or `docs`.
+
 ## Step 8 — Hand Off to Finalize
 
-Tests pass and type-check is clean. Your implementation work is done.
+Tests pass, type-check is clean, and changes are committed. Your implementation work is done.
 
 Invoke the `/finalize` skill:
 
