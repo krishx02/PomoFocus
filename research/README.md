@@ -15,6 +15,7 @@
 | [03-github-actions-ci-cd.md](./03-github-actions-ci-cd.md) | GitHub Actions CI/CD for Multi-Platform Apps | Full delivery surface (web, iOS, Android, VS Code, Mac widget) from one monorepo. Claude Code Action for AI-assisted auto-fix loops. Cloudflare, App Store, and Play Store pipelines. |
 | [04-stack-recommendations.md](./04-stack-recommendations.md) | Tech Stack Recommendations 2025-2026 | Supabase + CF Durable Objects + Supabase Auth (MVP→Better Auth) + Expo + SwiftUI widget + Nx + Vercel + MCP server. MVP cost: $0/month. |
 | [05-startups-and-oss-solving-this.md](./05-startups-and-oss-solving-this.md) | Startups & OSS Solving Agent Dev Workflows | Landscape of tools for "agent picks up Issue and ships PR." Aider + Sweep AI + OpenHands are the install-today picks. Devin is powerful but $500/month. Height is shut down. |
+| [06-product-research-methodology.md](./06-product-research-methodology.md) | Product Research & Discovery Methodologies | Survey of BMAD, GitHub Spec Kit, Osmani's spec-first approach, Shape Up, Torres' Continuous Discovery, Wondel.ai skills, and more. Recommends a `/discover` Claude Code skill for interactive product research. |
 
 ---
 
