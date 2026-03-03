@@ -650,27 +650,271 @@ This ticket can be handed to Claude Code with `/fix-issue 42` and executed witho
 
 ---
 
+## 2026 Updates: New Patterns from the Ecosystem
+
+> Updated March 2026 with web research on what teams are actually doing with GitHub + AI agents.
+
+### AGENTS.md: The Open Convention for Agent Context
+
+**Status:** Live. Stewarded by the Agentic AI Foundation (Linux Foundation). Supported by 60+ agents including Claude Code, Copilot, VS Code, Cursor.
+
+AGENTS.md is a simple Markdown file at the repo root that serves as "a README for agents." No rigid schema — just the format agents expect to find. GitHub analyzed 2,500+ repos and found the best ones share these traits:
+
+- **Lead with executable commands** — actual `npm test`, not "run the test suite"
+- **Show real code examples** — not abstract descriptions
+- **Use three-tier boundaries** — always do / ask first / never do
+- **Include specific version numbers**
+- **Nest per-package in monorepos** — agents read the nearest AGENTS.md in the tree
+
+**Recommended structure:**
+
+```markdown
+# Commands
+npm test
+npm run build
+npm run lint
+
+# Project Structure
+- src/     → Application code
+- tests/   → Test files
+- .github/ → Actions and automation
+
+# Code Style
+// ✅ Use const for immutable values
+// ❌ Avoid var
+
+# Boundaries
+**Always do:**
+- ✅ Run tests before opening PRs
+- ✅ Update CHANGELOG when shipping features
+
+**Ask first:**
+- ❓ Before modifying package.json
+- ❓ Before touching authentication code
+
+**Never do:**
+- ❌ Commit secrets or API keys
+- ❌ Modify production database migrations
+```
+
+**For PomoFocus:** Create a root AGENTS.md plus nested ones in each package directory (core, mobile, ios-widget, android, web, vs-code-ext). This works alongside CLAUDE.md — AGENTS.md is cross-agent, CLAUDE.md is Claude-specific.
+
+**Source:** [How to write a great agents.md — GitHub Blog (2,500+ repo analysis)](https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/)
+
+---
+
+### GitHub Agentic Workflows (Tech Preview, Feb 2026)
+
+**Status:** Technical preview. Available via `gh aw` CLI. Supports Claude Code, Copilot, and OpenAI Codex.
+
+Replaces YAML-based GitHub Actions with **plain Markdown files** for agent-driven automation. The agent reads the Markdown as its prompt and executes against the repo.
+
+**Structure:**
+
+```markdown
+---
+name: Issue Triage
+on:
+  issues:
+    types: [opened, reopened]
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+outputs:
+  - type: comment
+  - type: issue_label
+---
+
+When a new issue is opened:
+1. Analyze the issue title and description
+2. Research related issues in the repository
+3. Classify into categories: bug, feature, documentation, performance
+4. Apply appropriate labels
+5. Post a comment summarizing the findings
+```
+
+**Patterns working now:**
+- **Issue triage** — Auto-label and route based on content
+- **Documentation updates** — Keep READMEs aligned with code
+- **Test enhancement** — Assess coverage gaps, add tests
+- **CI investigation** — Analyze failures, propose fixes
+- **Continuous simplification** — Repeatedly identify improvements, open PRs
+
+**Security model:** Read-only by default. PRs are never auto-merged — humans always review.
+
+**Source:** [Automate repository tasks with GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/)
+
+---
+
+### The WRAP Framework: GitHub's Internal Task Design Pattern
+
+GitHub's own engineers use this four-step checklist for structuring agent work:
+
+- **W — Write effective issues:** Describe as if for someone brand new to the codebase
+- **R — Refine your instructions:** Repository-level (AGENTS.md), org-level, and agent-level custom instructions
+- **A — Atomic tasks:** Break large problems into independent pieces. 1–3 sentences, <10 files, one context window.
+- **P — Pair with the coding agent:** Leverage complementary human and AI strengths
+
+**Bad:** "Refactor the auth module"
+**Good:** "Migrate the authentication module to use Better Auth, ensuring all existing unit tests pass. Run `pnpm test --filter @pomofocus/core && pnpm type-check` to verify."
+
+**Source:** [WRAP up your backlog with GitHub Copilot coding agent](https://github.blog/ai-and-ml/github-copilot/wrap-up-your-backlog-with-github-copilot-coding-agent/)
+
+---
+
+### Claude Code GitHub Action v1.0 (GA, Jan 2026)
+
+**Status:** Production GA. Breaking changes from beta.
+
+**One-command setup:**
+```bash
+claude /install-github-app
+```
+
+**Usage in issues/PRs:** Comment `@claude implement this feature` or `@claude review for security`.
+
+**v1.0 syntax (replaces beta):**
+```yaml
+# .github/workflows/claude.yml
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: "Implement the feature described in this issue"
+          claude_args: |
+            --append-system-prompt "Follow CLAUDE.md conventions"
+            --max-turns 10
+```
+
+**Key change from beta:** `direct_prompt` → `prompt`, `custom_instructions` → `claude_args: --append-system-prompt`, `max_turns` → `claude_args: --max-turns`.
+
+**Source:** [Claude Code GitHub Actions Documentation](https://code.claude.com/docs/en/github-actions)
+
+---
+
+### Copilot Coding Agent: 2026 Features
+
+**New capabilities (Feb 2026):**
+- **Model picker** — Choose faster models for routine work, robust models for hard tasks
+- **Self-review** — Agent reviews its own changes before opening PR
+- **Integrated scanning** — Code scanning, secret detection, dependency checks (free with coding agent)
+- **Custom agents** — Define agent behavior in `.github/agents/` files
+- **Mission Control** — Dashboard for assigning and tracking multiple concurrent agent tasks
+
+**Model cost multipliers per request:**
+- 0x: gpt-5-mini, gpt-4.1, gpt-4o (essentially free)
+- 0.33x: claude-haiku-4.5, gemini-3-flash (cheap)
+- 1x: claude-sonnet-4, claude-sonnet-4.5 (standard)
+- Up to 50x: gpt-4.5, premium models (expensive)
+
+**Source:** [What's new with GitHub Copilot coding agent](https://github.blog/ai-and-ml/github-copilot/whats-new-with-github-copilot-coding-agent/)
+
+---
+
+### Custom Instructions Hierarchy (Multi-Agent)
+
+Agents now support multiple instruction formats. Precedence order:
+
+1. `AGENTS.md` (root or nested) — cross-agent, open standard
+2. `.github/agents/` — custom agent definitions (Copilot)
+3. `.github/copilot-instructions.md` — Copilot-specific
+4. `.github/instructions/**.instructions.md` — pattern-based instructions
+5. `CLAUDE.md` — Claude Code + Claude agents
+6. `GEMINI.md` — Google agents
+
+**For PomoFocus:** AGENTS.md handles any agent that hits the repo. CLAUDE.md adds Claude-specific rules (clarification protocol, destructive op guards, etc.).
+
+---
+
+### Playwright MCP: Browser Automation for Agent Verification
+
+**Status:** Live. Copilot coding agent has Playwright MCP built-in.
+
+Agents can open browsers, interact with UI, verify changes, and generate E2E tests — without needing to read source code.
+
+**Pattern:**
+```
+Agent task: "Implement signup form"
+    ↓
+Playwright MCP opens browser to localhost:3000
+    ↓
+Agent fills form, takes screenshots, explores UI
+    ↓
+Agent generates Playwright tests that verify behavior
+    ↓
+Agent implements the feature to make tests pass
+```
+
+**For PomoFocus:** Useful for web app verification. Agent can visually confirm timer UI, settings page, etc.
+
+**Source:** [How to debug a web app with Playwright MCP and GitHub Copilot](https://github.blog/ai-and-ml/github-copilot/how-to-debug-a-web-app-with-playwright-mcp-and-github-copilot/)
+
+---
+
+### What's NOT Working (Failures in 2026)
+
+From practitioner reports and filed issues:
+
+| Anti-pattern | Result | Fix |
+|-------------|--------|-----|
+| Vague issues | Low-quality code that fails CI | WRAP framework + atomic sizing |
+| No tests in repo | Agent can't self-correct, requires hand-holding | Write test baseline before onboarding agents |
+| Large features assigned to agent | Context explosion, hallucination, partial work | Decompose into 1–3 file sub-issues |
+| Autonomous agents blocked on approval prompts | Network domain prompts cause hangs | Pre-approve domains in agent config |
+| AI reviewing AI code | Inconsistent, misses subtle bugs | Use as first-pass filter, not final arbiter |
+| Infrastructure-as-Code tasks | Agents hesitant, high error rate | Write acceptance tests first, then let agents implement |
+
+---
+
 ## Implementation Checklist
 
+### Agent Context Files
+- [ ] Create `AGENTS.md` at repo root (cross-agent, open standard)
+- [ ] Create nested `AGENTS.md` in each package (core, mobile, ios-widget, android, web, vs-code-ext)
+- [x] Create `CLAUDE.md` at repo root (Claude-specific rules — done)
+
+### Issue Templates & Labels
 - [ ] Create `.github/ISSUE_TEMPLATE/feature-agent.yml`
 - [ ] Create `.github/ISSUE_TEMPLATE/bug-agent.yml`
-- [ ] Create `CLAUDE.md` at repo root (follow structure above)
+- [ ] Add label set: `agent-ready`, `in-progress`, `in-review`, `needs-human`, `ios-only`, `android-only`, `cross-platform`, `effort:small`, `effort:large`, `decomposed`
+- [ ] Set up GitHub Project v2 with Backlog / Agent-Ready / In Progress / In Review / Done columns
+- [ ] Write a shell script wrapping the Projects v2 GraphQL mutation for status updates
+
+### Skills & Agents
 - [ ] Create `.claude/skills/fix-issue/SKILL.md`
 - [ ] Create `.claude/skills/decompose-issue/SKILL.md`
 - [ ] Create `.claude/agents/ios-developer.md`
 - [ ] Create `.claude/agents/android-developer.md`
 - [ ] Create `.claude/agents/shared-developer.md`
+
+### GitHub Integrations
 - [ ] Configure `.claude/settings.json` with GitHub MCP server and allowed Bash commands
-- [ ] Set up GitHub Project v2 with Backlog / Agent-Ready / In Progress / In Review / Done columns
-- [ ] Add label set: `agent-ready`, `in-progress`, `in-review`, `needs-human`, `ios-only`, `android-only`, `cross-platform`, `effort:small`, `effort:large`, `decomposed`
-- [ ] Write a shell script wrapping the Projects v2 GraphQL mutation for status updates
+- [ ] Install Claude Code GitHub Action (`claude /install-github-app` or manual `.github/workflows/claude.yml`)
+- [ ] Set up GitHub Agentic Workflow for issue triage (`.github/workflows/triage.md`) — requires `gh aw` CLI (tech preview)
+- [ ] Add Playwright MCP for web UI verification (optional, useful for web platform)
+
+### Test Baseline (Before Onboarding Agents)
+- [ ] Set up test framework for `@pomofocus/core` (Vitest or Jest)
+- [ ] Set up Playwright for web E2E
+- [ ] Set up Detox or Maestro for React Native
+- [ ] Set up Swift testing for iOS widget
+- [ ] Verify: agents can run `pnpm test` and get pass/fail signal
 
 ---
 
 ## Sources
 
-The following sources informed this research. Note: WebSearch and WebFetch were unavailable in this session; all information is from the author's knowledge base (cutoff August 2025) and the project's existing `.claude/docs/` files.
-
+### Original (Aug 2025 knowledge base)
 - GitHub Docs — Projects v2 API: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects
 - GitHub Docs — Issue Templates (YAML): https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
 - GitHub MCP Server: https://github.com/github/github-mcp-server
@@ -682,5 +926,16 @@ The following sources informed this research. Note: WebSearch and WebFetch were 
 - Claude Code Docs — MCP: https://docs.anthropic.com/en/docs/claude-code/mcp
 - GitHub Copilot Workspace overview: https://githubnext.com/projects/copilot-workspace
 - GitHub Projects GraphQL API reference: https://docs.github.com/en/graphql/reference/objects#projectv2
-- PomoFocus `.claude/docs/claude-code-basics.md` (project file)
-- PomoFocus `.claude/docs/claude-code-advanced.md` (project file)
+
+### March 2026 Update (web research)
+- GitHub Blog — How to write a great agents.md (2,500+ repo analysis): https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/
+- GitHub Blog — WRAP framework for coding agent: https://github.blog/ai-and-ml/github-copilot/wrap-up-your-backlog-with-github-copilot-coding-agent/
+- GitHub Blog — Agentic Workflows (tech preview, Feb 2026): https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/
+- GitHub Blog — What's new with Copilot coding agent (Feb 2026): https://github.blog/ai-and-ml/github-copilot/whats-new-with-github-copilot-coding-agent/
+- Claude Code GitHub Actions v1.0 docs: https://code.claude.com/docs/en/github-actions
+- AGENTS.md open specification: https://agents.md/
+- GitHub Blog — Playwright MCP for agent UI verification: https://github.blog/ai-and-ml/github-copilot/how-to-debug-a-web-app-with-playwright-mcp-and-github-copilot/
+- GitHub Blog — 5 ways to integrate coding agent: https://github.blog/ai-and-ml/github-copilot/5-ways-to-integrate-github-copilot-coding-agent-into-your-workflow/
+- GitHub Copilot SDK launch: https://github.blog/news-insights/company-news/build-an-agent-into-any-app-with-the-github-copilot-sdk/
+- ATDD for Claude Code: https://github.com/swingerman/atdd
+- Ralph Loop (autonomous agent verification): https://github.com/frankbria/ralph-claude-code
