@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub-Agents.md — How to write agent-ready issues
+    url: https://github.com/krishg/PomoFocus/blob/main/GitHub-Agents.md#2-writing-agent-ready-issues
+    about: Read this before creating any issue. Poorly-specified issues will be closed and returned for revision.

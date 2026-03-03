@@ -1,0 +1,144 @@
+name: Bug (Agent-Ready)
+description: A bug report structured for autonomous Claude Code execution. Paste exact error messages — agents work best with exact strings to search for.
+labels: ["agent-ready", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Fill every field.** An agent will execute this without follow-up questions.
+        Paste the **exact** error message and stack trace — don't paraphrase.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence. What must be true when this bug is fixed?
+      placeholder: "The focus session timer must not reset to 25:00 when the iOS app is backgrounded for more than 30 seconds."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Exact steps to reproduce. Be precise — agents follow these literally.
+      placeholder: |
+        1. Launch app on iOS 17.2 simulator
+        2. Start a 25-minute focus session
+        3. Background the app (press Home)
+        4. Wait 35 seconds
+        5. Foreground the app
+        6. Observe: timer resets to 25:00 instead of showing ~24:25
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs. Actual
+      description: What should happen, and what actually happens.
+      placeholder: |
+        **Expected:** Timer continues counting down from where it left off when foregrounded.
+        **Actual:** Timer resets to 25:00 (full session duration).
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_message
+    attributes:
+      label: Error Message / Stack Trace
+      description: Paste verbatim. Do not paraphrase. Include the test ID if this is a test failure.
+      placeholder: |
+        FAIL apps/mobile/src/__tests__/useTimer.test.ts
+          ● TimerMachine › continuesInBackground
+
+            expect(received).toBe(expected)
+            Expected: 1465000
+            Received: 1500000
+
+            at Object.<anonymous> (apps/mobile/src/__tests__/useTimer.test.ts:47:5)
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & Background
+      description: When was this introduced? Link to the commit, PR, or issue that caused it.
+      placeholder: |
+        Introduced in commit a3f9d2c (PR #37 — timer refactor).
+        Last known good: commit b2e8f1a (before PR #37 merged).
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Affected Files
+      description: Exact paths from repo root. Include the test file where the regression test should be added.
+      placeholder: |
+        - `packages/core/src/timer/TimerMachine.ts` — timer scheduling logic (line ~87)
+        - `apps/mobile/src/__tests__/TimerMachine.test.ts` — add regression test here
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Checkboxes the agent can verify. Include the regression test criterion explicitly.
+      placeholder: |
+        - [ ] `pnpm nx test @pomofocus/core` passes with no new failures
+        - [ ] New test `TimerMachine.continuesInBackground` exists and passes
+        - [ ] `pnpm type-check` exits clean
+        - [ ] Commit message starts with "fix:"
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: What must NOT change. Prevents the agent from accidentally touching unrelated code.
+      placeholder: |
+        Do NOT modify `apps/web/` or `native/mac-widget/`.
+        Do NOT change the TimerState interface in `packages/core/src/types.ts`.
+    validations:
+      required: false
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test Plan
+      description: Exact commands to verify the fix.
+      placeholder: |
+        1. `pnpm nx test @pomofocus/core`
+        2. Confirm `TimerMachine.continuesInBackground` is listed as passed in output
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Shared/Cross-platform
+        - iOS (mobile)
+        - Android (mobile)
+        - Web
+        - macOS widget
+        - VS Code extension
+        - MCP server
+        - All platforms
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort Estimate
+      options:
+        - "effort:small (< 1 hour, < 10 files, implement directly)"
+        - "effort:large (decompose into sub-issues first)"
+    validations:
+      required: true

@@ -1,0 +1,104 @@
+name: Feature (Agent-Ready)
+description: A feature ticket structured for autonomous Claude Code execution. Fill every field — an agent will execute this without follow-up questions.
+labels: ["agent-ready", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Fill every field.** An agent will execute this without follow-up questions.
+        Read [GitHub-Agents.md §2](../GitHub-Agents.md#2-writing-agent-ready-issues) for writing tips.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence. A verifiable assertion — what must be true when this is done?
+      placeholder: "The iOS app must persist timer state across backgrounding for up to 10 minutes using UserDefaults."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & Background
+      description: Why is this needed? Link to related issues, PRs, design docs, or relevant commits.
+      placeholder: |
+        Requested in #38. Timer state is currently lost on app backgrounding (confirmed on iOS 17.2).
+        Related: Apple docs on background execution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Affected Files
+      description: Exact paths from repo root. Be specific — agents waste turns on discovery you can do in 10 seconds.
+      placeholder: |
+        - `packages/core/src/timer/TimerMachine.ts` — timer state machine
+        - `apps/mobile/src/hooks/useTimer.ts` — hook wrapping state machine
+        - `apps/mobile/src/__tests__/useTimer.test.ts` — add regression test here
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Checkboxes the agent can verify. Each criterion must be automatable — rewrite "looks correct" as a test.
+      placeholder: |
+        - [ ] `pnpm nx test @pomofocus/core` passes with no new failures
+        - [ ] New test `TimerMachine.backgroundPersistence` exists and passes
+        - [ ] `pnpm type-check` exits clean
+        - [ ] Timer continues counting after app backgrounded 30–60s (verified in simulator)
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: Explicitly state what NOT to change. Agents over-reach — if you don't list it here, they may touch it.
+      placeholder: |
+        Do NOT modify `apps/web/` or `native/mac-widget/`.
+        Do NOT change the TimerState interface in `packages/core/src/types.ts`.
+    validations:
+      required: false
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test Plan
+      description: Exact commands the agent must run to verify its work. Not "run the tests" — the exact invocation.
+      placeholder: |
+        1. `pnpm nx test @pomofocus/core`
+        2. `pnpm nx test @pomofocus/mobile`
+        3. Manually: start timer → background app → wait 30s → foreground → confirm state unchanged
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Shared/Cross-platform
+        - iOS (mobile)
+        - Android (mobile)
+        - Web
+        - macOS widget
+        - VS Code extension
+        - MCP server
+        - All platforms
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort Estimate
+      description: "effort:large issues will be auto-decomposed into sub-issues by /fix-issue."
+      options:
+        - "effort:small (< 1 hour, < 10 files, implement directly)"
+        - "effort:large (decompose into sub-issues first)"
+    validations:
+      required: true
