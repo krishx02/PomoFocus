@@ -1,6 +1,6 @@
 ---
 name: fix-issue
-description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. If needs-human, comments a blocker and stops. Otherwise: creates a branch, reads affected files, implements, runs tests until all pass, opens a PR, and updates labels.
+description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. If needs-human, comments a blocker and stops. Otherwise: creates a branch, reads affected files, implements, and runs tests until all pass. Calls /finalize when done — does not manage the PR or labels directly.
 user-invocable: true
 context: fork
 isolation: worktree
@@ -110,41 +110,14 @@ pnpm type-check
 
 If type errors exist, fix them before proceeding.
 
-## Step 8 — Open the PR
+## Step 8 — Hand Off to Finalize
+
+Tests pass and type-check is clean. Your implementation work is done.
+
+Invoke the `/finalize` skill:
 
 ```
-gh pr create \
-  --title "[type]: [issue title] (#$ARGUMENTS)" \
-  --body "$(cat <<'EOF'
-Closes #$ARGUMENTS
-
-## Changes
-[Bullet-point summary of what was changed and why]
-
-## Test Results
-[Paste the passing test output or describe what was run]
-
-## Out of Scope Respected
-[Confirm which files were NOT touched per the issue's Out of Scope]
-EOF
-)"
+/finalize $ARGUMENTS
 ```
 
-Where `[type]` is `feat`, `fix`, `refactor`, `test`, or `docs` depending on the issue type.
-
-## Step 9 — Update Labels
-
-```
-gh issue edit $ARGUMENTS \
-  --remove-label "in-progress" \
-  --add-label "in-review"
-```
-
-## Final Report
-
-Output a concise summary:
-- Branch name created
-- Files changed (list)
-- Test results (pass/fail counts)
-- PR URL
-- Any deviations from the issue spec and why
+Stop here — do not create the PR or update labels directly. The `/finalize` skill handles all GitHub state: PR creation, label transitions, and code review.
