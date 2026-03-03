@@ -37,9 +37,9 @@ pnpm nx dev @pomofocus/web
 # macOS menu bar widget (Swift — outside Nx)
 xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"
 # iOS home screen widget
-xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16"
+xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16,OS=latest"
 # Apple Watch app
-xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,name=Apple Watch Series 9 - 45mm"
+xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,name=Apple Watch Series 10 - 46mm,OS=latest"
 ```
 
 ---

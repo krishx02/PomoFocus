@@ -372,7 +372,7 @@ Each platform has different tools, test commands, file structures, and gotchas. 
 | `shared-developer.md` | Cross-platform TypeScript | `packages/` | `pnpm nx affected --target=test` |
 | `web-developer.md` | Next.js web app | `apps/web/` | `pnpm nx test @pomofocus/web` |
 | `mobile-developer.md` | Expo (iOS + Android) | `apps/mobile/` | `pnpm nx test @pomofocus/mobile` |
-| `ios-developer.md` | SwiftUI: macOS widget + iOS widget + watchOS | `native/apple/` | `xcodebuild test -scheme PomoFocus` |
+| `ios-developer.md` | SwiftUI: macOS widget + iOS widget + watchOS | `native/apple/` | `xcodebuild test -scheme PomoFocusMac` |
 | `vscode-developer.md` | VS Code extension | `apps/vscode-extension/` | `pnpm nx test @pomofocus/vscode-extension` |
 | `mcp-developer.md` | MCP server | `apps/mcp-server/` | `pnpm nx test @pomofocus/mcp-server` |
 
@@ -533,7 +533,7 @@ pnpm nx affected --target=lint --base=origin/main --head=HEAD
 | `apps/mobile` | Jest + Detox/Maestro | `pnpm nx test @pomofocus/mobile` | 70% |
 | `apps/vscode-extension` | Jest | `pnpm nx test @pomofocus/vscode-extension` | 70% |
 | `apps/mcp-server` | Vitest | `pnpm nx test @pomofocus/mcp-server` | 80% |
-| `native/mac-widget` | XCTest | `xcodebuild test -scheme PomoFocus` | 70% |
+| `native/apple/mac-widget` | XCTest | `xcodebuild test -scheme PomoFocusMac` | 70% |
 
 ### Test-First Rule
 

@@ -29,13 +29,13 @@ xcodebuild test \
 # iOS home screen widget
 xcodebuild test \
   -scheme PomoFocusiOSWidget \
-  -destination "platform=iOS Simulator,name=iPhone 16" \
+  -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
   -resultBundlePath TestResults.xcresult
 
 # Apple Watch app
 xcodebuild test \
   -scheme PomoFocusWatch \
-  -destination "platform=watchOS Simulator,name=Apple Watch Series 9 - 45mm" \
+  -destination "platform=watchOS Simulator,name=Apple Watch Series 10 - 46mm,OS=latest" \
   -resultBundlePath TestResults.xcresult
 ```
 
@@ -74,7 +74,7 @@ xcodebuild test \
 
 **Apple Watch app:**
 - SwiftUI app lifecycle (`@main` struct conforming to `App`)
-- `WKExtendedRuntimeSession` for background timer continuation (up to 30 minutes)
+- `WKExtendedRuntimeSession` for background timer continuation (duration limits vary by session type — see Apple's [WKExtendedRuntimeSession docs](https://developer.apple.com/documentation/watchkit/wkextendedruntimesession))
 - Complications via WidgetKit on watchOS 10+ (Smart Stack, watch face)
 - Connectivity options:
   - `WatchConnectivity` (`WCSession`) for real-time messages when paired iPhone is nearby
@@ -83,7 +83,7 @@ xcodebuild test \
 - Watch app lives in `native/apple/watchos-app/`
 
 **Entitlements:**
-- Check `native/apple/*.entitlements` before adding new capabilities
+- Check `native/apple/**/*.entitlements` before adding new capabilities
 - App Group entitlement (`group.com.pomofocus.shared`) required for sharing state between macOS/iOS targets
 - `WatchConnectivity` does not require a special entitlement but must be enabled in capabilities
 
@@ -107,7 +107,7 @@ xcodebuild test \
 
 Before opening a PR:
 1. macOS: `xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"` — all tests pass
-2. iOS widget (if changed): `xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16"` — all tests pass
-3. Watch (if changed): `xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,name=Apple Watch Series 9 - 45mm"` — all tests pass
+2. iOS widget (if changed): `xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16,OS=latest"` — all tests pass
+3. Watch (if changed): `xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,name=Apple Watch Series 10 - 46mm,OS=latest"` — all tests pass
 4. Build succeeds for each changed target with no new Swift warnings
 5. PR body includes "Closes #N" and notes which Apple targets were affected

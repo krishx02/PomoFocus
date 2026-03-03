@@ -446,7 +446,7 @@ let endDate = Date(timeIntervalSince1970: sharedDefaults?.double(forKey: "endDat
 
 ### Background Timer
 
-`WKExtendedRuntimeSession` keeps the watch app running in the background for up to 30 minutes — perfect for a 25-minute Pomodoro session:
+`WKExtendedRuntimeSession` keeps the watch app running in the background (duration limits vary by session type — see Apple's [WKExtendedRuntimeSession docs](https://developer.apple.com/documentation/watchkit/wkextendedruntimesession)) — perfect for a standard Pomodoro focus session:
 
 ```swift
 let session = WKExtendedRuntimeSession()
@@ -727,7 +727,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'start_focus_session',
-      description: 'Start a new 25-minute focus session',
+      description: 'Start a new focus session',
       inputSchema: {
         type: 'object',
         properties: {
