@@ -73,7 +73,16 @@ The timer is a mechanism. The product is environmental structure you carry with 
 
 ## 4. Device + Software Relationship
 
-### The device is the anchor. The app is the brain.
+### The device is the anchor. The app is the brain. But the app stands alone.
+
+**The physical device is the *best* experience, not a *required* one.** The software must be a complete product on its own — with a full timer, goals, tracking, and cloud sync. Users who choose to stay software-only are making a valid choice. The device is the premium layer for users who want the strongest version of environmental structure, but the app never feels incomplete without it.
+
+This matters for adoption: requiring a hardware purchase to use a Pomodoro app would kill growth. The software brings people in. The device deepens the experience for those who want it.
+
+**Three tiers of experience:**
+1. **Software-only** — App with timer, goals, reflection, tracking, cloud sync. Complete product.
+2. **Software + device** — App handles preparation/reflection, device handles focus sessions. The recommended experience.
+3. **Device-only** — Basic timer works out of the box without the app, but no goals/tracking/sync. Functional but limited.
 
 **Physical device (during session):**
 - Present on desk — replaces phone as the thing you look at
@@ -82,15 +91,16 @@ The timer is a mechanism. The product is environmental structure you carry with 
 - Acts as a commitment device — harder to ignore than a phone notification
 - Should make the phone unnecessary during focus time
 
-**Software app (between sessions):**
+**Software app (between sessions — or during session for software-only users):**
+- **Timer** — Full Pomodoro timer for software-only users. This is a deliberate choice the user makes, knowing the phone is a riskier environment.
 - **Preparation:** Set goals, plan sessions, define what you're working toward
 - **Reflection:** Quick post-session check-in ("Did I stay focused? What pulled me away?")
 - **Pattern tracking:** When are you most focused? What days do you crumble? How long before you break?
 - **Goal evolution:** Goals develop over time. The app is where you write, refine, and prioritize — the device pulls from this
-- **Cross-environment continuity:** Goals and streaks follow you across locations. The device is location-bound; the system isn't.
+- **Cross-environment continuity:** Goals and streaks follow you across locations and devices. Cloud sync is the connective tissue.
 - **Accountability:** Streaks, weekly reviews, eventually sharing with friends or groups
 
-**Critical design rule:** The app is a preparation and reflection tool, never a during-session distraction. If someone opens the app while they should be focusing, the product has failed.
+**Critical design rule:** For device users, the app is a preparation and reflection tool, never a during-session distraction. For software-only users, the timer is available in-app — but the product should still encourage phone-down habits (e.g., lock screen widget, do-not-disturb integration, minimal UI during sessions).
 
 ---
 
