@@ -1,6 +1,6 @@
-# PomoFocus — Product Brief v0.2
+# PomoFocus — Product Brief v0.3
 
-> **Status:** Phase 2 in progress (Solution Framing).
+> **Status:** Phase 2 complete.
 > **Last updated:** 2026-03-04
 > **Author:** Discovery session with founder
 
@@ -259,6 +259,9 @@ The user just finished a focused block. They feel good. This moment is emotional
 - Updated count: "3/5 sessions today" or "45 minutes focused today"
 - Streak update if relevant: "Day 12"
 
+**Step 1 (abandoned): Abandonment reason (~3 seconds)**
+- If the user stops a session early, ask: **"Had to stop"** (extenuating — excluded from success rate) or **"Gave up / lost focus"** (counts against success rate). See Section 10 for full abandonment logic.
+
 **Step 2: Quick reflection (optional, ~10-15 seconds)**
 - One question: **"How was your focus?"** — three options: Locked in / Decent / Struggled
 - If "Struggled": one follow-up — **"What pulled you away?"** — quick-tap options: Phone, People, Thoughts wandering, Got stuck on the task, Other
@@ -269,10 +272,13 @@ The user just finished a focused block. They feel good. This moment is emotional
 - "Take a break" (starts break timer — 5 min short, 15-20 min long after 4 sessions)
 - "Done for now" (closes the flow)
 
+**Step 3b: Post-break check-in (after break ends, before next session)**
+- "Was that break helpful?" — Yes / Somewhat / No. Feeds into break usefulness analytics (see Section 10).
+
 **What happens in the background:**
-- Session record uploads to cloud (timestamp, duration, goal, completed/abandoned, focus rating, distraction type)
+- Session record uploads to cloud (timestamp, duration, goal, completed/abandoned, abandonment reason, focus rating, distraction type, break usefulness)
 - Device syncs buffered sessions if phone is in BLE range
-- Data feeds into pattern tracking over time
+- Data feeds into pattern tracking over time (see Section 10 for full analytics design)
 
 ---
 
@@ -485,7 +491,129 @@ Social features are **free**. Adding friends, Library Mode, Quiet Feed, kudos, i
 
 ---
 
-## 10. Research Threads to Investigate (from Phase 1)
+## 10. Analytics & Insights — What We Track and Why
+
+### Design philosophy
+
+The insight is the product. The timer is just the data collection mechanism. Existing Pomodoro apps treat the timer as the product — they stop at "you did 4 sessions today." Users have no idea *why* some days feel productive and others don't. PomoFocus surfaces patterns that help users set themselves up to succeed.
+
+**Principles:**
+- **Insights over data** — never show a raw table. Every number must answer a question the user actually has.
+- **Automatic over manual** — minimize user input. Most data points are captured without the user doing anything.
+- **Goal-centric, not session-centric** — stats roll up to goals, not just calendar days.
+- **Process goals over outcome goals** — "Did I show up?" matters more than "Did I finish?"
+- **Non-judgmental tone** — the app observes and reflects, never scolds.
+
+### Raw data captured per session
+
+Eight data points per session, most automatic. The user actively provides at most two.
+
+| Data point | Source | How captured |
+|-----------|--------|-------------|
+| **Timestamp** (start + end) | Automatic | Timer start/stop |
+| **Session duration** | Automatic | Calculated from timestamps |
+| **Goal/task associated** | User selects before starting | Goal picker (pre-session) |
+| **Completed vs. abandoned** | Automatic + user input | See abandonment logic below |
+| **Focus quality rating** | Post-session reflection | "Locked in / Decent / Struggled" |
+| **Distraction type** (conditional) | Post-session reflection | Only shown if user reports "Struggled" — "Phone / People / Thoughts wandering / Got stuck / Other" |
+| **Process goal hit** | Automatic | Did they complete the number of sessions they committed to today? |
+| **Break taken vs. skipped** | Automatic | Did they take the break or skip to next session? |
+| **Break usefulness** (conditional) | Post-break reflection | After break ends, before next session starts — "Was that break helpful?" — Yes / Somewhat / No |
+
+### Abandonment logic and success rate
+
+**Success rate = sessions completed / sessions started**, expressed as a percentage. But not all abandoned sessions count against the user.
+
+When someone stops a session early, we ask why:
+
+- **"Had to stop"** (extenuating circumstances — meeting pulled in, emergency, life happened) → Session is **excluded entirely** from success rate. Not counted as started, not counted as completed. Life happening to you is not a failure.
+- **"Gave up / lost focus"** → Counts as started but **not completed**. This hits the success rate.
+
+This means the success rate only measures intentional follow-through, not external circumstances. If you start 10 sessions, abandon 2 because you lost focus, and cancel 1 because of a fire alarm, your success rate is 8/10 (80%) — the fire alarm session doesn't exist in the calculation.
+
+### Post-session reflection flow (updated)
+
+**Step 1: Focus quality (always shown, ~5 seconds)**
+- "How was your focus?" — Locked in / Decent / Struggled
+
+**Step 1b: Distraction type (only if Struggled, ~5 seconds)**
+- "What pulled you away?" — Phone / People / Thoughts wandering / Got stuck / Other
+
+**Step 2: Break (if taking a break)**
+- Break timer runs (5 min short / 15-20 min long after 4 sessions)
+
+**Step 2b: Break usefulness (after break ends, before next session starts)**
+- "Was that break helpful?" — Yes / Somewhat / No
+
+This keeps post-session input to two taps max on good sessions, three taps max on struggled sessions, and adds one question after breaks.
+
+### Derived metrics (computed from raw data)
+
+These are never stored per session — they're calculated across sessions automatically.
+
+| Metric | Calculated from | Timeframe |
+|--------|----------------|-----------|
+| **Daily completion rate** | Sessions completed / sessions started (excluding extenuating abandonments) | Per day |
+| **Goal-level completion rate** | Sessions completed per goal / sessions started per goal | Per goal, rolling |
+| **Focus quality distribution** | % of sessions rated locked in / decent / struggled | Weekly + monthly |
+| **Distraction frequency by type** | Count of each distraction type across struggled sessions | Weekly + monthly |
+| **Best time of day** | Focus quality ratings grouped by hour of day | Rolling 4 weeks |
+| **Best days of week** | Focus quality ratings grouped by day of week | Rolling 4 weeks |
+| **Consistency rate** | Days with at least one session / total days in period | Weekly + monthly |
+| **Break usefulness patterns** | Correlation between break ratings and subsequent session quality | Rolling 4 weeks |
+| **Focus Score** (composite) | Weighted blend of: self-reported quality (primary), completion rate, consistency, trend direction | Daily, recalculated |
+
+### Insight tiers — how data reaches the user
+
+**Tier 1 — Glanceable (home screen, always visible)**
+
+Information the user sees every time they open the app, without navigating anywhere.
+
+- Today's progress: "2/3 sessions done"
+- Focus Score: single composite number (the headline metric)
+- Total focus time this week: "3h 45m this week"
+- Success rate this month: "82%"
+
+**Tier 2 — Weekly insight card (surfaced proactively)**
+
+The app generates this weekly and pushes it to the user — they don't have to go looking for it.
+
+- Best and worst days of the week + best times of day
+- Distraction patterns: "Phone was your #1 distraction this week (4 of 6 struggled sessions)"
+- Goal-level progress and trends: "You're averaging 2.3 sessions/day on calculus, up from 1.8 last week"
+- Break usefulness patterns (if enough data): "You rate breaks helpful 80% of the time — and sessions after rated-helpful breaks are 'locked in' 60% more often"
+
+**Tier 3 — Monthly deep view (goal-centric, user pulls)**
+
+Available in a dedicated stats/insights section. The user navigates here when they want to go deep.
+
+- Goal-by-goal breakdown: sessions, completion rate, focus quality per goal
+- Focus quality trends over time: are you getting better?
+- Distraction evolution: are the types of distractions changing?
+- Break correlation insights: how break behavior relates to focus quality
+- Session length insights: do you focus better in 25-minute or 50-minute blocks?
+- Best/worst time and day patterns over a longer window
+
+### Focus Score (composite metric)
+
+A single number that answers "how's my focus going?" without the user needing to interpret multiple charts. Weighted blend of:
+
+1. **Self-reported focus quality** (primary weight) — the user's own assessment matters most
+2. **Completion rate** — are you finishing what you start?
+3. **Consistency** — are you showing up regularly?
+4. **Trend direction** — are things getting better or worse?
+
+Exact weights need tuning with real user data. The score should feel intuitively right — if a user had a great focus week, the number should reflect that without them needing to check the formula.
+
+### Open questions (analytics)
+
+- **Focus Score weighting** — needs calibration with real usage data. Initial weights are a hypothesis.
+- **Break usefulness** — new metric with no precedent in other Pomodoro apps. Worth tracking to see if actionable patterns emerge. If it turns out to be noise, we can remove the question.
+- **Cold start problem** — how many sessions before insights become meaningful? Need to define minimums (e.g., "weekly insights require at least 5 sessions that week") and show appropriate messaging before that threshold.
+
+---
+
+## 11. Research Threads to Investigate (from Phase 1)
 
 These should be explored before finalizing the solution design:
 
@@ -501,15 +629,15 @@ These should be explored before finalizing the solution design:
 
 ---
 
-## 11. Open Questions (remaining)
+## 12. Open Questions (remaining)
 
-*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~, ~~onboarding~~, ~~social features~~.
+*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~, ~~onboarding~~, ~~social features~~, ~~pattern tracking / analytics~~.
 
-1. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
+*(No remaining open questions from Phase 2.)*
 
 ---
 
-## 12. Competitive Landscape (to be expanded)
+## 13. Competitive Landscape (to be expanded)
 
 | Product | What It Does | Why It's Not This |
 |---------|-------------|-------------------|
@@ -524,4 +652,4 @@ These should be explored before finalizing the solution design:
 
 ---
 
-*Phase 2 in progress. Remaining: pattern tracking specifics.*
+*Phase 2 complete. All open questions answered.*
