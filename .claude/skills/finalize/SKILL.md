@@ -124,12 +124,12 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
 
 - **If Verdict = "LGTM"** → proceed to Step 5.
 
-- **If Critical > 0 AND REVIEW_PASS <= MAX_REVIEW_PASSES:**
+- **If Critical > 0 AND REVIEW_PASS < MAX_REVIEW_PASSES:**
   1. Report to the user: `"Review pass [REVIEW_PASS]: Found [Critical] critical issue(s). Attempting auto-fix..."`
   2. Fetch the critical inline comments via the GitHub API:
      ```bash
      REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
-     gh api repos/$REPO/pulls/[PR_NUMBER]/comments \
+     gh api repos/$REPO/pulls/$PR_NUMBER/comments \
        --jq '.[] | select(.body | startswith("🔴")) | {body, path, original_line}'
      ```
   3. Use the Agent tool with `subagent_type: general-purpose` to fix the critical findings.
@@ -148,7 +148,7 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
   4. Increment `REVIEW_PASS`.
   5. Return to the top of the review loop (re-launch code-reviewer).
 
-- **If Critical > 0 AND REVIEW_PASS > MAX_REVIEW_PASSES:**
+- **If Critical > 0 AND REVIEW_PASS >= MAX_REVIEW_PASSES:**
   1. If ISSUE_NUMBER is not "none":
      ```bash
      gh issue edit $ISSUE_NUMBER --add-label "needs-human"

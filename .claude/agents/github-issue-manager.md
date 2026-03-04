@@ -1,7 +1,7 @@
 ---
 name: github-issue-manager
 description: Reads everything that was just implemented on the current branch — diff, commits, issue body — and creates a maximally descriptive PR. Then updates issue labels (in-progress → in-review). Called by the /finalize skill after tests pass. Does not touch code files.
-tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git branch*), Bash(git status*), Bash(git push*), Bash(git fetch*)
+tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git branch*), Bash(git status*), Bash(git push*), Bash(git fetch*), Write
 ---
 
 You are the GitHub issue manager for PomoFocus. Your job is to take a completed implementation and produce a PR that tells the full story of what changed and why — so reviewers (human and AI) have all the context they need without reading the code.
@@ -53,7 +53,12 @@ gh pr list --head $BRANCH_NAME --json number,url,state
   ```bash
   git push -u origin $BRANCH_NAME
   ```
-- **state: CLOSED** → proceed to Step 3 to create a new PR. Note in the PR body: "Re-opens previously closed PR."
+- **state: CLOSED** → re-open the existing PR instead of creating a new one (avoids duplicate PRs for the same branch):
+  ```bash
+  gh pr reopen [CLOSED_PR_NUMBER]
+  git push -u origin $BRANCH_NAME
+  ```
+  Record `PR_URL` and `PR_NUMBER` from the closed PR output. Skip to Step 5.
 - **No PR found** → proceed to Step 3.
 
 ---
@@ -102,14 +107,13 @@ First, push the branch to origin:
 git push -u origin $BRANCH_NAME
 ```
 
-Then write the PR body to a uniquely named temp file (avoids heredoc injection from diff content and race conditions from fixed paths):
+Then create a uniquely named temp file and write the PR body to it using the **Write tool** (not a shell heredoc — avoids heredoc injection if diff content contains the sentinel string):
 
 ```bash
 PR_BODY_FILE=$(mktemp /tmp/pr-body.XXXXXX.md)
-cat > "$PR_BODY_FILE" << 'POMOFOCUS_PR_BODY_SENTINEL'
-[PR body from Step 3]
-POMOFOCUS_PR_BODY_SENTINEL
 ```
+
+Use the **Write tool** to write the PR body from Step 3 to the exact path stored in `$PR_BODY_FILE`. The Write tool is injection-proof since it does not interpret the content as shell code.
 
 Derive the type prefix from the issue or commits: bugs → `fix:`, new features → `feat:`, refactors → `refactor:`, tests → `test:`, docs → `docs:`.
 
@@ -120,14 +124,16 @@ Derive the PR title based on whether an issue exists:
 PR_URL=$(gh pr create \
   --title "[type]: [issue title or branch summary] (#$ISSUE_NUMBER)" \
   --body-file "$PR_BODY_FILE")
+GH_EXIT=$?
 
 # If ISSUE_NUMBER is "none":
 PR_URL=$(gh pr create \
   --title "[type]: [branch summary]" \
   --body-file "$PR_BODY_FILE")
+GH_EXIT=$?
 
-if [ -z "$PR_URL" ]; then
-  echo "ERROR: gh pr create failed. PR body preserved at: $PR_BODY_FILE"
+if [ $GH_EXIT -ne 0 ] || [ -z "$PR_URL" ]; then
+  echo "ERROR: gh pr create failed (exit $GH_EXIT). PR body preserved at: $PR_BODY_FILE"
   exit 1
 fi
 echo "$PR_URL"

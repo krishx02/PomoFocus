@@ -58,17 +58,29 @@ Determine branch type from the issue labels:
 
 For bugs:
 ```bash
-git checkout -b fix/issue-$ARGUMENTS-<slug> 2>/dev/null \
-  || git checkout fix/issue-$ARGUMENTS-<slug>
+if git checkout -b fix/issue-$ARGUMENTS-<slug>; then
+  : # new branch created
+elif git checkout fix/issue-$ARGUMENTS-<slug>; then
+  : # switched to existing branch — verify below
+else
+  echo "ERROR: could not create or switch to branch" >&2
+  exit 1
+fi
 ```
 
 For features:
 ```bash
-git checkout -b feature/issue-$ARGUMENTS-<slug> 2>/dev/null \
-  || git checkout feature/issue-$ARGUMENTS-<slug>
+if git checkout -b feature/issue-$ARGUMENTS-<slug>; then
+  : # new branch created
+elif git checkout feature/issue-$ARGUMENTS-<slug>; then
+  : # switched to existing branch — verify below
+else
+  echo "ERROR: could not create or switch to branch" >&2
+  exit 1
+fi
 ```
 
-If the branch already existed (second command ran), verify you are on the correct branch before continuing:
+Verify you are on the correct branch before continuing:
 ```bash
 git branch --show-current
 ```
@@ -121,7 +133,7 @@ If tests fail:
 
 **Iteration limit:** If tests are still failing after 5 attempts, stop the loop:
 ```bash
-gh issue edit $ARGUMENTS --add-label "needs-human"
+gh issue edit $ARGUMENTS --remove-label "in-progress" --add-label "needs-human"
 gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
 ## Ralph Loop Exhausted — Needs Human
 
