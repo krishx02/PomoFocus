@@ -297,7 +297,109 @@ The user just finished a focused block. They feel good. This moment is emotional
 
 ---
 
-## 8. Research Threads to Investigate (from Phase 1)
+## 8. Onboarding — First 60 Seconds to First Session
+
+### Entry points — not just the app store
+
+The user's first experience is NOT necessarily a mobile download. They could:
+- Download from App Store / Google Play (mobile)
+- **Open it in a web browser** — no install, no download, just a URL (desktop or mobile)
+- Get sent a link by a friend
+
+The onboarding flow must work identically across all entry points. The web version is especially important: zero-friction, open a URL and go. For web users without an account, session data and goals persist via browser local storage (cookies / localStorage) until they sign up.
+
+### Step 1: The hook (~5 seconds)
+
+One screen. No sign-up. No account creation.
+
+> "Build structure when your environment doesn't. Set a goal. Start a session. Put your phone down."
+
+Big button: **"Get started"**
+
+### Step 2: First goal (~20 seconds)
+
+Structure seekers cluster around common goals. Pre-built templates remove the blank-page problem — one tap instead of typing. But the option to type a custom goal is always visible.
+
+Screen says:
+> "What do you want to make progress on?"
+
+**Pre-built templates (tap to select):**
+
+| Template | Long-term goal created | Default process goal |
+|----------|----------------------|---------------------|
+| Studying | "Stay on top of [my classes]" | "3 study sessions/day" |
+| Working out | "Build a consistent fitness habit" | "1 workout session/day" |
+| Side project | "Build [my project]" | "2 deep work sessions/day" |
+| Reading | "Read more consistently" | "1 reading session/day" |
+| Writing | "Write consistently" | "2 writing sessions/day" |
+| Learning a skill | "Learn [skill]" | "2 practice sessions/day" |
+
+- User taps a template → bracketed parts become editable (e.g., "my classes" → "calculus"). Process goal session count is pre-filled but adjustable with +/-.
+- **"Something else"** — always visible below templates. Opens a text field for fully custom goal input.
+- Result: one long-term goal + one process goal. App is now functional. Add more goals later.
+
+### Step 3: Timer preference (~10 seconds)
+
+> "How long do you like to focus?"
+
+- **25 / 5** — "Classic Pomodoro" (default, highlighted)
+- **50 / 10** — "Deep work"
+- **Custom** — user sets their own
+
+### Step 4: Device check (~5 seconds)
+
+> "Do you have a PomoFocus device?"
+
+- **Yes** → BLE pairing flow (scan, connect, goals sync to device, confirm display). Adds 30-60 seconds.
+- **No** → Skip entirely. No upsell. Subtle line: "You can pair a device anytime in Settings."
+
+### Step 5: Widget prompt (~10 seconds, mobile only)
+
+> "Add PomoFocus to your lock screen so your goals stay visible without opening your phone."
+
+Visual guide showing how to add the iOS/Android widget (system-level action, app can't automate).
+
+- **Web users:** Skip this step — not relevant.
+- **If skipped:** Remind once after 3rd session: "Want your goals on your lock screen?"
+
+### Step 6: First session — immediately
+
+> "Ready? Your first session: [Goal name]. 25 minutes."
+
+**Start** button. They're in. No more screens between them and focusing.
+
+### Step 7: Account creation (deferred)
+
+No sign-up before the first session. Everything works locally (or in browser storage for web).
+
+After 1-2 completed sessions, prompt:
+> "Create a free account to save your progress."
+
+Or on return visit (web): "Sign up so you don't lose your sessions."
+
+Value-first, account-later. User has experienced the product before being asked to commit.
+
+### What is NOT in onboarding (deliberate)
+- No account/sign-up (deferred to after first session)
+- No full goal hierarchy setup (just one long-term + one process — add more later)
+- No tutorial or feature walkthrough (learn by doing)
+- No settings beyond timer length
+- No social features or sharing prompts
+- No payment or plan selection
+
+### Time to first session
+
+| Entry point | Time | Notes |
+|-------------|------|-------|
+| Web browser | ~40 seconds | No install, no widget step |
+| Mobile, software-only | ~50-60 seconds | Includes widget prompt |
+| Mobile + device | ~90-120 seconds | Adds BLE pairing |
+
+**Principle:** Get the user into their first focus session as fast as possible. Everything else can wait. The product proves itself through the experience, not through explanation.
+
+---
+
+## 9. Research Threads to Investigate (from Phase 1)
 
 These should be explored before finalizing the solution design:
 
@@ -313,17 +415,16 @@ These should be explored before finalizing the solution design:
 
 ---
 
-## 9. Open Questions (remaining)
+## 10. Open Questions (remaining)
 
-*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~.
+*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~, ~~onboarding~~.
 
-1. **What happens in the first 5 minutes?** Onboarding for a device + app combo is complex. What's the experience?
-2. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
-3. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
+1. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
+2. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
 
 ---
 
-## 10. Competitive Landscape (to be expanded)
+## 11. Competitive Landscape (to be expanded)
 
 | Product | What It Does | Why It's Not This |
 |---------|-------------|-------------------|
@@ -338,4 +439,4 @@ These should be explored before finalizing the solution design:
 
 ---
 
-*Phase 2 in progress. Remaining: onboarding, social features (v1 scope), pattern tracking specifics.*
+*Phase 2 in progress. Remaining: social features (v1 scope), pattern tracking specifics.*
