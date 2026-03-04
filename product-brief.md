@@ -182,18 +182,60 @@ The lock screen / home screen widget is visible *without opening the app*. It do
 - Quick-start button (tap → timer starts, app opens in minimal mode)
 - Streak or progress indicator ("5-day streak" or "3/5 sessions done")
 
+### Goal model — three layers
+
+Goals aren't just "study calculus today." Process-oriented goals (what you *do*) drive more consistent behavior than outcome goals (what you *achieve*). The product supports both, in a hierarchy:
+
+**Long-term goals (the "why"):**
+- Big-picture, ongoing aspirations: "Get strong at calculus," "Finish my novel," "Launch the side project"
+- No daily session count — these are directional, not completable in a day
+- Provide *meaning* to daily work. Every session connects back to a long-term goal.
+- Can run for weeks or months. The user creates, evolves, and eventually completes or retires them.
+
+**Process goals (the "how"):**
+- Daily/weekly habits attached to a long-term goal: "Study calculus 3 sessions/day" or "Write 2 sessions every morning"
+- These appear on the device and in the widget — they're the actionable layer
+- Trackable: you either did your 3 sessions today or you didn't
+- Streaks attach here (not to the long-term goal)
+- A long-term goal can have multiple process goals
+
+**Session intentions (the "what right now"):**
+- Optional, per-session: "Finish problem set 4" or "Write the intro paragraph"
+- Most granular level — what you're doing *this specific* 25 minutes
+- Shows on the device screen during the session
+
+**Example hierarchy:**
+```
+Long-term:  "Get strong at calculus"
+  Process:  "3 study sessions per day"
+    Session: "Finish problem set 4"
+    Session: "Review chapter 7 notes"
+    Session: "Practice integration problems"
+
+Long-term:  "Write my novel"
+  Process:  "2 writing sessions every morning"
+    Session: "Draft chapter 3 opening"
+    Session: "Edit yesterday's pages"
+```
+
+**How this flows through the system:**
+- App manages all three levels (create, edit, track, visualize)
+- Device caches process goals + displays session intention text
+- Widget shows process goals with today's progress
+- Stats roll up at every level: "45 sessions toward 'Get strong at calculus' this month"
+
 ### Pre-session (in the app — under 30 seconds)
 
 The user opens the app when they're ready to focus. If the pre-session flow takes more than 30 seconds, the app has become the distraction.
 
 **What they see:**
-- **Today's goals** — 3-5 active goals, each with a name and optional target session count ("Study calculus — 0/3 sessions today")
+- **Today's process goals** — 3-5 active process goals, each with progress ("Study calculus — 1/3 sessions today"), grouped under their long-term goals
 - **Quick stats** — current streak, sessions completed today, total focused time today. Visible immediately, not buried in a dashboard. This is the "evidence that structure is working."
 - **Start session button** — prominent
 
 **What they do:**
-1. Pick which goal (or accept the app's suggestion based on what's unfinished)
-2. Optionally set a session intention — one sentence: "Finish problem set 4" or "Write the intro paragraph." This is the text that shows on the device screen during focus.
+1. Pick which process goal (or accept the app's suggestion based on what's unfinished)
+2. Optionally set a session intention — one sentence: "Finish problem set 4." This is the text that shows on the device screen during focus.
 3. Hit start. Put the phone down.
 
 ### During session
