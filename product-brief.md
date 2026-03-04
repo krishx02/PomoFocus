@@ -1,6 +1,6 @@
-# PomoFocus — Product Brief v0.3
+# PomoFocus — Product Brief v0.4
 
-> **Status:** Phase 2 complete.
+> **Status:** Phase 3 complete (Opportunity Mapping).
 > **Last updated:** 2026-03-04
 > **Author:** Discovery session with founder
 
@@ -613,7 +613,81 @@ Exact weights need tuning with real user data. The score should feel intuitively
 
 ---
 
-## 11. Research Threads to Investigate (from Phase 1)
+## 11. Opportunity Solution Tree (Phase 3)
+
+### Desired Outcome
+> Create portable structure so I follow through on my goals instead of losing time to my phone.
+
+### Opportunity Map
+
+```
+Desired Outcome: Create portable structure so I follow through
+                 on my goals instead of losing time to my phone
+
+├── Opportunity D (PRIMARY): Distraction triggers a guilt → avoidance →
+│   more distraction spiral that compounds over time
+│   │
+│   │   Core insight: In the moment of craving, the user can't FEEL
+│   │   the future reward of focusing — even though they know it exists.
+│   │   The dopamine pull is immediate; the satisfaction is abstract.
+│   │
+│   ├── ★ Surface cumulative personal evidence — show all progress made
+│   │     across sessions, goals, and streaks. "Look at everything you've
+│   │     built" is harder to argue with than "remember last Tuesday."
+│   ├── ★ Reward the act of STARTING, not finishing — immediate positive
+│   │     feedback at the moment of highest resistance (competing with
+│   │     the dopamine hit from other apps)
+│   └── Own satisfaction numbers — "You rated 9/10 after your last 5
+│         sessions" (concrete, personal, inarguable)
+│
+├── Opportunity A (PAIRED): Goals are invisible when structure disappears
+│   ├── Lock screen / home screen widget (goal always visible)
+│   ├── Physical device on desk showing current goal
+│   └── Push notifications tied to process goal schedule
+│
+├── Opportunity E (SUPPORTING): No social accountability for solo focus
+│   ├── Library Mode (presence signals — friends are focusing)
+│   ├── Quiet Feed ("Krish focused today" — no numbers)
+│   └── Encouragement tap (private kudos)
+│
+└── Opportunity B (DESIGN PRINCIPLE): The focus tool lives on the
+    distraction device
+    ├── Physical device replaces phone during sessions
+    └── Minimal UI during sessions (don't compete with distraction apps)
+```
+
+### Focused Opportunity
+
+**D + A together: Break the spiral by making accumulated progress visible at the moment of craving.**
+
+The physical device on the desk is itself a progress artifact — "I own this because I'm someone who focuses." The app surfaces cumulative evidence (sessions completed, goals advanced, streaks maintained, personal satisfaction ratings) so the user can *see* the person they're becoming, not just intellectually know it.
+
+The intervention has two parts:
+1. **Cumulative progress as craving antidote** — when the user is tempted to scroll, the evidence of everything they've built is visible (widget, device, app home screen). Not motivational quotes — their own data.
+2. **Reward starting, not finishing** — the dopamine hit comes at session start (immediate feedback, acknowledgment), not 25 minutes later. This competes directly with the craving for other apps.
+
+### Riskiest Assumption
+
+**Users will complete post-session reflections consistently enough to build a useful dataset.**
+
+Mitigating factors:
+- **Self-selection**: the target user actively wants to change. Someone who buys a physical focus device is signaling serious intent — they'll do a 2-tap reflection.
+- **Minimal friction**: reflection is 2 taps max on good sessions (focus rating + next action). No journaling, no open-ended text.
+- **The data is the product**: users see their own numbers played back to them. The more they reflect, the more powerful the craving intervention becomes. The feedback loop is self-reinforcing.
+
+### Design Implications
+
+These opportunity findings refine several existing sections of the brief:
+
+1. **Post-session reflection (Section 6)** is now understood as a *data collection mechanism* for the craving intervention, not just a self-awareness exercise. This raises its priority.
+2. **Focus Score and analytics (Section 10)** serve double duty: they're both an insight tool AND the ammunition for breaking the guilt spiral. The Tier 1 glanceable stats ("82% success rate", "45 sessions this month") are the craving antidote.
+3. **The widget (Section 6)** isn't just a convenience — it's the primary touchpoint for the craving moment. It should show cumulative progress prominently.
+4. **The physical device** is the strongest version of this intervention: a tangible object on your desk that represents your commitment and progress. It breaks the scroll trance through a different sensory channel.
+5. **Tone must be non-judgmental everywhere.** The app observes and reflects accumulated progress — it never scolds. "Look at everything you've built" not "you scrolled for 40 minutes."
+
+---
+
+## 12. Research Threads to Investigate (from Phase 1 & 3)
 
 These should be explored before finalizing the solution design:
 
