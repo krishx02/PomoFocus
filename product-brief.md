@@ -171,7 +171,91 @@ The device must work **without the phone nearby.** If the device requires a live
 
 ---
 
-## 6. Research Threads to Investigate (from Phase 1)
+## 6. Session Flow
+
+### The widget is a critical touchpoint
+
+The lock screen / home screen widget is visible *without opening the app*. It does the goal salience job — keeping goals visible — without pulling the user into the phone. For software-only users, the widget is the software equivalent of glancing at the physical device on the desk.
+
+**Widget shows:**
+- Current/next goal ("Study calculus — 2 sessions today")
+- Quick-start button (tap → timer starts, app opens in minimal mode)
+- Streak or progress indicator ("5-day streak" or "3/5 sessions done")
+
+### Pre-session (in the app — under 30 seconds)
+
+The user opens the app when they're ready to focus. If the pre-session flow takes more than 30 seconds, the app has become the distraction.
+
+**What they see:**
+- **Today's goals** — 3-5 active goals, each with a name and optional target session count ("Study calculus — 0/3 sessions today")
+- **Quick stats** — current streak, sessions completed today, total focused time today. Visible immediately, not buried in a dashboard. This is the "evidence that structure is working."
+- **Start session button** — prominent
+
+**What they do:**
+1. Pick which goal (or accept the app's suggestion based on what's unfinished)
+2. Optionally set a session intention — one sentence: "Finish problem set 4" or "Write the intro paragraph." This is the text that shows on the device screen during focus.
+3. Hit start. Put the phone down.
+
+### During session
+
+**Device users:** Phone should be away. Device shows goal text + countdown. If the app is open, it shows a minimal screen: "Focus session in progress. Put your phone down." (If the user keeps opening the app during sessions, surface that pattern in post-session reflection.)
+
+**Software-only users:** App shows the timer, but the design still pushes phone-down habits:
+- Minimal UI — just countdown + goal text. No navigation, no stats, no feeds.
+- Do-not-disturb integration — prompt to enable DND when session starts
+- Lock screen widget updates with countdown (no need to unlock to check time)
+- "Flip to focus" suggestion — encourage placing phone face-down
+
+**Key principle:** Even for software-only users, the app makes itself *boring* during a session. The timer is there because it has to be, but nothing else invites interaction.
+
+### Post-session (the highest-leverage moment)
+
+The user just finished a focused block. They feel good. This moment is emotionally charged and serves two purposes: **reinforcement** (acknowledging the accomplishment strengthens the habit loop) and **reflection** (brief check-in builds self-awareness over time).
+
+**Step 1: Completion acknowledgment (automatic, ~2 seconds)**
+- "Session complete. 25 minutes focused on: Study calculus."
+- Updated count: "3/5 sessions today" or "45 minutes focused today"
+- Streak update if relevant: "Day 12"
+
+**Step 2: Quick reflection (optional, ~10-15 seconds)**
+- One question: **"How was your focus?"** — three options: Locked in / Decent / Struggled
+- If "Struggled": one follow-up — **"What pulled you away?"** — quick-tap options: Phone, People, Thoughts wandering, Got stuck on the task, Other
+- Two taps max. No journaling. No open-ended text (unless they want to add a note).
+
+**Step 3: Next action (~5 seconds)**
+- "Start another session?" (same goal or pick different)
+- "Take a break" (starts break timer — 5 min short, 15-20 min long after 4 sessions)
+- "Done for now" (closes the flow)
+
+**What happens in the background:**
+- Session record uploads to cloud (timestamp, duration, goal, completed/abandoned, focus rating, distraction type)
+- Device syncs buffered sessions if phone is in BLE range
+- Data feeds into pattern tracking over time
+
+---
+
+## 7. Pricing Model
+
+### Free tier — complete product, local data
+
+- Timer works (app and device)
+- Goals work (create, track, sync to device via BLE)
+- Post-session reflection works
+- Local data on device and app
+- Basic stats: today's sessions, current streak
+
+### Paid tier — cloud sync + deep insights (subscription)
+
+- Cross-device sync (phone ↔ web ↔ device, all through the cloud)
+- Full history and pattern tracking (weekly trends, time-of-day analysis, goal completion rates)
+- Data export
+- Eventually: social features, accountability partners
+
+**Why this split works:** A free user gets a complete Pomodoro + goals + reflection experience. They hit the upgrade moment naturally — "I've been using this for 3 weeks, I want to see my trends across devices" — rather than hitting a wall on basic functionality. The paywall gates *convenience and depth*, not *core value*.
+
+---
+
+## 8. Research Threads to Investigate (from Phase 1)
 
 These should be explored before finalizing the solution design:
 
@@ -187,19 +271,17 @@ These should be explored before finalizing the solution design:
 
 ---
 
-## 7. Open Questions (remaining)
+## 9. Open Questions (remaining)
 
-*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~.
+*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~.
 
 1. **What happens in the first 5 minutes?** Onboarding for a device + app combo is complex. What's the experience?
-2. **Is this a subscription?** The app has ongoing value (tracking, goals, sync). The device is a one-time purchase. How does pricing work?
-3. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
-4. **What does the session flow feel like end-to-end?** Pre-session (goal setting) → during session (focus) → post-session (reflection) — what specifically happens at each stage in the app?
-5. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
+2. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
+3. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
 
 ---
 
-## 8. Competitive Landscape (to be expanded)
+## 10. Competitive Landscape (to be expanded)
 
 | Product | What It Does | Why It's Not This |
 |---------|-------------|-------------------|
@@ -214,4 +296,4 @@ These should be explored before finalizing the solution design:
 
 ---
 
-*Phase 2 in progress. Remaining: session flow, pricing model, social features, pattern tracking, onboarding.*
+*Phase 2 in progress. Remaining: onboarding, social features (v1 scope), pattern tracking specifics.*
