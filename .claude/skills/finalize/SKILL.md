@@ -54,13 +54,9 @@ gh pr list --head $BRANCH_NAME --json number,url,state
   ```bash
   git push -u origin $BRANCH_NAME
   ```
-- If `ISSUE_NUMBER` is not "none", run the label update inline (since github-issue-manager will be skipped):
+- If `ISSUE_NUMBER` is not "none", run the label update inline (since github-issue-manager will be skipped). `gh issue edit` exits 0 when removing a label that isn't present, so no guard is needed:
   ```bash
-  CURRENT_LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name')
-  if echo "$CURRENT_LABELS" | grep -q "in-progress"; then
-    gh issue edit $ISSUE_NUMBER --remove-label "in-progress"
-  fi
-  gh issue edit $ISSUE_NUMBER --add-label "in-review"
+  gh issue edit $ISSUE_NUMBER --remove-label "in-progress" --add-label "in-review"
   ```
 - Skip to Step 4.
 
@@ -153,13 +149,13 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      ```bash
      gh issue edit $ISSUE_NUMBER --add-label "needs-human"
      gh issue comment $ISSUE_NUMBER --body "$(cat <<'EOF'
-     ## Review Loop Exhausted — Needs Human
+## Review Loop Exhausted — Needs Human
 
-     Critical issues found by the code-reviewer persist after 2 auto-fix attempts
-     (3 total review passes). Please review the PR comments and resolve the
-     critical findings manually.
-     EOF
-     )"
+Critical issues found by the code-reviewer persist after 2 auto-fix attempts
+(3 total review passes). Please review the PR comments and resolve the
+critical findings manually.
+EOF
+)"
      ```
   2. Stop. Report to user: `"Critical issues persist after 3 review passes. Needs human review. PR: [PR_URL]"`
 

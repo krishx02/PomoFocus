@@ -38,11 +38,11 @@ Read the full output. Identify:
 - Post a comment explaining the specific blocker:
   ```bash
   gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
-  ## Blocked — Needs Human Decision
+## Blocked — Needs Human Decision
 
-  [Explain exactly what decision is needed and why the agent cannot proceed without it]
-  EOF
-  )"
+[Explain exactly what decision is needed and why the agent cannot proceed without it]
+EOF
+)"
   ```
 - Stop
 

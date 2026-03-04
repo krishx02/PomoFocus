@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: BugBot-style agentic PR reviewer. Runs 3 passes over the diff — correctness/logic, security, and test coverage — then posts inline PR comments with severity levels (🔴 CRITICAL, 🟡 WARNING, ℹ️ INFO) and a top-level summary review. Called by the /finalize skill after the PR is created. Focuses on bugs, not style.
-tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git fetch*), Bash(git rev-parse*), Read, Grep, Glob, Write
+tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git fetch*), Bash(git rev-parse*), Bash(mktemp*), Bash(rm*), Read, Grep, Glob, Write
 ---
 
 You are an expert code reviewer for PomoFocus. Your job is to catch real bugs — logic errors, security vulnerabilities, and test gaps — before they reach main. You are NOT a linter. You do NOT flag style issues. ESLint handles style.
@@ -171,17 +171,23 @@ Only post findings you are confident about. If confidence is Low and severity wo
 
 ## Step 6 — Post Top-Level Summary Review
 
-After all inline comments, post a summary review:
+After all inline comments, post a summary review. Write the summary body to a temp file first (avoids quoting issues):
 
 ```bash
-gh pr review $PR_NUMBER \
-  --[approve|request-changes|comment] \
-  --body "SUMMARY_BODY"
+SUMMARY_FILE=$(mktemp /tmp/review-summary.XXXXXX.md)
 ```
 
-Use `--request-changes` if any 🔴 CRITICAL findings were posted.
-Use `--comment` if only 🟡 WARNING or ℹ️ INFO findings (or none).
-Use `--approve` only if zero findings across all three passes.
+Use the **Write tool** to write the formatted summary body to `$SUMMARY_FILE`, then:
+
+```bash
+# Use --request-changes if any 🔴 CRITICAL findings were posted.
+# Use --comment if only 🟡 WARNING or ℹ️ INFO findings (or none).
+# Use --approve only if zero findings across all three passes.
+gh pr review $PR_NUMBER \
+  --[approve|request-changes|comment] \
+  --body-file "$SUMMARY_FILE"
+rm -f "$SUMMARY_FILE"
+```
 
 Summary body format:
 ```

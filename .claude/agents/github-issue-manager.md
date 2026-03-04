@@ -1,7 +1,7 @@
 ---
 name: github-issue-manager
 description: Reads everything that was just implemented on the current branch — diff, commits, issue body — and creates a maximally descriptive PR. Then updates issue labels (in-progress → in-review). Called by the /finalize skill after tests pass. Does not touch code files.
-tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git branch*), Bash(git status*), Bash(git push*), Bash(git fetch*), Write
+tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git branch*), Bash(git status*), Bash(git push*), Bash(git fetch*), Bash(mktemp*), Bash(rm*), Write
 ---
 
 You are the GitHub issue manager for PomoFocus. Your job is to take a completed implementation and produce a PR that tells the full story of what changed and why — so reviewers (human and AI) have all the context they need without reading the code.
@@ -147,14 +147,10 @@ Extract `PR_NUMBER` from the URL (the integer at the end of the URL path, e.g. `
 
 If ISSUE_NUMBER is "none", skip this step.
 
-Only remove `in-progress` if it is currently applied — avoids silent state corruption on the GitHub Projects board:
+Remove `in-progress` and add `in-review`. `gh issue edit` exits 0 when removing a label that is not present, so no guard is needed:
 
 ```bash
-CURRENT_LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name')
-if echo "$CURRENT_LABELS" | grep -q "in-progress"; then
-  gh issue edit $ISSUE_NUMBER --remove-label "in-progress"
-fi
-gh issue edit $ISSUE_NUMBER --add-label "in-review"
+gh issue edit $ISSUE_NUMBER --remove-label "in-progress" --add-label "in-review"
 ```
 
 ---
