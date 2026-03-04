@@ -1,6 +1,6 @@
-# PomoFocus — Product Brief v0.1
+# PomoFocus — Product Brief v0.2
 
-> **Status:** Phase 1 complete (Problem & Target). Phase 2 (Solution Framing) not started.
+> **Status:** Phase 2 in progress (Solution Framing).
 > **Last updated:** 2026-03-04
 > **Author:** Discovery session with founder
 
@@ -104,7 +104,74 @@ This matters for adoption: requiring a hardware purchase to use a Pomodoro app w
 
 ---
 
-## 5. Research Threads to Investigate
+## 5. Solution Shape — Device Architecture
+
+### v1 target: Software (iOS + web) + prototype physical device
+
+The founder has no hardware background. v1 is a working prototype device (dev board, 3D-printed or off-the-shelf enclosure) paired with the software app. Not a shippable consumer product — something for personal use and 10-20 testers.
+
+**The critical feature to prove in v1:** Sync between the physical device and the cloud. Session data, goals, and progress must flow between device → app → cloud seamlessly.
+
+### Device is independent during focus. Sync is eventual.
+
+The device must work **without the phone nearby.** If the device requires a live BLE connection to start a session, the user needs their phone on the desk — which is the problem being solved. Instead:
+
+- **Goals are created and edited only in the app.** The device has no keyboard or text input. Think Apple Watch pulling calendar events from the iPhone — you don't type on the watch.
+- **Goals sync to the device via BLE** whenever the phone is nearby (could be once a day, could be after every session).
+- **The device caches goals locally** (3-5 active goals, stored as short text strings in flash memory — a few KB).
+- **During a session, the device is fully self-sufficient.** User scrolls through cached goals with a button/dial, selects one, starts the timer. Phone can be in another room, turned off, doesn't matter.
+- **Completed sessions are buffered locally** (last ~50 sessions: timestamp, duration, goal ID, completed/abandoned).
+- **Sync happens when convenient.** Next time the phone is in BLE range, buffered sessions push up to the app/cloud, and any new/changed goals push down to the device. If sync doesn't happen for a week, nothing breaks.
+
+### Hardware direction
+
+| Component | Choice | Why |
+|-----------|--------|-----|
+| Microcontroller | **ESP32** (e.g., LILYGO T-Display S3) | $3-5 chip, BLE + WiFi built in, flash storage, massive community. The standard for this kind of project. |
+| Display | **E-ink** (lean) or OLED (alternative) | E-ink: paper-like, readable in sunlight, uses battery only on screen change (timer shows mostly static content). Matches the calm/focused aesthetic. Battery lasts weeks. OLED: brighter, faster refresh, but higher power draw and burn-in risk from static content. |
+| Input | **1-3 physical buttons** or a small rotary dial | Enough to: scroll goals, select, start timer, pause, done. Minimal and tactile. |
+| Power | **USB-C** (for desk use) + battery for portability | Rechargeable LiPo battery. E-ink display means battery lasts much longer. |
+| Connectivity | **BLE only** (no WiFi needed on device) | Phone is the relay to the cloud. Keeps device simple, cheap, low-power. |
+| Enclosure | **Off-the-shelf dev board** → later 3D-printed case | Start with a bare LILYGO board. Enclosure is cosmetic and can come later. |
+
+**Reference products to look up:**
+- "LILYGO T5 e-paper" — ESP32 + e-ink display dev board
+- "LILYGO T-Display S3" — ESP32 + small color LCD dev board
+- "Watchy" — open-source ESP32 e-ink smartwatch (shows what's possible)
+- "Adafruit SSD1306 128x64 OLED" — common small OLED for hardware projects
+
+### Device interaction model
+
+```
+[On the app — before focus time]
+  1. Create/edit goals ("Study calculus", "Write chapter 3")
+  2. Set timer preferences (25/5, 50/10, custom)
+  3. Goals + settings sync to device via BLE
+
+[On the device — during focus time, phone is away]
+  1. Button press → wake device
+  2. Scroll through cached goals → select one
+  3. Display shows: goal text + timer countdown
+  4. Timer runs independently
+  5. Session completes → stored locally on device
+
+[Later — phone comes back in range]
+  1. BLE reconnects automatically
+  2. Completed sessions push to app/cloud
+  3. Updated goals push down to device
+  4. App shows full history, streaks, patterns
+```
+
+### What the device does NOT do (v1)
+- No text input / goal editing on the device
+- No WiFi (phone relays to cloud)
+- No complex UI (no menus, no settings screens)
+- No audio/haptic feedback (maybe later — buzzer for timer end)
+- No multi-user support (one device = one person)
+
+---
+
+## 6. Research Threads to Investigate (from Phase 1)
 
 These should be explored before finalizing the solution design:
 
@@ -120,19 +187,19 @@ These should be explored before finalizing the solution design:
 
 ---
 
-## 6. Open Questions (for Phase 2)
+## 7. Open Questions (remaining)
 
-1. **What does the physical device actually look like?** Form factor, display, inputs, size — what makes it something you want on your desk?
-2. **What's the minimum viable device?** ESP32 + e-ink? Off-the-shelf dev board? 3D-printed enclosure? What can a non-hardware founder prototype?
-3. **How do device and app communicate?** BLE is the plan — what are the UX implications of pairing, range, battery?
-4. **What happens in the first 5 minutes?** Onboarding for a device + app combo is complex. What's the experience?
-5. **Is this a subscription?** The app has ongoing value (tracking, goals, sync). The device is a one-time purchase. How does pricing work?
-6. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
-7. **What does "v1 of the device" mean concretely?** Working prototype for personal use? Something shippable to 100 people? Kickstarter-ready?
+*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~.
+
+1. **What happens in the first 5 minutes?** Onboarding for a device + app combo is complex. What's the experience?
+2. **Is this a subscription?** The app has ongoing value (tracking, goals, sync). The device is a one-time purchase. How does pricing work?
+3. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
+4. **What does the session flow feel like end-to-end?** Pre-session (goal setting) → during session (focus) → post-session (reflection) — what specifically happens at each stage in the app?
+5. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
 
 ---
 
-## 7. Competitive Landscape (to be expanded)
+## 8. Competitive Landscape (to be expanded)
 
 | Product | What It Does | Why It's Not This |
 |---------|-------------|-------------------|
@@ -147,4 +214,4 @@ These should be explored before finalizing the solution design:
 
 ---
 
-*Phase 2 will cover: solution shape, device specifications, MVP scope, and build plan.*
+*Phase 2 in progress. Remaining: session flow, pricing model, social features, pattern tracking, onboarding.*
