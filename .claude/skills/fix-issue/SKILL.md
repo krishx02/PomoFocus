@@ -63,7 +63,7 @@ if git checkout -b fix/issue-$ARGUMENTS-<slug>; then
 elif git checkout fix/issue-$ARGUMENTS-<slug>; then
   : # switched to existing branch — verify below
 else
-  echo "ERROR: could not create or switch to branch" >&2
+  echo "ERROR: could not create or switch to branch. Run 'git worktree list' — if this branch is checked out in another worktree, remove that worktree first." >&2
   exit 1
 fi
 ```
@@ -75,7 +75,7 @@ if git checkout -b feature/issue-$ARGUMENTS-<slug>; then
 elif git checkout feature/issue-$ARGUMENTS-<slug>; then
   : # switched to existing branch — verify below
 else
-  echo "ERROR: could not create or switch to branch" >&2
+  echo "ERROR: could not create or switch to branch. Run 'git worktree list' — if this branch is checked out in another worktree, remove that worktree first." >&2
   exit 1
 fi
 ```

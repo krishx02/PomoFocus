@@ -130,7 +130,7 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      ```bash
      REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
      gh api repos/$REPO/pulls/$PR_NUMBER/comments \
-       --jq '.[] | select(.body | startswith("🔴")) | {body, path, original_line}'
+       --jq '.[] | select(.body | startswith("🔴")) | {body, path, line, original_line, diff_hunk}'
      ```
   3. Use the Agent tool with `subagent_type: general-purpose` to fix the critical findings.
      Provide this prompt (substituting real values for bracketed placeholders):
@@ -155,8 +155,9 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      gh issue comment $ISSUE_NUMBER --body "$(cat <<'EOF'
      ## Review Loop Exhausted — Needs Human
 
-     Critical issues found by the code-reviewer persist after 3 auto-fix passes.
-     Please review the PR comments and resolve the critical findings manually.
+     Critical issues found by the code-reviewer persist after 2 auto-fix attempts
+     (3 total review passes). Please review the PR comments and resolve the
+     critical findings manually.
      EOF
      )"
      ```

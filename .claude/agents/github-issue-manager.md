@@ -117,19 +117,18 @@ Use the **Write tool** to write the PR body from Step 3 to the exact path stored
 
 Derive the type prefix from the issue or commits: bugs → `fix:`, new features → `feat:`, refactors → `refactor:`, tests → `test:`, docs → `docs:`.
 
-Derive the PR title based on whether an issue exists:
+Derive the PR title and create the PR with a proper conditional:
 
 ```bash
-# If ISSUE_NUMBER is not "none":
-PR_URL=$(gh pr create \
-  --title "[type]: [issue title or branch summary] (#$ISSUE_NUMBER)" \
-  --body-file "$PR_BODY_FILE")
-GH_EXIT=$?
-
-# If ISSUE_NUMBER is "none":
-PR_URL=$(gh pr create \
-  --title "[type]: [branch summary]" \
-  --body-file "$PR_BODY_FILE")
+if [ "$ISSUE_NUMBER" != "none" ]; then
+  PR_URL=$(gh pr create \
+    --title "[type]: [issue title or branch summary] (#$ISSUE_NUMBER)" \
+    --body-file "$PR_BODY_FILE")
+else
+  PR_URL=$(gh pr create \
+    --title "[type]: [branch summary]" \
+    --body-file "$PR_BODY_FILE")
+fi
 GH_EXIT=$?
 
 if [ $GH_EXIT -ne 0 ] || [ -z "$PR_URL" ]; then
