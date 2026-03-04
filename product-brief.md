@@ -399,7 +399,93 @@ Value-first, account-later. User has experienced the product before being asked 
 
 ---
 
-## 9. Research Threads to Investigate (from Phase 1)
+## 9. Social Features — Accountability Without Comparison
+
+### Design philosophy
+
+Social features in PomoFocus follow one rule: **encourage through presence, never pressure through numbers.** The research is clear — social accountability (knowing someone is working alongside you) increases focus time by up to 87% (Stanford). But social comparison (leaderboards, public stats, visible rankings) correlates with anxiety, guilt, and worse long-term adherence.
+
+PomoFocus is not a social network. It's a focus tool where knowing your friends are also putting in work makes you more likely to show up.
+
+**Core principles:**
+- Goals are always private. Nobody sees what you're working on unless you choose to share.
+- No numbers are visible to others. No session counts, no hours, no streaks shown publicly.
+- Encouragement is private — only the recipient knows. No public kudos counts.
+- No feeds, no algorithms, no engagement optimization. Social features serve focus, not attention.
+
+### v1 social features
+
+**1. Add friends**
+Foundation for everything else. Simple friend system — search by username or share an invite link. No follower/following asymmetry. Friendships are mutual (both must accept).
+
+**2. Library Mode (presence signals)**
+A small indicator showing which of your friends are currently in a focus session. Like glancing across a library and seeing your friend at another table — no interruption, just awareness.
+
+- Shows a dot or subtle status next to friend's name: "focusing" / "on break" / "offline"
+- No details about what they're working on or how long they've been going
+- Seeing a friend focusing creates gentle social motivation: "they're working, maybe I should too"
+
+**Why this works:** Focusmate proved that just *seeing* another person working changes behavior. Body doubling — the presence of someone doing tasks alongside you — is one of the strongest accountability mechanisms, especially for people who struggle with self-structure. Library Mode is async body doubling.
+
+**3. Quiet Feed ("Krish focused today")**
+Friends see that you completed focus sessions — but not how many, not how long, not what goal. Just evidence of effort.
+
+- Feed entry: "[Name] focused today" — that's it. One entry per day max, no matter how many sessions.
+- No timestamps, no session counts, no streaks. You see that your friend showed up. Not whether they did 1 session or 10.
+- Inspired by BeReal's anti-comparison design: sharing without showing off.
+
+**Why this works:** The user sees their friends putting in work and feels motivated to do the same — "damn, Sarah's been consistent" — without the toxic comparison of knowing exactly how much. The absence of numbers is deliberate. You can't feel "behind" if there's no metric to measure against.
+
+**4. Encouragement tap (private kudos)**
+When you see a friend in the quiet feed or in Library Mode, you can tap once to send encouragement. One tap. No text, no emoji picker, no comments.
+
+- The recipient sees: "[Name] sent you encouragement" — a private notification.
+- **Nobody else sees how many encouragements anyone received.** No counts, no popularity signals. Completely invisible to everyone except the recipient.
+- There is no way to see who *didn't* get encouragement. No absence signal.
+
+**Why this works:** Strava's kudos system drives massive engagement (14B+ kudos given) because it celebrates effort, not performance. PomoFocus takes it further by making kudos counts invisible — removing even the possibility of comparison.
+
+**5. Invite link (growth + social proof)**
+One-tap shareable link: "Focus with me on PomoFocus." Share via iMessage, WhatsApp, text, whatever. The friend clicks the link, lands on the web version, and can start a session in 40 seconds (no install required).
+
+- This is both a social feature and a growth mechanism. Friend-to-friend sharing is how Forest and Study Together scaled.
+- The social proof of "my friend uses this and they've been getting things done" is more powerful than any ad.
+
+### Backlog (post-v1, needs more design thinking)
+
+These features are promising but require more complexity and will be revisited after v1 launches and we have real user feedback.
+
+**Shared sessions ("Focus with me" / ambient join)**
+Two friends focus at the same time with a shared timer. Not video — just a shared commitment. A friend can also join mid-session without any interruption to the person already focusing. The original user is only notified *after* their session ends: "Sarah joined your session and focused for 18 minutes."
+
+- No punishment for quitting early (unlike Forest's tree-dying mechanic). Gentle, not punitive.
+- The mid-session join is the key differentiator: it's like silently sitting down next to your friend in a library.
+
+**Study Crew (private group goals)**
+Small private groups (2-5 people) set a shared weekly commitment ("We'll each do 15 sessions this week"). The group sees a collective progress bar — not individual breakdowns. Goals remain private. The group shares commitment to showing up, not what they're working on.
+
+**Weekly reflection card (opt-in sharing)**
+The app generates a personal weekly summary — qualitative, not quantitative. "You focused on 3 different goals this week. Your best day was Tuesday." Users can optionally share this card with friends. Like Spotify Wrapped: private by default, shareable by choice. No raw numbers — just narrative.
+
+**Real-world impact (session donations)**
+Focus sessions translate into something tangible — trees planted, study hours donated, etc. Forest partnered with Trees for the Future and it became one of their strongest retention hooks. Requires partnerships and logistics — clearly post-launch.
+
+### What social features PomoFocus will NEVER have
+- Public leaderboards or rankings
+- Visible session counts, hours, or streaks on profiles
+- Public kudos/like counts
+- Algorithmic feeds or engagement optimization
+- Comments or messaging within the app (use your existing messaging apps)
+- "Top focuser" badges or competitive rankings
+- Any feature where seeing someone else's numbers could make you feel "behind"
+
+### Where social features live in pricing
+
+Social features are **free**. Adding friends, Library Mode, Quiet Feed, kudos, invite links — all free tier. Social accountability is core to the product thesis (portable structure), not a premium upsell. Putting social behind a paywall would kill the network effect that makes these features work.
+
+---
+
+## 10. Research Threads to Investigate (from Phase 1)
 
 These should be explored before finalizing the solution design:
 
@@ -415,16 +501,15 @@ These should be explored before finalizing the solution design:
 
 ---
 
-## 10. Open Questions (remaining)
+## 11. Open Questions (remaining)
 
-*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~, ~~onboarding~~.
+*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~, ~~onboarding~~, ~~social features~~.
 
-1. **Social features — yes or no for v1?** Accountability partners, shared goals, study groups — powerful but complex. Where's the line for launch?
-2. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
+1. **What data matters for "pattern tracking"?** What charts/insights would actually change user behavior vs. vanity metrics?
 
 ---
 
-## 11. Competitive Landscape (to be expanded)
+## 12. Competitive Landscape (to be expanded)
 
 | Product | What It Does | Why It's Not This |
 |---------|-------------|-------------------|
@@ -439,4 +524,4 @@ These should be explored before finalizing the solution design:
 
 ---
 
-*Phase 2 in progress. Remaining: social features (v1 scope), pattern tracking specifics.*
+*Phase 2 in progress. Remaining: pattern tracking specifics.*
