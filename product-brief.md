@@ -1,6 +1,6 @@
-# PomoFocus — Product Brief v0.4
+# PomoFocus — Product Brief v0.5
 
-> **Status:** Phase 3 complete (Opportunity Mapping).
+> **Status:** Phase 4 complete (Shaping).
 > **Last updated:** 2026-03-04
 > **Author:** Discovery session with founder
 
@@ -687,7 +687,107 @@ These opportunity findings refine several existing sections of the brief:
 
 ---
 
-## 12. Research Threads to Investigate (from Phase 1 & 3)
+## 12. v1 Shape — Fixed Boundaries (Phase 4)
+
+### Appetite
+
+No fixed calendar deadline — but a fixed *scope*. The shape below is the ceiling, not the floor. If something isn't listed, it's not in v1. Period.
+
+### What's in the box
+
+**Platforms:**
+- iOS (native via Expo/React Native)
+- Web (Next.js — zero-friction entry point, shareable URL)
+- ESP32 physical device (BLE sync)
+- Android is NOT in v1
+
+**Core loop (must ship — this is the product):**
+1. **Three-layer goal model** — long-term goals → process goals → session intentions. Create, edit, track in app. Process goals + session intentions sync to device.
+2. **Timer** — Pomodoro timer in app (software-only users) and on device (device users). Configurable intervals (25/5, 50/10, custom).
+3. **Post-session reflection** — 2-tap flow: focus quality (locked in / decent / struggled) + distraction type (if struggled). Break usefulness question after breaks.
+4. **Cumulative progress surfaces** — widget (iOS lock screen / home screen), app home screen, device idle screen. Shows: sessions today, streak, success rate, total focus time. This is the craving intervention.
+5. **BLE device sync** — goals push from app → device. Completed sessions push from device → app. Eventual consistency (works offline, syncs when in range).
+6. **Cloud sync** — all data syncs across iOS + web via Supabase. Free for all v1 testers (no paywall).
+7. **Accounts** — Supabase Auth. Deferred sign-up (after first session). Free cloud sync for all users in v1.
+
+**Analytics (must ship):**
+- Tier 1 glanceable stats (home screen): sessions today, Focus Score, weekly focus time, success rate
+- Tier 2 weekly insight card (pushed proactively): best/worst days, distraction patterns, goal-level progress
+- Tier 3 monthly deep view: goal-by-goal breakdown, focus quality trends, distraction evolution
+- Focus Score composite metric (self-reported quality + completion rate + consistency + trend)
+- Abandonment logic with "had to stop" vs. "gave up" distinction
+
+**Social (must ship):**
+- Add friends (mutual, symmetric)
+- Library Mode (presence signals — who's currently focusing)
+- Quiet Feed ("Krish focused today" — one entry per day, no numbers)
+- Encouragement tap (private, one-tap kudos, invisible counts)
+- Invite link (shareable URL, friend lands on web version)
+
+**Onboarding (must ship):**
+- 60-second flow as designed in Section 8
+- Goal templates (studying, working out, side project, reading, writing, learning a skill)
+- Timer preference selection
+- Device pairing (if applicable)
+- Widget prompt (iOS)
+- Deferred account creation
+
+### What's NOT in the box (explicit no-go's)
+
+| Feature | Why not v1 |
+|---------|-----------|
+| **Android** | Expo makes it possible but triples QA. Ship iOS + web first, add Android when the core loop is proven. |
+| **Shared sessions / ambient join** | Requires real-time session state sync between users (WebSockets). Significant infrastructure beyond the v1 social features. Post-v1. |
+| **Study Crew (group goals)** | Needs more design thinking. Group dynamics are complex. Post-v1. |
+| **Weekly reflection card (shareable)** | Nice retention feature but not core. Post-v1. |
+| **Session donations (trees planted, etc.)** | Requires partnerships. Post-v1. |
+| **Payment / subscription billing** | Everyone gets full access free in v1. Paywall comes when we know what people value enough to pay for. |
+| **Mac menu bar widget** | SwiftUI + WidgetKit is a separate native project. Post-v1. |
+| **VS Code extension** | Post-v1. |
+| **Claude Code MCP server** | Post-v1. |
+| **Data export** | Post-v1. |
+| **Haptic/audio feedback on device** | Device v1 is visual only (display + buttons). Buzzer for timer end is a maybe. |
+| **E-ink display** | Start with OLED (LILYGO T-Display S3). E-ink adds complexity for v1 prototype. |
+
+### Rabbit holes (time sinks to watch for)
+
+These are areas where scope can silently expand. Set a time limit and move on if stuck.
+
+1. **BLE reliability** — Bluetooth is notoriously finicky. Define "good enough" sync: goals update within 30 seconds of phone being in range. Don't chase 100% reliability. Retry logic + local cache handles the rest.
+2. **Focus Score weighting** — Don't over-engineer the formula before having real data. Ship with simple equal weights, tune later with actual user sessions.
+3. **Widget design** — iOS widgets have strict size/update constraints. Don't fight the platform. Ship a simple widget that shows streak + today's progress. Iterate on design after launch.
+4. **Goal template UX** — The template picker is 20 seconds of onboarding, not a product in itself. Don't build a template editor or let users create/share templates. Six hardcoded templates + "something else."
+5. **Device enclosure** — The device is a bare dev board for v1. No 3D printing, no case design. If testers complain about aesthetics, that's v2.
+6. **Real-time presence (Library Mode)** — Can be polling-based (check every 30-60 seconds) rather than true WebSocket real-time. "Focusing" status doesn't need sub-second accuracy.
+7. **Offline-first architecture** — Local-first with background sync is the right architecture but can become an endless rabbit hole. Use Supabase's built-in real-time sync. Don't build a custom CRDT.
+
+### De-risking order (build this sequence)
+
+Build in the order that retires the biggest risks first:
+
+1. **Data layer + cloud sync** — Supabase schema, auth, real-time sync. If this doesn't work, nothing works.
+2. **Core timer + goal model** — The atomic unit. Timer runs, sessions record, goals track.
+3. **Post-session reflection** — Data collection mechanism for the core thesis. Without this, no insights.
+4. **Cumulative progress surfaces** — Widget + home screen stats. This IS the product differentiator.
+5. **BLE device sync** — Prove the phone-away thesis. This is the riskiest technical piece.
+6. **Device firmware** — ESP32 timer + goal display + local storage + BLE.
+7. **Analytics & insights** — Tier 1 → Tier 2 → Tier 3. Each tier is independently valuable.
+8. **Social features** — Friends → Library Mode → Quiet Feed → kudos → invite link. Each layer builds on the previous.
+9. **Onboarding** — Build last. Onboarding for a product that doesn't exist yet is wasted work.
+
+### Success criteria for v1
+
+v1 is done when 10-20 testers can:
+- [ ] Create goals, run sessions, and see their cumulative progress on iOS or web
+- [ ] Pair a physical device that displays their goal and runs a timer independently
+- [ ] See sessions from the device appear in the app after BLE sync
+- [ ] Get a weekly insight card showing their focus patterns
+- [ ] Add friends and see who's currently focusing (Library Mode)
+- [ ] Open a shared link and start a session in the web browser in under 60 seconds
+
+---
+
+## 13. Research Threads to Investigate (from Phase 1 & 3)
 
 These should be explored before finalizing the solution design:
 
@@ -703,15 +803,7 @@ These should be explored before finalizing the solution design:
 
 ---
 
-## 12. Open Questions (remaining)
-
-*Answered in Phase 2:* ~~device form factor~~, ~~minimum viable device~~, ~~device-app communication~~, ~~v1 scope~~, ~~session flow~~, ~~pricing model~~, ~~onboarding~~, ~~social features~~, ~~pattern tracking / analytics~~.
-
-*(No remaining open questions from Phase 2.)*
-
----
-
-## 13. Competitive Landscape (to be expanded)
+## 14. Competitive Landscape (to be expanded)
 
 | Product | What It Does | Why It's Not This |
 |---------|-------------|-------------------|
@@ -726,4 +818,4 @@ These should be explored before finalizing the solution design:
 
 ---
 
-*Phase 2 complete. All open questions answered.*
+*Phase 4 complete. v1 shaped and bounded.*
