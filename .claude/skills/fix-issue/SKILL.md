@@ -169,14 +169,22 @@ git commit -m "[type]: [short description] (#$ARGUMENTS)"
 ```
 Use the conventional commit prefix matching the issue type: `feat`, `fix`, `refactor`, `test`, or `docs`.
 
-## Step 8 — Hand Off to Finalize
+## Step 8 — Push and Stop
 
-Tests pass, type-check is clean, and changes are committed. Your implementation work is done.
+Tests pass, type-check is clean, and changes are committed. Push the branch and stop.
 
-Invoke the `/finalize` skill:
-
-```
-/finalize $ARGUMENTS
+```bash
+git push -u origin $(git branch --show-current)
 ```
 
-Stop here — do not create the PR or update labels directly. The `/finalize` skill handles all GitHub state: PR creation, label transitions, and code review.
+Then output exactly this message (substituting real values):
+
+```
+Implementation complete for issue #$ARGUMENTS.
+Branch pushed: [BRANCH_NAME]
+
+Start a new Claude Code session and run:
+  /finalize $ARGUMENTS
+```
+
+Do NOT call `/finalize` here. Do NOT create the PR or update labels. Stop completely — finalize runs in a separate context window to avoid carrying implementation history into the PR and review phase.
