@@ -2,8 +2,7 @@
 name: tech-design
 description: Run a structured technical design interview to make architecture decisions. Researches options live, challenges assumptions with devil's advocate questioning, and produces Architecture Decision Records (MADR 4.0). Adapts depth automatically — lightweight ADR for library choices, full design doc for system-level decisions. Use between /discover and /clarify.
 user-invocable: true
-context: fork
-agent: general-purpose
+context: conversation
 argument-hint: "[optional: decision area, e.g. 'real-time sync strategy' or 'state management library']"
 ---
 
