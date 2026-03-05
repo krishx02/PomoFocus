@@ -65,6 +65,8 @@ Ask questions ONE AT A TIME. Adapt follow-ups based on what you learn.
 
 2. **What Matters Most**: "If you had to pick the top 2-3 criteria for this decision, what would they be? (e.g., developer experience, performance, cost, ecosystem maturity, simplicity)"
 
+If the user hasn't considered any options or says "I don't know where to start" — that's fine. Skip the rest of Step 2a and go straight to Step 2b (Research). Let the research inform the conversation rather than forcing the user to speculate.
+
 If the user's answers reference the product brief's appetite or no-go's, acknowledge that and factor it into the research.
 
 ### Step 2b — Research
@@ -159,6 +161,7 @@ Write to `research/decisions/NNN-kebab-case-title.md` using this exact format.
 **Date:** [today's date]
 **Decision-makers:** [user's name or "project lead"]
 **Zoom level:** [Level 1-4, from Phase 1]
+**Platforms:** [list of affected platforms from Phase 1, e.g., "iOS app, web, Apple Watch"]
 
 ## Context and Problem Statement
 
@@ -219,6 +222,7 @@ For Level 1–2 decisions, also write to `research/designs/kebab-case-title.md`:
 **Date:** [today's date]
 **Status:** Accepted
 **Related ADR:** [link to ADR from Step 4c]
+**Platforms:** [list of affected platforms from Phase 1]
 
 ## Context & Scope
 
