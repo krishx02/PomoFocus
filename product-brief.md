@@ -758,6 +758,7 @@ No fixed calendar deadline — but a fixed *scope*. The shape below is the ceili
 | **VS Code extension** | Post-v1. |
 | **Claude Code MCP server** | Post-v1. |
 | **Data export** | Post-v1. |
+| **Accessibility / i18n** | v1 is English-only; accessibility follows iOS/web platform defaults. |
 | **Haptic/audio feedback on device** | Device v1 is visual only (display + buttons). Buzzer for timer end is a maybe. |
 | **E-ink display** | Start with OLED (LILYGO T-Display S3). E-ink adds complexity for v1 prototype. |
 
@@ -802,6 +803,8 @@ v1 is done when 10-20 testers can:
 ## 13. Research Threads — Findings
 
 These threads were flagged during discovery as needing verification before finalizing the solution design. Findings below, with direct PomoFocus implications.
+
+**v1 relevance:** Threads 1 (commitment devices) and 7 (guilt-productivity cycle) directly validate the core thesis and should inform v1 design decisions. Threads 2 (goal salience) and 3 (environmental design) support the widget and device rationale. Threads 4 (habit timelines), 5 (screen time intervention), and 6 (Pomodoro efficacy) are useful background but won't change what gets built for v1.
 
 ---
 
