@@ -1,6 +1,6 @@
 ---
 name: fix-issue
-description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. If needs-human, comments a blocker and stops. Otherwise: creates a branch, reads affected files, implements, runs tests until all pass, opens a PR, and updates labels.
+description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. If needs-human, comments a blocker and stops. Otherwise: creates a branch, reads affected files, implements, and runs tests until all pass. Calls /finalize when done — does not manage the PR or labels directly.
 user-invocable: true
 context: fork
 isolation: worktree
@@ -36,8 +36,13 @@ Read the full output. Identify:
 - DO NOT implement anything
 - Read the existing comments to understand what decision is needed
 - Post a comment explaining the specific blocker:
-  ```
-  gh issue comment $ARGUMENTS --body "## Blocked — Needs Human Decision\n\n[Explain exactly what decision is needed and why the agent cannot proceed without it]"
+  ```bash
+  gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+## Blocked — Needs Human Decision
+
+[Explain exactly what decision is needed and why the agent cannot proceed without it]
+EOF
+)"
   ```
 - Stop
 
@@ -47,14 +52,37 @@ Read the full output. Identify:
 
 Derive the branch slug from the issue title (lowercase, hyphens, max 40 chars).
 
+Determine branch type from the issue labels:
+- If the issue has label `bug` → use the `fix/` prefix
+- Otherwise → use the `feature/` prefix
+
 For bugs:
-```
-git checkout -b fix/issue-$ARGUMENTS-<slug>
+```bash
+if git checkout -b fix/issue-$ARGUMENTS-<slug>; then
+  : # new branch created
+elif git checkout fix/issue-$ARGUMENTS-<slug>; then
+  : # switched to existing branch — verify below
+else
+  echo "ERROR: could not create or switch to branch. Run 'git worktree list' — if this branch is checked out in another worktree, remove that worktree first." >&2
+  exit 1
+fi
 ```
 
 For features:
+```bash
+if git checkout -b feature/issue-$ARGUMENTS-<slug>; then
+  : # new branch created
+elif git checkout feature/issue-$ARGUMENTS-<slug>; then
+  : # switched to existing branch — verify below
+else
+  echo "ERROR: could not create or switch to branch. Run 'git worktree list' — if this branch is checked out in another worktree, remove that worktree first." >&2
+  exit 1
+fi
 ```
-git checkout -b feature/issue-$ARGUMENTS-<slug>
+
+Verify you are on the correct branch before continuing:
+```bash
+git branch --show-current
 ```
 
 Update the issue label to `in-progress`:
@@ -87,6 +115,8 @@ Rules:
 - Follow the existing patterns in each file you modify — read before editing
 - Write tests for any new business logic (tests go alongside implementation, not after PR)
 
+Do NOT commit yet — the commit happens after tests and type-check pass in Step 7.
+
 ## Step 7 — The Ralph Loop (Verify Until Pass)
 
 Run the Test Plan command from the issue.
@@ -101,6 +131,22 @@ If tests fail:
 3. Run tests again
 4. Repeat until all tests pass
 
+**Iteration limit:** If tests are still failing after 5 attempts, stop the loop:
+```bash
+gh issue edit $ARGUMENTS --remove-label "in-progress" --add-label "needs-human"
+gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+## Ralph Loop Exhausted — Needs Human
+
+Tests are still failing after 5 fix attempts. The failure may require
+infrastructure unavailable in this environment, involve a pre-existing flake,
+or need a deeper design decision.
+
+Please review the test failure output and resolve the root cause manually.
+EOF
+)"
+```
+Stop — do not open a PR.
+
 Do NOT open a PR with failing tests.
 
 Also run:
@@ -110,41 +156,35 @@ pnpm type-check
 
 If type errors exist, fix them before proceeding.
 
-## Step 8 — Open the PR
+After tests pass AND type-check is clean, stage and commit:
+```bash
+# Stage only files from the issue's Affected Files list + any new test files written.
+# Do NOT use git add -A — it can accidentally include generated files or debugging artifacts.
+git add [each file from Affected Files list, plus any new test files]
 
+# Verify what's staged before committing — unstage anything unexpected:
+git status
+
+git commit -m "[type]: [short description] (#$ARGUMENTS)"
 ```
-gh pr create \
-  --title "[type]: [issue title] (#$ARGUMENTS)" \
-  --body "$(cat <<'EOF'
-Closes #$ARGUMENTS
+Use the conventional commit prefix matching the issue type: `feat`, `fix`, `refactor`, `test`, or `docs`.
 
-## Changes
-[Bullet-point summary of what was changed and why]
+## Step 8 — Push and Stop
 
-## Test Results
-[Paste the passing test output or describe what was run]
+Tests pass, type-check is clean, and changes are committed. Push the branch and stop.
 
-## Out of Scope Respected
-[Confirm which files were NOT touched per the issue's Out of Scope]
-EOF
-)"
-```
-
-Where `[type]` is `feat`, `fix`, `refactor`, `test`, or `docs` depending on the issue type.
-
-## Step 9 — Update Labels
-
-```
-gh issue edit $ARGUMENTS \
-  --remove-label "in-progress" \
-  --add-label "in-review"
+```bash
+git push -u origin $(git branch --show-current)
 ```
 
-## Final Report
+Then output exactly this message (substituting real values):
 
-Output a concise summary:
-- Branch name created
-- Files changed (list)
-- Test results (pass/fail counts)
-- PR URL
-- Any deviations from the issue spec and why
+```
+Implementation complete for issue #$ARGUMENTS.
+Branch pushed: [BRANCH_NAME]
+
+Start a new Claude Code session and run:
+  /finalize $ARGUMENTS
+```
+
+Do NOT call `/finalize` here. Do NOT create the PR or update labels. Stop completely — finalize runs in a separate context window to avoid carrying implementation history into the PR and review phase.
