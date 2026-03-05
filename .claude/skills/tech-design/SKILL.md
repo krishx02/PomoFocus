@@ -19,10 +19,12 @@ If the user invoked this skill with $ARGUMENTS, use that as the starting context
 
 Before asking any questions:
 
-1. Read `research/04-stack-recommendations.md` to understand existing stack decisions
-2. Use Glob to find existing ADRs: `research/decisions/*.md`
-3. Read any existing ADRs to understand prior decisions and avoid contradictions
-4. Read `CLAUDE.md` for current project constraints
+1. Read `CLAUDE.md` for current project constraints
+2. Read `research/04-stack-recommendations.md` to understand existing stack decisions
+3. Check if `research/product-brief.md` exists (output of `/discover`). If it does, read it — the JTBD statement, target user, appetite, and no-go's from product discovery directly inform which architecture options make sense. Reference these throughout the interview.
+4. Use Glob to find existing ADRs: `research/decisions/*.md`
+5. Read any existing ADRs to understand prior decisions and avoid contradictions
+6. If the user provides $ARGUMENTS that matches an existing ADR topic, check whether this is a **new decision** or a **revision of a prior decision**. If revising, note which ADR will be superseded.
 
 This background context informs your questions and prevents re-litigating settled decisions.
 
@@ -32,20 +34,22 @@ This background context informs your questions and prevents re-litigating settle
 
 Goal: Understand what needs to be decided and how deep to go.
 
-Ask these questions ONE AT A TIME using the AskUserQuestion tool. Wait for each answer before asking the next.
+Ask these questions ONE AT A TIME using the AskUserQuestion tool. Wait for each answer before asking the next. **Adapt your follow-up questions based on what you learn** — if an answer reveals unexpected constraints or context, probe deeper before moving on. The questions below are starting points, not a rigid script.
 
 1. **The Decision**: "What technical decision needs to be made? Describe it in one sentence — what are you trying to figure out?"
 
-2. **Constraints**: "What constraints exist for this decision? Consider: budget, timeline, team skills, existing commitments from prior decisions, platform requirements, performance targets."
+2. **Platforms Affected**: "Which platforms does this decision affect? (iOS app, iOS widget, Apple Watch, macOS menu bar, Android, web, VS Code extension, Claude Code MCP, BLE device — or all of them?) Different platforms may have different constraints."
 
-3. **Stakes**: "How hard would it be to change this decision later? Is this a one-way door (hard to reverse — e.g., database choice) or a two-way door (easy to change — e.g., utility library)?"
+3. **Constraints**: "What constraints exist for this decision? Consider: budget, timeline, team skills, existing commitments from prior decisions, platform requirements, performance targets."
+
+4. **Stakes**: "How hard would it be to change this decision later? Is this a one-way door (hard to reverse — e.g., database choice) or a two-way door (easy to change — e.g., utility library)?"
 
 After collecting answers, **determine the zoom level** using the C4 model:
 
 - **Level 1–2 (System/Container):** Decisions about major runtime units, external system interactions, data stores, communication protocols. Examples: database choice, sync architecture, auth strategy, API design. → **Full depth** (all 5 phases, design doc + ADR)
 - **Level 3–4 (Component/Code):** Decisions about internal structure, libraries, patterns, module organization. Examples: state management library, component architecture, testing strategy. → **Quick depth** (abbreviated phases, ADR only)
 
-Tell the user which depth you've selected and why. Ask: "Does this depth feel right, or should I go deeper/lighter?"
+**Summarize your understanding** of the decision context in 2-3 sentences. Tell the user which depth you've selected and why. Ask: "Is this an accurate picture of what we're deciding? Does this depth feel right, or should I go deeper/lighter?"
 
 ---
 
@@ -53,11 +57,15 @@ Tell the user which depth you've selected and why. Ask: "Does this depth feel ri
 
 Goal: Map realistic options with real-world evidence.
 
+Ask questions ONE AT A TIME. Adapt follow-ups based on what you learn.
+
 ### Step 2a — Ask the user
 
 1. **Prior Thinking**: "What options have you already considered? What's your current instinct, and why?"
 
 2. **What Matters Most**: "If you had to pick the top 2-3 criteria for this decision, what would they be? (e.g., developer experience, performance, cost, ecosystem maturity, simplicity)"
+
+If the user's answers reference the product brief's appetite or no-go's, acknowledge that and factor it into the research.
 
 ### Step 2b — Research
 
@@ -70,6 +78,12 @@ Use the WebSearch tool to research the decision space. Run 2-4 searches targetin
 
 Use WebFetch on the most relevant results to extract specific data points.
 
+**Research quality rules:**
+- Prefer sources from the current year or last year. Flag anything older than 2 years as potentially outdated.
+- Weight recognized experts and official documentation over random blog posts.
+- When citing benchmarks, note the conditions (version tested, hardware, dataset size). Benchmarks without context are misleading.
+- If you find contradictory information, present both sides rather than picking one.
+
 ### Step 2c — Present options
 
 Present 2-4 realistic options in this format:
@@ -81,9 +95,10 @@ Present 2-4 realistic options in this format:
 **Cons:** [bulleted, with sources where possible]
 **Best when:** [scenario where this option wins]
 **Real-world usage:** [notable projects/companies using it]
+**Platform notes:** [if platforms were specified in Phase 1, note any platform-specific implications]
 ```
 
-Ask: "Based on this research, which option are you leaning toward and why? Or are there options I missed?"
+**Summarize** the landscape in 2-3 sentences. Ask: "Based on this research, which option are you leaning toward and why? Or are there options I missed?"
 
 ---
 
@@ -103,17 +118,19 @@ Ask 2 questions:
 
 ### For Full-depth decisions (Level 1–2):
 
-Ask 3-4 questions, covering these cross-cutting concerns:
+Ask 4-5 questions, covering these cross-cutting concerns:
 
 1. **The Counter-Case**: Same as above — strongest argument against the preference.
 
-2. **Security & Privacy**: "How does this choice affect the security surface? Are there authentication, authorization, or data privacy implications?"
+2. **Platform Implications**: If multiple platforms are affected (from Phase 1), stress each one: "How does this choice work on [platform X]? Does it have the same trade-offs there, or does [platform X] introduce different constraints?" For example, a sync strategy that works great on web may have battery implications on watchOS, or a state library that's fine for React may not exist for SwiftUI.
 
-3. **Cost & Scale**: "What happens to cost and complexity when this scales to 10x users? 100x? Is there a cliff where this choice breaks down?"
+3. **Security & Privacy**: "How does this choice affect the security surface? Are there authentication, authorization, or data privacy implications?"
 
-4. **Consistency Check**: Review existing ADRs and stack decisions. "Does this choice conflict with any prior decisions? Does it create inconsistency in the architecture?" (Only ask if you found a potential conflict.)
+4. **Cost & Scale**: "What happens to cost and complexity when this scales to 10x users? 100x? Is there a cliff where this choice breaks down?"
 
-After the stress test, summarize: "Here's what survived scrutiny and what's still a risk." Let the user make the final call.
+5. **Consistency Check**: Review existing ADRs and stack decisions. "Does this choice conflict with any prior decisions? Does it create inconsistency in the architecture?" (Only ask if you found a potential conflict.)
+
+After the stress test, **summarize what survived scrutiny and what's still a risk.** Be specific: "The main risk you're accepting is [X]. The mitigation is [Y]." Let the user make the final call.
 
 ---
 
@@ -131,12 +148,14 @@ Count existing files in `research/decisions/` to determine the next number (NNN 
 
 ### Step 4c — Write the ADR
 
-Write to `research/decisions/NNN-kebab-case-title.md` using this exact format:
+Write to `research/decisions/NNN-kebab-case-title.md` using this exact format.
+
+**If this supersedes a prior ADR** (identified in "Before You Begin"), set the status to indicate the relationship and update the old ADR's status line to `**Status:** Superseded by [ADR-NNN](./NNN-kebab-case-title.md)`.
 
 ```markdown
 # ADR-NNN: [Decision Title]
 
-**Status:** Accepted
+**Status:** Accepted [or "Accepted, supersedes [ADR-XXX](./XXX-old-title.md)"]
 **Date:** [today's date]
 **Decision-makers:** [user's name or "project lead"]
 **Zoom level:** [Level 1-4, from Phase 1]
@@ -253,6 +272,20 @@ After writing the artifacts:
    - The decision in one sentence
    - Key trade-off accepted
    - Recommended next action (usually: use `/clarify` to scope the first implementation task, or `/decompose-issue` to create tickets)
+
+---
+
+## Graceful Abort — "Not Ready to Decide"
+
+At ANY point during the interview, if the user says they're not ready to decide, or if you detect that the decision requires information neither of you has:
+
+1. **Save partial thinking** to `research/decisions/DRAFT-NNN-kebab-case-title.md` with status `**Status:** Draft — not yet decided`
+2. Capture what IS known (context, constraints, options explored so far, open questions)
+3. List the **specific blockers** — what information or research is needed before this decision can be made
+4. Suggest concrete next steps (e.g., "run a prototype to benchmark Option A vs B", "check Supabase Realtime latency in production", "ask in the Expo Discord about watchOS support")
+5. Report the draft file path and stop
+
+This is not a failure — it's a signal that the decision needs more input. A deferred decision with clear blockers is better than a forced decision with hidden assumptions.
 
 ---
 
