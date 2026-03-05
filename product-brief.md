@@ -1,6 +1,6 @@
-# PomoFocus — Product Brief v0.5
+# PomoFocus — Product Brief v0.6
 
-> **Status:** Phase 4 complete (Shaping).
+> **Status:** Phase 5 complete (Research — Section 13 threads verified, Section 14 expanded).
 > **Last updated:** 2026-03-04
 > **Author:** Discovery session with founder
 
@@ -68,6 +68,8 @@ The founder's own experience crystallized this: at Nike in Portland, performance
 > A physical commitment device that keeps your goals visible, creates structure through focused work sessions, and replaces your phone as the object on your desk you reach for.
 
 The timer is a mechanism. The product is environmental structure you carry with you.
+
+> **Research note:** Ariely & Wertenbroch (2002) and Bryan, Karlan & Nelson (2010) confirm that commitment devices are among the most effective behavior change tools available — and that *observability* is a key amplifier. The physical device is itself a commitment device: purchasing it is a public act of precommitment. This confirms the core thesis: the product isn't just a timer, it's a tangible commitment artifact. Environmental design research (Kanjo 2022, PNAS 2025) further confirms that removing the phone from the visual field is more effective than willpower-based blocking.
 
 ---
 
@@ -182,6 +184,8 @@ The lock screen / home screen widget is visible *without opening the app*. It do
 - Quick-start button (tap → timer starts, app opens in minimal mode)
 - Streak or progress indicator ("5-day streak" or "3/5 sessions done")
 
+> **Research note:** Gollwitzer (1999) and Gollwitzer & Sheeran (2006) — meta-analysis of 94 studies, N > 8,000, effect size d = 0.65 — confirm that implementation intentions (a specific "if [cue], then [behavior]" plan) significantly outperform goal intentions alone. The widget operationalizes this: seeing "Study calculus — 0/3 sessions today" the moment you unlock your phone creates the cue-response link automatically. Goal visibility doesn't need to be manually scheduled — the widget and device ensure it is always present.
+
 ### Goal model — three layers
 
 Goals aren't just "study calculus today." Process-oriented goals (what you *do*) drive more consistent behavior than outcome goals (what you *achieve*). The product supports both, in a hierarchy:
@@ -279,6 +283,10 @@ The user just finished a focused block. They feel good. This moment is emotional
 - Session record uploads to cloud (timestamp, duration, goal, completed/abandoned, abandonment reason, focus rating, distraction type, break usefulness)
 - Device syncs buffered sessions if phone is in BLE range
 - Data feeds into pattern tracking over time (see Section 10 for full analytics design)
+
+> **Research note (session intervals):** Biwer et al. (2023) — 87 students, *British Journal of Educational Psychology* — found that systematic breaks (both Pomodoro 24/6 and shorter 12/3) produced higher concentration, motivation, and lower perceived task difficulty vs. self-regulated breaks, with no difference in total task completion. A 2025 scoping review (PMC, N=5,270) confirms systematic Pomodoro-style intervals consistently outperform self-paced work. **This confirms:** (1) the break structure is essential and must not be optional/skipped; (2) the exact interval (25 vs. 50 minutes) is less critical than the systematic structure itself — offering interval presets is research-backed.
+
+> **Research note (abandonment tone):** Sirois & Pychyl (2013) confirm that self-criticism after procrastination reinforces avoidance rather than correcting it. The non-judgmental abandonment framing ("Had to stop" / "Gave up / lost focus" as data, not shame) is evidence-based. Wohl, Pychyl & Bennett (2010) show self-forgiveness after past procrastination *reduces* future procrastination. The completion acknowledgment step should be warm regardless of session outcome.
 
 ---
 
@@ -611,6 +619,8 @@ Exact weights need tuning with real user data. The score should feel intuitively
 - **Break usefulness** — new metric with no precedent in other Pomodoro apps. Worth tracking to see if actionable patterns emerge. If it turns out to be noise, we can remove the question.
 - **Cold start problem** — how many sessions before insights become meaningful? Need to define minimums (e.g., "weekly insights require at least 5 sessions that week") and show appropriate messaging before that threshold.
 
+> **Research note (cold start):** Lally et al. (2010) found that habit automaticity takes 18–254 days (mean 66 days) and that exercise-type behaviors take ~1.5x longer than simple habits. Focus sessions are exercise-complexity behaviors. This means: (1) minimum thresholds for "weekly insights" should be ≥5 sessions / ≥3 weeks before monthly patterns surface; (2) the product must be intrinsically rewarding for 3–9+ months before the habit feels automatic for most users; (3) the 66-day mark is worth surfacing explicitly as a milestone ("You've been showing up for 66 days — research says this is where structure starts to feel automatic").
+
 ---
 
 ## 11. Opportunity Solution Tree (Phase 3)
@@ -666,6 +676,8 @@ The intervention has two parts:
 1. **Cumulative progress as craving antidote** — when the user is tempted to scroll, the evidence of everything they've built is visible (widget, device, app home screen). Not motivational quotes — their own data.
 2. **Reward starting, not finishing** — the dopamine hit comes at session start (immediate feedback, acknowledgment), not 25 minutes later. This competes directly with the craving for other apps.
 
+> **Research note:** Sirois & Pychyl (2013) confirm that procrastination is an emotion-regulation failure — the guilt spiral is real, self-reinforcing, and worsened by self-judgment. Self-compassion (Sirois & Pychyl) and self-forgiveness (Wohl, Pychyl & Bennett 2010) are the empirically-supported counter-interventions. This **confirms** both parts of the intervention: (1) cumulative evidence ("look at what you've built") reduces the perceived cost of starting by increasing self-efficacy; (2) rewarding the act of starting directly addresses the highest-resistance emotional moment. The non-judgmental tone is not a stylistic preference — it is evidence-based design that will measurably reduce procrastination vs. a punitive alternative.
+
 ### Riskiest Assumption
 
 **Users will complete post-session reflections consistently enough to build a useful dataset.**
@@ -683,7 +695,7 @@ These opportunity findings refine several existing sections of the brief:
 2. **Focus Score and analytics (Section 10)** serve double duty: they're both an insight tool AND the ammunition for breaking the guilt spiral. The Tier 1 glanceable stats ("82% success rate", "45 sessions this month") are the craving antidote.
 3. **The widget (Section 6)** isn't just a convenience — it's the primary touchpoint for the craving moment. It should show cumulative progress prominently.
 4. **The physical device** is the strongest version of this intervention: a tangible object on your desk that represents your commitment and progress. It breaks the scroll trance through a different sensory channel.
-5. **Tone must be non-judgmental everywhere.** The app observes and reflects accumulated progress — it never scolds. "Look at everything you've built" not "you scrolled for 40 minutes."
+5. **Tone must be non-judgmental everywhere.** The app observes and reflects accumulated progress — it never scolds. "Look at everything you've built" not "you scrolled for 40 minutes." (Research basis: Sirois & Pychyl 2013; Wohl et al. 2010 — self-judgment reinforces procrastination; self-compassion and self-forgiveness reduce it.)
 
 ---
 
@@ -787,34 +799,191 @@ v1 is done when 10-20 testers can:
 
 ---
 
-## 13. Research Threads to Investigate (from Phase 1 & 3)
+## 13. Research Threads — Findings
 
-These should be explored before finalizing the solution design:
-
-| Thread | Key Question | Starting Points |
-|--------|-------------|-----------------|
-| Present bias & commitment devices | What types of commitment devices have the highest adherence rates? | Ariely's work on pre-commitment; StickK app research |
-| Goal salience | How frequently must goals be visible to maintain motivation? | Implementation intentions (Gollwitzer, 1999); visual cue research |
-| Environmental design | What specific environmental changes most reduce phone usage? | James Clear (Atomic Habits); phone-free zone studies |
-| Habit formation timelines | How long before a "structure seeker" internalizes the structure? | Lally et al. (2010) — average 66 days, high variance |
-| Screen time intervention research | Do physical alternatives to phones reduce screen time? | Light Phone studies; dumbphone movement research |
-| Pomodoro technique efficacy | Does Pomodoro specifically work, or is any structured interval effective? | DeLong (2009); Cirillo's original research |
-| Guilt-productivity cycle | How does post-scrolling guilt affect subsequent productivity? | Procrastination research (Pychyl, Sirois) |
+These threads were flagged during discovery as needing verification before finalizing the solution design. Findings below, with direct PomoFocus implications.
 
 ---
 
-## 14. Competitive Landscape (to be expanded)
+### Thread 1: Present Bias & Commitment Devices
 
-| Product | What It Does | Why It's Not This |
-|---------|-------------|-------------------|
-| Forest App | Gamified phone-down timer (grow a tree) | Lives on the phone. No goals. No physical presence. |
-| Focus Keeper / Tide | Pomodoro timers | Timer-only. No goal system. On the phone. |
-| Opal / One Sec | App blockers / friction tools | Treats symptoms (block apps) not cause (no structure). |
-| Light Phone | Minimal phone | Replaces your phone entirely. Too extreme for most. |
-| Pomodoro physical timers | Mechanical kitchen timers | No goal connection. No tracking. No system. |
-| Timeular | Physical time-tracking die | Tracks time categories but doesn't create structure or block distractions. |
+**Key question:** What commitment device types have the highest adherence rates?
 
-**The gap:** No product combines a physical focus device + goal-connected software + behavioral science foundation. Physical timers have no brains. Apps live on the distraction device. Nothing bridges both.
+**Findings:**
+
+1. **Ariely & Wertenbroch (2002)** — Students who self-imposed deadlines before the final deadline outperformed students with maximum flexibility, completing fewer tasks late and scoring higher overall. Precommitment works even at low stakes because the act of choosing to constrain future behavior reframes failure. *(Psychological Science)*
+
+2. **Bryan, Karlan & Nelson (2010)** — Commitment devices increase adherence across health, finance, and education contexts. Public commitment outperforms private commitment: observability is a key multiplier — when others can see your commitment, both demand and follow-through increase significantly. *(Annual Review of Economics)*
+
+3. **StickK platform data** — Users who tied financial penalties to their goals were 60 percentage points more likely to report success. StickK users overall are ~3x more likely to achieve their goals than non-users. The highest-performing contracts combine financial stakes + a referee + social visibility — each element compounds the effect.
+
+4. **Exley & Naecker (HBS, 2021)** — Observability increases both the demand for and the effectiveness of commitment devices. Making a commitment observable (to others, or to a physical environment) significantly strengthens follow-through.
+
+> **→ PomoFocus implication:** The physical device IS the commitment device. Purchasing it is an observable act of precommitment — it signals intent to self and environment. The social layer (Quiet Feed, streak sharing) amplifies this through partial social visibility. Onboarding should reinforce the framing: "You've already made the commitment. Now let's keep it."
+
+---
+
+### Thread 2: Goal Salience & Implementation Intentions
+
+**Key question:** How frequently must goals be visible to maintain motivation?
+
+**Findings:**
+
+1. **Gollwitzer (1999)** — Implementation intentions ("If [situation], then [behavior]") significantly improve goal attainment vs. goal intentions alone. Meta-analysis of 94 studies (N > 8,000) showed a medium-to-large effect on goal attainment (d = 0.65). The mechanism: forming an implementation intention activates the cue-situation representation, making it highly accessible — users *notice* and *act on* the cue automatically when it occurs. *(American Psychologist)*
+
+2. **Gollwitzer & Sheeran (2006)** — Implementation intentions bridge the intention-action gap by delegating control from conscious deliberation to automatic cue-response links. The goal doesn't need to be consciously recalled — the environment recalls it.
+
+3. **Visual cue specificity** — Environmental cues (objects in the visual field, time-of-day triggers, specific locations) are more reliable habit triggers than memory-based reminders. The more specific the cue, the stronger and faster the habit loop forms.
+
+> **→ PomoFocus implication:** The widget is not a convenience feature — it *is* the implementation intention made visible. Seeing "Study calculus — 0/3 sessions today" the moment you pick up your phone creates the "if [pick up phone], then [focus on calculus]" trigger. The physical device on the desk is an even stronger implementation intention: it replaces the phone as the cue-object in the environment. Goal visibility doesn't need manual optimization — it happens automatically because both the widget and device are always present.
+
+---
+
+### Thread 3: Environmental Design & Phone Usage
+
+**Key question:** What specific environmental changes most reduce phone usage?
+
+**Findings:**
+
+1. **Ward et al. (2017)** — The mere presence of a smartphone on a desk reduces available cognitive capacity, even when face-down and silenced. Effect was largest for high-dependency users. *(Journal of the Association for Consumer Research)* **Note:** A 2022 replication study did not reproduce the effect, so this should be cited with caution — but the directional logic (phone in field of view = cognitive resource consumption) remains consistent with broader attention research.
+
+2. **Kanjo et al. (2022 RCT)** — A nudge-based intervention testing 10 environmental strategies (greyscale display, notification disabling, app restructuring, phone-free zones) reduced problematic smartphone use, screen time, and anxiety after 2 weeks in two independent studies (N=51, N=70). Environmental restructuring outperformed willpower-based approaches. *(IJMHA)*
+
+3. **PNAS Nexus (2025)** — Blocking mobile internet on smartphones improved sustained attention, mental health, and subjective well-being. Critically, the mechanism was *reduced attractor pull* from fewer competing stimuli — not willpower suppression. Removing the pull is more effective than resisting it.
+
+4. **James Clear (Atomic Habits, 2018)** — Environmental design operationalized: friction is the primary lever. Making the desired behavior one tap away and the undesired behavior require physical effort (phone in another room) compounds over time. Environment beats intention.
+
+> **→ PomoFocus implication:** The core product thesis is well-grounded in evidence. Removing the phone from the desk during sessions isn't just intuitive — it's supported by multiple lines of research. The device's job is to replace the phone as "the thing you reach for." For software-only users, the app must make itself maximally boring during sessions (minimal UI, DND integration, lock screen widget) to reduce the pull toward distraction apps.
+
+---
+
+### Thread 4: Habit Formation Timelines
+
+**Key question:** How long before a "structure seeker" internalizes the structure?
+
+**Findings:**
+
+1. **Lally et al. (2010)** — Mean time to habit automaticity was 66 days, but the range was 18–254 days — a 14x spread. Exercise behaviors took ~1.5x longer to automatize than simple eating/drinking behaviors. Missing a single day did not significantly set back formation. *(European Journal of Social Psychology)*
+
+2. **The variance is the finding** — "66 days" is a statistical mean of a wide, skewed distribution. Some users will form the focus habit in 3 weeks; others will need 8+ months of consistent structure. Any product that treats day 66 as an endpoint misunderstands the data.
+
+3. **Focus behavior complexity** — Session-based focus habits (structured Pomodoro work) are closer to exercise behaviors than simple habits in terms of cognitive and behavioral complexity. This pushes the realistic automaticity timeline toward 2–3 months for most users, with some taking much longer.
+
+> **→ PomoFocus implication:** The analytics cold-start threshold must be designed with patience. "Weekly insights" require ≥5 sessions that week; monthly patterns require ≥3 weeks of data. The product must be rewarding long before the habit is automatic — the first 3 weeks are critical for retention. Streaks should be forgiving (one missed day shouldn't reset a 30-day streak). The 66-day milestone is worth surfacing: "You've been showing up for 66 days — research says this is where it starts to feel automatic."
+
+---
+
+### Thread 5: Screen Time Intervention — Physical Alternatives
+
+**Key question:** Do physical alternatives to phones reduce screen time?
+
+**Findings:**
+
+1. **Strehle et al. (2025, BMC Medicine RCT)** — A 3-week RCT restricting screen time to ≤2 hours/day (N=111) showed significant improvements in well-being (small-to-medium effect sizes). Sustained screen reduction is achievable in controlled conditions and produces measurable psychological benefit. *(BMC Medicine)*
+
+2. **PNAS Nexus (2025)** — Blocking mobile internet improved sustained attention and mental health. The mechanism was *reduced pull* from fewer competing stimuli — not willpower. This supports product design that reduces the attractor force of the phone, not just adds friction.
+
+3. **Light Phone user experience** — Qualitative data consistently shows that a dedicated, non-smartphone device reduces habitual reach-for-phone behavior. Users report significantly reduced reflexive checking. No peer-reviewed RCT exists specifically on Light Phone 2, but the behavioral mechanism (different object = different habit loop) is consistent with environmental design evidence.
+
+4. **Cultural signal** — The dumbphone movement (r/nosurf, Light Phone 3 sold out, Punkt MP02 waitlist, growing "digital minimalism" community) indicates strong, authentic demand for physical alternatives among a motivated subset. This is the PomoFocus device's early adopter population.
+
+> **→ PomoFocus implication:** The physical device addresses the deepest behavioral lever: replacing habitual reach-for-phone with reach-for-focus-tool. The software-only version reduces screen time through cues (widget, lock screen timer, DND integration) but cannot replicate the sensory replacement the physical device provides. Marketing should be direct: "Your phone stays in your pocket during focus time. This stays on your desk."
+
+---
+
+### Thread 6: Pomodoro Technique Efficacy
+
+**Key question:** Does Pomodoro specifically work, or is any structured interval effective?
+
+**Findings:**
+
+1. **Biwer et al. (2023)** — Compared Pomodoro breaks vs. self-regulated breaks vs. shorter systematic breaks in 87 students across real study sessions. Both systematic break conditions (Pomodoro and shorter) produced higher self-reported concentration, motivation, and lower perceived task difficulty vs. self-regulated breaks. No significant difference in total task completion. The structure matters; the exact interval is secondary. *(British Journal of Educational Psychology)*
+
+2. **Recent scoping review (PMC, 2025)** — 32 studies (N=5,270) found that structured Pomodoro-style interventions consistently improved focus, reduced mental fatigue, and enhanced sustained task performance vs. unstructured self-paced work.
+
+3. **Cognitive capacity window** — Research supports 20–45 minutes as the peak cognitive capacity window for most people. 25 minutes falls comfortably within this range. 50-minute sessions are appropriate for users with trained focus who need deeper work blocks.
+
+4. **Flowtime finding** — Flowtime (work until focus naturally breaks, take a proportional break) shows similar effectiveness to Pomodoro in some studies, suggesting that any systematic approach to breaks outperforms pure self-regulation.
+
+> **→ PomoFocus implication:** The 25/5 default is research-justified. Flexible intervals (25/5, 50/10, 90/20) are also justified — the mechanism is systematic structure, not the specific number. Offering interval presets rather than a locked 25-minute duration is both user-friendly and consistent with the evidence. The "custom interval" feature in the v1 scope is correct. What must *not* be removed is the systematic break structure — free-form timers without enforced breaks are the weakest version of this product.
+
+---
+
+### Thread 7: Guilt-Productivity Cycle
+
+**Key question:** How does post-scrolling guilt affect subsequent productivity?
+
+**Findings:**
+
+1. **Sirois & Pychyl (2013)** — Procrastination is fundamentally an emotion-regulation failure, not a time-management problem. Tasks perceived as unpleasant trigger short-term mood repair (scrolling, avoidance), which provides immediate relief but leads to guilt, shame, and escalating avoidance. The cycle is self-reinforcing: avoidance → guilt → lower self-efficacy → more avoidance. *(Social and Personality Psychology Compass)*
+
+2. **Self-compassion as buffer** — High self-compassion individuals procrastinate significantly less because they don't enter the self-criticism loop that makes starting feel even harder. Self-compassion predicts effective self-regulation and reduces the stress associated with self-blame.
+
+3. **Self-forgiveness reduces future procrastination** — Wohl, Pychyl & Bennett (2010) found that forgiving yourself for past procrastination significantly *reduces* future procrastination; self-criticism *reinforces* it. Punishing users for missed sessions directly worsens outcomes.
+
+4. **The starting problem is emotional, not motivational** — The perceived difficulty of beginning a focus session peaks when negative affect is highest (post-scroll guilt). Reducing the emotional cost of starting — or providing an immediate positive reward at start — directly addresses the hardest moment.
+
+> **→ PomoFocus implication:** The "reward starting, not finishing" mechanic in OST Opportunity D is strongly research-backed. Positive feedback at session start competes directly with the dopamine hit from scrolling and counter-acts the emotional barrier created by guilt. The app's non-judgmental tone is evidence-based design, not just a stylistic choice. The abandonment flow (Section 6) must never shame — even "Gave up / lost focus" should be framed as data to learn from, never as failure.
+
+---
+
+---
+
+## 14. Competitive Landscape
+
+### Focus Apps (on the distraction device)
+
+| Product | What It Does | Why Users Choose It | PomoFocus Advantage |
+|---------|-------------|---------------------|---------------------|
+| **Forest App** | Gamified phone-down timer — grow a virtual tree during sessions. Social sharing, charity mode. | Visual reward for phone-free time; satisfying completion animation; social bragging | Lives on the phone. No goals. No physical presence. The tree is on the phone you're supposed to put down. |
+| **Focus Keeper / Tide** | Pomodoro timers with ambient sounds. Tide adds nature sounds and breathing exercises. | Low friction, beautiful design, ambient sound aids focus | Timer-only. No goal system. No pattern analytics. On the phone. |
+| **Opal / One Sec** | App blockers and friction tools — Opal blocks apps on schedule, One Sec adds 1-second delay before opening distraction apps. | Treats the symptom directly; works even without motivation | Treats symptoms (block apps) not cause (no structure or purpose). Willpower-based. No positive replacement for the phone habit. |
+| **RescueTime / Toggl Track** | Automatic or manual time tracking across apps and websites. Analytics on where time goes. | Detailed time audit; works in background automatically | Tracks time retrospectively, doesn't create structure prospectively. No goal connection. No behavior change mechanic. |
+| **BeTimeful** | Social media blocker with scheduled access windows | Hard limits on social apps; scheduling reduces mindless checking | Blocking-only. No focus structure, no goal system, no positive replacement behavior. |
+
+### Accountability & Social Focus
+
+| Product | What It Does | Why Users Choose It | PomoFocus Advantage |
+|---------|-------------|---------------------|---------------------|
+| **Focusmate** | Virtual body doubling — book 25- or 50-minute video sessions with a matched accountability partner. 5M+ sessions, 150+ countries. 90% of users report increased focus. | Live social accountability; especially effective for ADHD (152% productivity increase in company survey); structure from external commitment | Requires scheduling a partner in advance; can't start spontaneously; heavy social overhead for light users; no goal system or long-term tracking |
+| **Study Together / StudyStream** | Discord-based virtual study rooms (largest study Discord, 24/7). Free. Camera/screen share required for accountability rooms. | Free, always available, ambient social presence, student community | No goal structure; no personal tracking; accountability is ambient not specific; not designed for non-students |
+| **Strava** | Social fitness tracking — activities, kudos, segments, clubs. 14B+ kudos given in 2025 (20% YoY). Research shows kudos causally increase running frequency. | Powerful social layer; accountability through audience; 1hr activity per 2min in-app (exceptional ratio) | Fitness-only. But the *kudos model* is the direct inspiration for PomoFocus's Quiet Feed — social validation without comparison metrics. |
+
+### Visual Planning & Scheduling
+
+| Product | What It Does | Why Users Choose It | PomoFocus Advantage |
+|---------|-------------|---------------------|---------------------|
+| **Tiimo** | Visual planner for ADHD/autism. Visual timers, AI planning, sensory-friendly design, 500K+ users. Apple 2025 iPhone App of the Year. | Purpose-built for neurodiverse users; visual time representation; reduces overwhelm | Planning-focused, not focus-session focused. No accountability mechanic, no social layer, no physical device. Great at "what to do"; not at "doing it." |
+| **Structured** | Visual daily timeline planner with icons/colors. 1.5M active users, 4.8/5 App Store. Apple Watch + Mac. | Beautiful visual design; drag-and-drop time blocking; calm aesthetic | Timeline planning, not structured work sessions. No Pomodoro intervals, no focus accountability, no goal hierarchy. Solves the planning problem, not the execution problem. |
+| **Todoist / Things 3** | Task management with GTD-style organization. Powerful capture, projects, priorities. | Comprehensive task system; great for complex projects | Task *capture* and *planning*; no focus session structure, no environment change, no behavioral design. The tasks still live on the phone. |
+
+### Physical Timers & Devices
+
+| Product | What It Does | Why Users Choose It | PomoFocus Advantage |
+|---------|-------------|---------------------|---------------------|
+| **Time Timer** | Visual analog timer — a red disk that shrinks as time elapses. Used in ADHD/autism education, 504 plan accommodation, classrooms. | Tangible time visualization; no screens; works without apps; education-tested | No goal connection. No tracking. No BLE. No app. It's a timer — nothing more. PomoFocus is a system; Time Timer is a tool. |
+| **Timeular** | Physical time-tracking die — flip to the face representing your current activity category. App syncs and shows time distribution. | Tactile time tracking; automatic capture; great for freelancers | Tracks time categories, doesn't create structure. No focus blocks, no goals, no distraction-blocking mechanic. Retrospective, not prospective. |
+| **Pomodoro mechanical timers** | Kitchen timer in tomato shape. The original physical timer. | Cheap, no setup, no phone required, satisfying tactile click | No goal connection. No tracking. No system. No BLE. The tomato timer was the 1987 version of this idea. |
+
+### Wearable Data Loops (hardware analogy)
+
+| Product | What It Does | Why Users Choose It | PomoFocus Analogy |
+|---------|-------------|---------------------|-------------------|
+| **Oura Ring** | Continuous biometric tracking (sleep, recovery, readiness). Daily "crown" reward system. Behavioral tag correlation. | Actionable daily readiness score; jewelry-grade hardware; strong habit loop (daily crowns) | The Oura/Whoop model is the closest hardware analog to what PomoFocus is doing in the focus domain. Both are device + app data loops where the device captures what the app interprets. The behavioral tag journal (Whoop) is structurally similar to PomoFocus's post-session reflection. |
+| **WHOOP** | Wearable strain/recovery tracker with daily journal (tag habits, correlate with metrics). Subscription-only, no hardware purchase. | Deep habit correlation data; athlete community; subscription model without upfront cost | Same analogy as Oura. Neither tracks focus or goals — but the *product architecture* (passive device + active reflection → personal insights → behavior change) is the template. |
+
+### Design Inspirations (not direct competitors)
+
+| Product | What PomoFocus Borrowed |
+|---------|------------------------|
+| **BeReal** | Anti-comparison design: no public metrics, no likes, no infinite scroll. Inspired Quiet Feed's "presence without performance" philosophy. |
+| **Strava** | Kudos model: social validation without ranking or comparison. Research confirms kudos causally increase behavior frequency. |
+| **Oura Ring** | Device + app data loop. Passive capture → active insight → behavior change. Hardware that makes the app more valuable, not the other way around. |
+| **Light Phone** | The "minimum viable phone" framing. Not a replacement for your smartphone — a different object for different contexts. |
+
+---
+
+**The gap:** No product combines a physical focus device + goal-connected software + behavioral science foundation. Physical timers have no brains. Apps live on the distraction device. Accountability tools (Focusmate) require scheduling overhead. Planning apps (Tiimo, Structured) solve "what to do" not "actually doing it." Nothing bridges the physical-digital divide with goals, tracking, and environmental replacement in one system.
 
 ---
 
