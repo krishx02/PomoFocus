@@ -18,17 +18,31 @@ This belief is not new. It runs through the greatest designers of the last centu
 
 ### 1. Ryo Lu — "It's All the Same Thing"
 
-**Background:** Head of Design at Cursor. Previously at Notion and Stripe. Built ryOS (a personal operating system project) entirely in Cursor. His work sits at the intersection of design, engineering, and creative expression.
+**Background:** Head of Design at Cursor. Previously an early designer at Notion and Stripe (also Asana). Born in China, raised in Canada. Built ryOS — a retro-styled operating system — entirely in Cursor as a demonstration of soulful, AI-assisted creation. His stated mission: *"I make a world where anyone can make software."*
 
-**Core philosophy:** Ryo sees the world as fundamentally modular — simple rules and patterns recombining to create emergent complexity. Design is consciously participating in this process. He describes working in code as "sculpting clay or finding David in the marble" — the design already exists in the material, and the designer's job is to reveal it.
+**Core philosophy:** Ryo sees the world as fundamentally modular — simple rules and patterns recombining to create emergent complexity. Design is consciously participating in this process through **decomposition and recomposition**: taking something complex, breaking it into fundamental components, understanding the relationships between parts, and rebuilding it in a form that is simpler, more powerful, or reveals something previously hidden. He describes working in code as "sculpting clay or finding David in the marble" — the design already exists in the material, and the designer's job is to reveal it.
+
+His aesthetic aspiration for software: *"The craftsmanship of German cameras, the playfulness of Japanese toys, and the mass appeal of Coca-Cola."* — precision, delight, and universal accessibility working together.
 
 **Key principles:**
-- **"It's all the same thing"** — Design, engineering, art, and craft are not separate disciplines. They are different views of the same underlying act: making something that works and feels right. When the boundaries dissolve, the work gets better.
-- **Soulfulness over polish** — A product should feel like a person made it with care, not like a committee approved it. The best digital products have the warmth of handmade objects.
-- **The material is the medium** — At Notion, the material was blocks. At Cursor, the material is code itself. Understanding the material deeply — not fighting it — produces design that feels native and inevitable.
-- **Design as discovery, not decoration** — The design is already latent in the problem. The designer's job is to find it, not to impose something on top of it.
+- **"It's all the same thing"** — Design, engineering, art, and craft are not separate disciplines. They are different views of the same underlying act: making something that works and feels right. When the boundaries dissolve, the work gets better. Echoes Zhuangzi's Daoist philosophy of seeing past artificial distinctions to the underlying unity of things.
+- **Tenderness is care made visible** — Understand what people need and are frustrated with. Build tools that amplify their strengths while erasing drudgery. Good design is generous — not sentimental, but structurally generous. The emotional connection is not decoration layered on top; it is the structural outcome of designing with soul.
+- **Stay true to the medium** — *"When you optimize for visual consistency over interaction fidelity, you lose the soul in each medium."* Each input method (touch, mouse, keyboard, voice) has its own physics and affordances. Each platform demands its own design language. Forcing uniformity kills the soul.
+- **Earned simplicity** — *"The swan glides elegantly because it's paddling like hell underneath. Easy is what comes after hard."* Simple design is the result of wrestling with complexity and compressing it into something digestible. It is never the starting point.
+- **Greatness is emergent, not planned** — *"You always start with shit. But because it exists, it can be improved."* Quality appears through iteration, not from a grand plan. Excellence looks inevitable only in retrospect.
+- **Systems over features** — *"A product solves one problem. A system gives you the building blocks to solve infinite problems."* He is drawn to building blocks that enable infinite recombination rather than fixed solutions.
+- **Pro-grade tools with beginner packaging** — Never dumb things down. Give users powerful tools with discoverable interfaces. Let users surprise you; treat their growth as a journey you accompany with strategic affordances.
 
-**Why this matters for PomoFocus:** The physical device, the app, the widget, the watch — they're all the same thing expressed in different materials. The design should feel like it was *found* in each material, not ported between them. An e-ink screen has different soul than an OLED. Respect the medium.
+**Key quotes:**
+- *"Design is philosophy because it forces you to ask: what is this thing really?"*
+- *"Tenderness is care made visible."*
+- *"You always start with shit. But because it exists, it can be improved."*
+- *"When you optimize for visual consistency over interaction fidelity, you lose the soul in each medium."*
+- *"AI is trained on all public knowledge, but you're trained on what you've experienced and how you respond: your taste, judgment, how you feel. That gap is what makes you distinct and valuable."*
+
+**Why this matters for PomoFocus:** The physical device, the app, the widget, the watch — they're all the same thing expressed in different materials. The design should feel like it was *found* in each material, not ported between them. An e-ink screen has different soul than an OLED. Respect the medium. And the product should embody tenderness — visible care for the user who is struggling to build structure in their life. Not sentimental. Structurally generous.
+
+**Sources:** [Dialectic/Substack interview](https://jdahl.substack.com/p/cursors-ryo-lu-on-soulful-design), [Dive Club deep dive](https://www.dive.club/deep-dives/ryo-lu-cursor), [ryo.lu](https://ryo.lu/), [work.ryo.lu](https://work.ryo.lu/)
 
 ---
 
