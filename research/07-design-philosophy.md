@@ -468,7 +468,18 @@ When discussing PomoFocus design, use these terms with shared meaning:
 - **Braun** — SK4, ET66, T3, the Braun design collection
 
 ### Movements
-- **Calm Technology** — Amber Case, [calmtech.com](https://calmtech.com), *Calm Technology* (2015)
-- **Wabi-Sabi** — Leonard Koren, *Wabi-Sabi: for Artists, Designers, Poets & Philosophers* (1994)
+- **Calm Technology** — Amber Case, [calmtech.com](https://calmtech.com), *Calm Technology* (2015); Calm Tech Institute evaluation categories at [calmtech.institute](https://www.calmtech.institute)
+- **Wabi-Sabi** — Leonard Koren, *Wabi-Sabi: for Artists, Designers, Poets & Philosophers* (1994); Soetsu Yanagi, *The Unknown Craftsman* (1972)
 - **Shaker Design** — *Shaker: Life, Work, and Art* (June Sprigg, 1991)
 - **Scandinavian Design** — Charlotte & Peter Fiell, *Scandinavian Design* (2002)
+- **Material Honesty** — John Ruskin, *The Seven Lamps of Architecture* (1849); Frank Lloyd Wright's organic architecture
+- **Quiet Luxury** — The Row, Brunello Cucinelli, Muji as design exemplars of quality through restraint
+
+### Evaluation Frameworks (used by the `/design-review` skill)
+- **Jakob Nielsen** — [10 Usability Heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/) (1994, updated 2020)
+- **Harry Brignull** — [Deceptive Patterns taxonomy](https://www.deceptive.design/types); Mathur et al. (2019) classification from 53,000 product pages
+- **WCAG 2.2** — [Web Content Accessibility Guidelines](https://www.w3.org/WAI/WCAG22/quickref/), AA as minimum standard
+- **Apple HIG** — [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines) for iOS, watchOS, macOS
+- **Material Design 3** — [m3.material.io](https://m3.material.io/) for Android design patterns
+- **Critical Design Strategy** — Roberts et al. (2026, IEEE TVCG), 3-stage critique method with principle weighting
+- **Luke Wroblewski** — ["Obvious Always Wins"](https://www.lukew.com/ff/entry.asp?1945=), making critical features visible over hidden
