@@ -66,7 +66,7 @@ pnpm nx lint @pomofocus/mobile
 - `apps/web/` — web app
 - `apps/vscode-extension/` — VS Code extension
 - `apps/mcp-server/` — MCP server
-- `native/mac-widget/` — Swift/Xcode project (separate project entirely)
+- `native/apple/mac-widget/` — Swift/Xcode project (separate project entirely)
 - `.github/workflows/` — CI configuration
 
 ## On Completion

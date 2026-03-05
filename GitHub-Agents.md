@@ -128,7 +128,7 @@ for up to 10 minutes on iOS 17+.
 
 ## Out of Scope
 [Mandatory. Agents over-reach. List what must NOT change.]
-Do NOT modify `apps/web/` or `native/mac-widget/`.
+Do NOT modify `apps/web/` or `native/apple/mac-widget/`.
 Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 
 ## Test Plan
@@ -198,7 +198,7 @@ which causes it to stop firing when app enters background.
 - [ ] Commit message starts with "fix:"
 
 ## Out of Scope
-Do NOT modify `apps/web/`, `native/mac-widget/`, or any Android files.
+Do NOT modify `apps/web/`, `native/apple/mac-widget/`, or any Android files.
 Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 
 ## Test Plan
@@ -372,7 +372,7 @@ Each platform has different tools, test commands, file structures, and gotchas. 
 | `shared-developer.md` | Cross-platform TypeScript | `packages/` | `pnpm nx affected --target=test` |
 | `web-developer.md` | Next.js web app | `apps/web/` | `pnpm nx test @pomofocus/web` |
 | `mobile-developer.md` | Expo (iOS + Android) | `apps/mobile/` | `pnpm nx test @pomofocus/mobile` |
-| `ios-developer.md` | SwiftUI widget | `native/mac-widget/` | `xcodebuild test -scheme PomoFocus` |
+| `ios-developer.md` | SwiftUI: macOS widget + iOS widget + watchOS | `native/apple/` | `xcodebuild test -scheme PomoFocusMac` |
 | `vscode-developer.md` | VS Code extension | `apps/vscode-extension/` | `pnpm nx test @pomofocus/vscode-extension` |
 | `mcp-developer.md` | MCP server | `apps/mcp-server/` | `pnpm nx test @pomofocus/mcp-server` |
 
@@ -492,7 +492,7 @@ Auto-enforce agent-ready format on every new issue. See `.github/ISSUE_TEMPLATE/
 | `.github/workflows/claude.yml` | `@claude` comment | Any |
 | `.github/workflows/deploy-web.yml` | Push to main, `apps/web/**` changes | Web → Vercel |
 | `.github/workflows/mobile.yml` | Push to main, `apps/mobile/**` changes | iOS + Android → EAS |
-| `.github/workflows/mac-widget.yml` | Push to main, `native/mac-widget/**` | macOS → Xcode Cloud |
+| `.github/workflows/mac-widget.yml` | Push to main, `native/apple/mac-widget/**` | macOS → Xcode Cloud |
 | `.github/workflows/vscode.yml` | Tag push (`v*`) | VS Code Marketplace |
 
 ### What Agents Must Know About CI
@@ -533,7 +533,7 @@ pnpm nx affected --target=lint --base=origin/main --head=HEAD
 | `apps/mobile` | Jest + Detox/Maestro | `pnpm nx test @pomofocus/mobile` | 70% |
 | `apps/vscode-extension` | Jest | `pnpm nx test @pomofocus/vscode-extension` | 70% |
 | `apps/mcp-server` | Vitest | `pnpm nx test @pomofocus/mcp-server` | 80% |
-| `native/mac-widget` | XCTest | `xcodebuild test -scheme PomoFocus` | 70% |
+| `native/apple/mac-widget` | XCTest | `xcodebuild test -scheme PomoFocusMac` | 70% |
 
 ### Test-First Rule
 

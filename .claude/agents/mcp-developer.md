@@ -81,7 +81,7 @@ apps/mcp-server/
 - `apps/web/` — web app
 - `apps/mobile/` — Expo app
 - `apps/vscode-extension/` — VS Code extension
-- `native/mac-widget/` — Swift/Xcode project
+- `native/apple/mac-widget/` — Swift/Xcode project
 - `.github/workflows/` — CI configuration
 
 ## On Completion

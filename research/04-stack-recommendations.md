@@ -286,7 +286,25 @@ Use **Expo (React Native, bare workflow or with custom dev client)** for iOS and
 
 ---
 
-## 5. Desktop / Mac Widget — Tauri vs Electron vs SwiftUI
+## 5. Native Apple Targets — macOS Widget, iOS Widget, Apple Watch
+
+### Overview
+
+PomoFocus targets three native Apple surfaces, all built in Swift/SwiftUI and housed in a single Xcode workspace at `native/apple/`:
+
+| Target | Framework | Min OS | Location |
+|--------|-----------|--------|----------|
+| macOS menu bar widget | SwiftUI + MenuBarExtra | macOS 13 | `native/apple/mac-widget/` |
+| iOS home screen widget | WidgetKit + AppIntents | iOS 17 | `native/apple/ios-widget/` |
+| Apple Watch app | SwiftUI + WatchKit | watchOS 10 | `native/apple/watchos-app/` |
+
+All three share timer state via a common App Group (`group.com.pomofocus.shared`) and Supabase Realtime.
+
+See sections 5b and 5c for iOS widget and watchOS details.
+
+---
+
+## 5a. Desktop / Mac Widget — Tauri vs Electron vs SwiftUI
 
 ### The Requirements
 - macOS menu bar widget showing current Pomodoro timer
@@ -352,6 +370,125 @@ If Swift is a hard constraint (TypeScript-only team), use **Tauri v2** as the ru
 - https://developer.apple.com/documentation/swiftui/
 - https://developer.apple.com/documentation/widgetkit
 - https://github.com/supabase/supabase-swift
+
+---
+
+## 5b. iOS Home Screen Widget (WidgetKit)
+
+### The Requirements
+- Show current Pomodoro timer state on the iOS home screen and Smart Stack
+- Update when the timer state changes (within WidgetKit's system-controlled cadence)
+- Interactive controls to start/pause (iOS 17+ interactive widgets)
+- Share state with the Expo app running on the same device
+
+### Architecture
+
+iOS home screen widgets are **not live views** — they are snapshots driven by a `TimelineProvider`. The system decides when to refresh them (approximately hourly unless the app explicitly triggers a reload).
+
+**State sharing via App Group:**
+```swift
+// Shared UserDefaults between Expo app and widget extension
+let sharedDefaults = UserDefaults(suiteName: "group.com.pomofocus.shared")
+
+// Written by Expo app (via react-native module or Expo App Extension)
+sharedDefaults?.set(timerState.secondsRemaining, forKey: "secondsRemaining")
+sharedDefaults?.set(timerState.endDate.timeIntervalSince1970, forKey: "endDate")
+
+// Read by widget TimelineProvider
+let endDate = Date(timeIntervalSince1970: sharedDefaults?.double(forKey: "endDate") ?? 0)
+```
+
+**Triggering a widget reload from Expo:**
+```typescript
+// From the Expo app, call a native module that calls:
+// WidgetCenter.shared.reloadTimelines(ofKind: "PomoFocusWidget")
+```
+
+**Interactive widgets (iOS 17+):**
+- Use `AppIntents` (`StartSessionIntent`, `PauseSessionIntent`) for `Button`/`Toggle` controls
+- Intents run in a background extension process — they must update shared state and call `WidgetCenter.shared.reloadAllTimelines()`
+
+### Key Constraints
+- No live timer tick in widget — use `Text(.timerInterval:)` for a system-rendered countdown that updates automatically without reloads
+- Widget memory limit: ~30MB — keep dependencies minimal
+- Widget cannot access Supabase Realtime directly; it reads shared UserDefaults state
+- Minimum: iOS 17 (for interactive widgets); iOS 16 for non-interactive WidgetKit
+
+### Location in Repo
+`native/apple/ios-widget/` — a WidgetKit extension target in the Apple Xcode workspace.
+
+**Sources:**
+- https://developer.apple.com/documentation/widgetkit
+- https://developer.apple.com/documentation/widgetkit/creating-a-widget-extension
+- https://developer.apple.com/documentation/appintents
+
+---
+
+## 5c. Apple Watch App (watchOS)
+
+### The Requirements
+- Show current Pomodoro timer on the wrist
+- Allow starting/pausing sessions from the watch
+- Continue counting in background (background timer)
+- Complications on watch faces and Smart Stack (watchOS 10+)
+- Sync with the iPhone app (and optionally with Supabase directly for cellular watches)
+
+### Architecture Decision: Companion-Only vs. Independent
+
+| | Companion-only | Independent (cellular) |
+|---|---|---|
+| **Connectivity** | Requires paired iPhone nearby (`WatchConnectivity`) | Connects directly to Supabase via WiFi/cellular |
+| **Complexity** | Lower — no direct backend auth needed | Higher — full auth flow on watch |
+| **Cost** | No extra infra | Same Supabase tier |
+| **MVP fit** | ✅ Yes | ❌ Defer to later phase |
+
+**Recommendation:** Ship companion-only for MVP. Add independent operation (cellular/WiFi Supabase Realtime) in Phase 3.
+
+### Background Timer
+
+`WKExtendedRuntimeSession` keeps the watch app running in the background (duration limits vary by session type — see Apple's [WKExtendedRuntimeSession docs](https://developer.apple.com/documentation/watchkit/wkextendedruntimesession)) — perfect for a standard Pomodoro focus session:
+
+```swift
+let session = WKExtendedRuntimeSession()
+session.delegate = self
+session.start()
+// Session stays active until invalidated — duration limits vary by session type
+```
+
+For long break sessions, verify the applicable duration limit in the Apple docs linked above and schedule a local notification if the session needs to extend beyond it.
+
+### Complications (watchOS 10+ Smart Stack)
+
+Build complications via WidgetKit (same `TimelineProvider` pattern as the iOS widget). Supports:
+- Circular, rectangular, and corner complication families
+- Smart Stack widget on watchOS 10 (shows when the wrist is raised during a session)
+
+### WatchConnectivity (Companion Mode)
+
+```swift
+// Watch side — receive timer state from iPhone
+func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+    let secondsRemaining = message["secondsRemaining"] as? Int ?? 0
+    // Update local timer display
+}
+
+// iPhone side (via Expo native module) — send state to watch
+WCSession.default.sendMessage(["secondsRemaining": state.secondsRemaining], replyHandler: nil)
+```
+
+### Key Constraints
+- watchOS apps have strict memory limits (~60MB for extension)
+- No URLSession background transfers on watchOS (use `WatchConnectivity` or foreground requests)
+- Minimum: watchOS 10 (Xcode 15+) for Smart Stack complications via WidgetKit
+- Watch app must have a paired iOS app on the same Apple Developer account
+
+### Location in Repo
+`native/apple/watchos-app/` — a watchOS app target in the Apple Xcode workspace.
+
+**Sources:**
+- https://developer.apple.com/documentation/watchkit
+- https://developer.apple.com/documentation/watchconnectivity
+- https://developer.apple.com/documentation/widgetkit/creating-complications-for-apple-watch
 
 ---
 
@@ -590,7 +727,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'start_focus_session',
-      description: 'Start a new 25-minute focus session',
+      description: 'Start a new focus session',
       inputSchema: {
         type: 'object',
         properties: {
