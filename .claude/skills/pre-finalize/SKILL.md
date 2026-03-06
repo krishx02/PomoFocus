@@ -120,7 +120,7 @@ Build verification: SKIPPED — no build targets configured yet
 
 ## Step 4 — Run Integration and E2E Tests
 
-> **Tool choices** are documented in [`research/08-testing-frameworks.md`](../../research/08-testing-frameworks.md) and [`technical-design-decisions.md`](../../technical-design-decisions.md). Playwright (web), Maestro (mobile), @vscode/test-electron (VS Code), Swift Testing + XCTest (Apple), Vitest (all TypeScript).
+> **Tool choices** are documented in [`research/08-testing-frameworks.md`](../../research/08-testing-frameworks.md) and [`technical-design-decisions.md`](../../technical-design-decisions.md). Playwright (web E2E + visual regression + accessibility via axe-core), Maestro (mobile), @vscode/test-electron (VS Code), Swift Testing + XCTest (Apple), Vitest (all TypeScript + coverage via v8), Pact (API contracts, deferred).
 
 For each affected platform bucket, run the corresponding test command. **Before each command, check that the test infrastructure exists.** If it does not, skip with a clear message.
 
@@ -216,6 +216,67 @@ This catches downstream test failures in consumer packages. If Nx is not configu
 
 Record all results: which tests ran, which passed, which were skipped, which failed.
 
+## Step 4b — Visual Regression Tests
+
+If the `web` bucket is affected and Playwright E2E infrastructure exists:
+```bash
+# Playwright screenshot tests are part of the E2E suite (toHaveScreenshot assertions)
+# They run automatically as part of `pnpm nx e2e @pomofocus/web-e2e` in Step 4.
+# No separate command needed — just verify screenshot baselines are committed.
+if [ -d "apps/web-e2e" ] && find apps/web-e2e -name "*.png" -path "*snapshots*" 2>/dev/null | head -1 | grep -q .; then
+  echo "Visual regression: screenshot baselines found — validated as part of E2E"
+else
+  echo "SKIP: No screenshot baselines committed yet — visual regression not active"
+fi
+```
+
+For mobile (React Native Owl): skip until `apps/mobile/owl` directory exists.
+For Apple native targets: skip — visual testing is manual via Xcode previews.
+
+## Step 4c — Accessibility Tests
+
+If the `web` bucket is affected:
+```bash
+# Check if @axe-core/playwright is installed and accessibility tests exist
+if [ -d "apps/web-e2e" ] && (grep -rq "axe" apps/web-e2e/ 2>/dev/null || grep -q "axe-core" apps/web/package.json 2>/dev/null); then
+  echo "Accessibility: axe-core assertions found — validated as part of E2E"
+else
+  echo "SKIP: @axe-core/playwright not configured yet — accessibility tests not active"
+fi
+```
+
+Accessibility tests using `@axe-core/playwright` are expected to be embedded in the Playwright E2E suite (not a separate run). They execute as part of `pnpm nx e2e @pomofocus/web-e2e`.
+
+For mobile: skip until axe DevTools Mobile + Appium is configured.
+For Apple native: skip — rely on XCTest accessibility assertions + manual VoiceOver testing.
+
+## Step 4d — Code Coverage Check
+
+If any TypeScript bucket is affected and Vitest coverage is configured:
+```bash
+# Check if coverage is configured in any vitest config
+if grep -rq "coverage" vitest.config.* 2>/dev/null || grep -rq "coverage" packages/*/vitest.config.* 2>/dev/null || grep -rq "coverage" apps/*/vitest.config.* 2>/dev/null; then
+  pnpm nx affected --target=test --base=origin/main --head=HEAD -- --coverage
+else
+  echo "SKIP: Vitest coverage not configured yet (expects @vitest/coverage-v8)"
+fi
+```
+
+Coverage thresholds (75% lines/functions/statements, 70% branches) are enforced in each package's `vitest.config.ts`. The ratchet pattern means thresholds only increase over time.
+
+## Step 4e — API Contract Tests
+
+```bash
+# Pact contract tests — deferred until Cloudflare Workers API layer exists
+if [ -d "packages/api-client/pact" ] || grep -rq "pact" packages/api-client/package.json 2>/dev/null; then
+  pnpm nx test:pact @pomofocus/api-client
+else
+  echo "SKIP: Pact contract tests not configured yet — deferred until API layer exists"
+fi
+```
+
+Record all results from Steps 4-4e: which tests ran, which passed, which were skipped, which failed.
+
 ## Step 5 — Fix Loop
 
 If ALL tests passed (or were skipped), go to Step 6.
@@ -286,6 +347,10 @@ Integration / E2E tests:
   [platform]: PASS / SKIP (reason)
   ...
 
+Visual regression: PASS / SKIP (reason)
+Accessibility (axe-core): PASS / SKIP (reason)
+Code coverage: PASS / SKIP (reason) [include % if available]
+API contracts (Pact): PASS / SKIP (reason)
 Cross-package (nx affected): PASS / SKIP / N/A
 
 Fix attempts: [0 if clean, or N]

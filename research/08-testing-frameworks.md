@@ -8,6 +8,8 @@
 
 The testing tool landscape has shifted significantly in 2024-2026. **Playwright** has overtaken Cypress as the dominant web E2E framework. **Maestro** has emerged as the Expo-recommended mobile E2E tool, displacing Detox. Apple's **Swift Testing** framework (WWDC 2024) is the new standard for Swift unit/integration tests, though **XCTest** remains required for UI automation. **Vitest** has become the preferred test runner for modern TypeScript projects, outperforming Jest by 4-20x. VS Code extension testing remains standardized on Microsoft's **@vscode/test-electron**.
 
+Beyond the core E2E/integration layer: **Playwright screenshots** handle visual regression for web (with Percy available for team review workflows). **axe-core** (via `@axe-core/playwright`) is the industry standard for automated accessibility testing with zero false positives. **Pact** is the ThoughtWorks "Adopt"-tier tool for API contract testing between clients and backend. Code coverage should use **Vitest's v8 provider** with a ratchet pattern starting at 75%.
+
 **Summary table:**
 
 | Platform | E2E / Integration Tool | Unit Test Runner | Key Evidence |
@@ -181,3 +183,146 @@ All three Apple targets (macOS menu bar, iOS widget, watchOS app) use `xcodebuil
 - [Vitest vs Jest | Better Stack](https://betterstack.com/community/guides/scaling-nodejs/vitest-vs-jest/)
 - [Vitest vs. Jest | Hacker News discussion](https://news.ycombinator.com/item?id=42245442)
 - [Testing in 2026: Jest, React Testing Library, and Full Stack Testing Strategies](https://www.nucamp.co/blog/testing-in-2026-jest-react-testing-library-and-full-stack-testing-strategies)
+
+---
+
+## 6. Visual Regression Testing — Playwright Screenshots
+
+### Contenders
+
+1. **Playwright built-in screenshots** — `toHaveScreenshot()`, free, no SaaS
+2. **Chromatic** (Storybook team) — component-driven, Storybook-native, free for OSS
+3. **Percy** (BrowserStack) — AI-powered diffing, team review workflow, 5k free screenshots/month
+4. **Applitools Eyes** — enterprise AI diffing, premium pricing
+
+### Expert Recommendations
+
+**Playwright built-in:** Playwright's `toHaveScreenshot()` uses Pixelmatch for pixel-by-pixel comparison with configurable `maxDiffPixels` thresholds. Free, no third-party dependency, runs in CI natively. Best for developer-driven visual checks where a team review dashboard is not needed.
+
+**Chromatic:** Built by the Storybook team. Zero-friction integration with Storybook; captures every story as a visual test automatically. Free for open-source projects. Includes Page Shift Detection to reduce false positives. Best choice if you're already using Storybook for component development.
+
+**Percy:** AI-powered diffing reduces false positives from font rendering, anti-aliasing, and dynamic content. AI Visual Review Agent (launched late 2025) filters ~40% of false positives automatically and reduces review time by 3x. Free tier: 5,000 screenshots/month. Best for team workflows with design review.
+
+**React Native / Mobile:** React Native Owl (Formidable Labs/NearForm) provides visual regression testing for React Native on iOS and Android. For native Apple targets (SwiftUI), visual testing is limited to Xcode previews and manual screenshot comparison — no mature third-party tooling exists.
+
+### Decision
+
+**Playwright screenshots** for web E2E visual regression — free, CI-native, no external dependency. Escalate to **Percy** or **Chromatic** later if the team needs a visual review dashboard or AI-powered false-positive reduction. For mobile, defer to **React Native Owl** when the mobile app has stable UI. For Apple native targets, rely on Xcode previews and manual review — the surface area (menu bar widget, iOS widget, watch complication) is small enough that automated visual regression is not cost-effective yet.
+
+### Sources
+
+- [Visual comparisons | Playwright](https://playwright.dev/docs/test-snapshots)
+- [Visual tests | Storybook docs](https://storybook.js.org/docs/writing-tests/visual-testing)
+- [Percy vs Chromatic | Medium](https://medium.com/@crissyjoshua/percy-vs-chromatic-which-visual-regression-testing-tool-to-use-6cdce77238dc)
+- [Best Visual Regression Testing Tools for 2026 | Bug0](https://bug0.com/knowledge-base/visual-regression-testing-tools)
+- [GitHub: FormidableLabs/react-native-owl](https://github.com/FormidableLabs/react-native-owl)
+
+---
+
+## 7. Accessibility Testing — axe-core + @axe-core/playwright
+
+### Contenders
+
+1. **axe-core** (Deque Systems) — industry standard, zero false positives, open-source engine
+2. **Pa11y** — open-source CLI, built on axe-core, used by UK Gov Digital Service
+3. **Lighthouse** (Google) — built into Chrome DevTools, accessibility + performance audits
+
+### Expert Recommendations
+
+**axe-core (Deque Systems):** Detects ~57% of accessibility issues automatically with **zero false positives** — critical for CI pipelines where false positives block merges. Supports WCAG 2.1 AA, WCAG 2.2, Section 508, ADA standards. The `@axe-core/playwright` package provides an `AxeBuilder` class that integrates directly with Playwright tests for automated CI validation.
+
+**Pa11y:** Open-source, CLI-first, built on the same axe-core engine. Used by UK Government Digital Service. Optimized for large-scale automated scanning. Good alternative if you prefer CLI over Playwright integration.
+
+**Lighthouse:** Built into Chrome DevTools — zero setup for quick developer checks. Includes accessibility scoring alongside performance. Less comprehensive than axe-core but good for catching obvious issues during development.
+
+**ThoughtWorks Technology Radar (2025):** "Intelligent guided accessibility tests" are in the Assess ring — the radar recommends integrating automated accessibility checks into CI pipelines as standard practice.
+
+**Regulatory context:** The European Accessibility Act (EAA) took effect June 2025. EU businesses now face legal obligations for digital accessibility, with fines reaching hundreds of thousands of euros. This makes automated accessibility testing a compliance requirement, not just a best practice.
+
+**Critical limitation:** No automated tool catches more than ~40% of accessibility issues. Automated tools handle structural/HTML issues; manual testing is still required for screen reader behavior, keyboard navigation flow, color contrast perception, and cognitive load. The recommended approach: one automated tool in CI + periodic manual keyboard/screen reader spot-checks.
+
+### Decision
+
+**axe-core via `@axe-core/playwright`** for web accessibility in CI — zero false positives, Playwright-native, WCAG 2.2 compliant. For React Native mobile, **axe DevTools Mobile** (Deque) via Appium when mobile E2E infrastructure is mature. For Apple native targets, rely on **XCTest accessibility assertions** + manual VoiceOver testing. Run Lighthouse as an optional developer check, not a CI gate.
+
+### Sources
+
+- [Accessibility testing | Playwright](https://playwright.dev/docs/accessibility-testing)
+- [Best Free Accessibility Testing Tools Compared | inclly](https://inclly.com/resources/accessibility-testing-tools-comparison)
+- [axe DevTools for Mobile — React Native | Deque Docs](https://docs.deque.com/devtools-mobile/2025.7.2/en/react-native/)
+- [Intelligent guided accessibility tests | ThoughtWorks Tech Radar](https://www.thoughtworks.com/radar/techniques/intelligent-guided-accessibility-tests)
+
+---
+
+## 8. API Contract Testing — Pact
+
+### Contenders
+
+1. **Pact** — consumer-driven contracts, multi-language, PactFlow broker
+2. **OpenAPI + Prism** — specification-first validation, mock servers
+3. **Dredd** — validates API against OpenAPI/Swagger specs
+
+### Expert Recommendations
+
+**ThoughtWorks Technology Radar (2025):** Consumer-Driven Contract Testing is ADOPT tier. Pact is the recommended tool; PactFlow (managed broker) lowers barriers for complex API ecosystems.
+
+**Martin Fowler:** Consumer-driven contracts enable autonomous teams — providers fetch and run consumer tests in their pipeline to catch breaking changes immediately. Contract tests are most valuable when services are being defined, as consumers drive API design by expressing their needs as tests.
+
+**Modern approach (bi-directional testing):** Provider publishes OpenAPI spec to PactFlow; consumers publish Pact files. Both are validated together — no manual API test code needed in provider. PactFlow now offers AI-assisted test generation from natural language prompts.
+
+**For Supabase specifically:** No dedicated contract testing tooling exists. The recommended pattern:
+1. **Type generation from schema:** `npx supabase gen types typescript` regenerates TypeScript types from the database schema. Run in CI (nightly or on migration changes) to catch schema drift.
+2. **Pact contracts** for the layer between clients (iOS/web/Android) and Cloudflare Workers (the API edge).
+3. **OpenAPI + Prism** for mocking the Cloudflare Workers layer during development.
+
+### Decision
+
+**Pact** for consumer-driven contracts between mobile/web clients and Cloudflare Workers. **Supabase type generation** in CI (via GitHub Actions) to catch database schema drift. Defer Pact setup until the Cloudflare Workers API layer exists — before that, there are no contracts to test. Start with type generation from day one.
+
+### Sources
+
+- [Consumer-Driven Contract Testing | ThoughtWorks Tech Radar](https://www.thoughtworks.com/radar/techniques/consumer-driven-contract-testing)
+- [Martin Fowler: Consumer-Driven Contracts](https://martinfowler.com/articles/consumerDrivenContracts.html)
+- [Generating TypeScript Types | Supabase Docs](https://supabase.com/docs/guides/api/rest/generating-types)
+- [Pact Open Source Update — May 2025](https://docs.pact.io/blog/2025/05/28/pact-open-source-update-may-2025)
+
+---
+
+## 9. Code Coverage — Vitest v8 Provider + Ratchet Pattern
+
+### Expert Recommendations on Thresholds
+
+**Google (2019 research paper):** 60% = acceptable, 75% = commendable, 90% = exemplary. Measured at changeset level during code review across 1 billion lines of code.
+
+**Martin Fowler:** Coverage is a diagnostic metric, not a quality gate. 100% coverage does not guarantee quality. Recommends 60-80% as a practical range, with the understanding that the number itself matters less than the trend.
+
+**Kent C. Dodds:** Recommends 70-80% pragmatically. Key advice: "Write tests. Not too many. Mostly integration." Measure where you are now, set the threshold 5% below current, and increase quarterly. Focus on integration tests over unit tests for maximum confidence-per-line-of-test-code.
+
+### Vitest Coverage Setup
+
+**Provider choice:** Vitest supports both v8 (Chrome V8 engine coverage) and Istanbul (instrumentation-based). Since Vitest v3.2.0, AST-based coverage remapping makes v8 identical in accuracy to Istanbul. **Use v8** — it's faster.
+
+### The Ratchet Pattern
+
+Instead of a fixed threshold that incentivizes bogus tests, use a ratchet: the threshold can only go up, never down.
+
+1. Measure current coverage (e.g., 50%)
+2. Set CI threshold to 45% (5% below current)
+3. As teams improve coverage, the threshold follows
+4. Future PRs must maintain or exceed the threshold
+
+This prevents silent regression while avoiding the anti-pattern of writing assertion-free tests to hit an arbitrary number.
+
+**Tools:** `jest-ratchet` / `jest-coverage-ratchet` (adaptable to Vitest), SonarCloud quality gates, or a custom GitHub Action that compares PR coverage to the main branch.
+
+### Decision
+
+**Vitest v8 provider** (`@vitest/coverage-v8`) for all TypeScript packages. Start with **75% lines / 75% functions / 75% statements / 70% branches** as initial thresholds (Google's "commendable" tier). Adopt the **ratchet pattern** — once coverage exceeds the threshold, ratchet it up quarterly. Enforce in CI via `vitest run --coverage` with thresholds in `vitest.config.ts`.
+
+### Sources
+
+- [Coverage | Vitest Guide](https://vitest.dev/guide/coverage.html)
+- [Martin Fowler: Test Coverage](https://martinfowler.com/bliki/TestCoverage.html)
+- [Google Testing Blog: Code Coverage Best Practices](https://testing.googleblog.com/2020/08/code-coverage-best-practices.html)
+- [Kent C. Dodds: Write tests. Not too many. Mostly integration.](https://kentcdodds.com/blog/write-tests)
+- [Ratchets in software development | qntm.org](https://qntm.org/ratchet)
