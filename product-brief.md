@@ -774,20 +774,6 @@ These are areas where scope can silently expand. Set a time limit and move on if
 6. **Real-time presence (Library Mode)** — Can be polling-based (check every 30-60 seconds) rather than true WebSocket real-time. "Focusing" status doesn't need sub-second accuracy.
 7. **Offline-first architecture** — Local-first with background sync is the right architecture but can become an endless rabbit hole. Use Supabase's built-in real-time sync. Don't build a custom CRDT.
 
-### De-risking order (build this sequence)
-
-Build in the order that retires the biggest risks first:
-
-1. **Data layer + cloud sync** — Supabase schema, auth, real-time sync. If this doesn't work, nothing works.
-2. **Core timer + goal model** — The atomic unit. Timer runs, sessions record, goals track.
-3. **Post-session reflection** — Data collection mechanism for the core thesis. Without this, no insights.
-4. **Cumulative progress surfaces** — Widget + home screen stats. This IS the product differentiator.
-5. **BLE device sync** — Prove the phone-away thesis. This is the riskiest technical piece.
-6. **Device firmware** — ESP32 timer + goal display + local storage + BLE.
-7. **Analytics & insights** — Tier 1 → Tier 2 → Tier 3. Each tier is independently valuable.
-8. **Social features** — Friends → Library Mode → Quiet Feed → kudos → invite link. Each layer builds on the previous.
-9. **Onboarding** — Build last. Onboarding for a product that doesn't exist yet is wasted work.
-
 ### Success criteria for v1
 
 v1 is done when 10-20 testers can:
