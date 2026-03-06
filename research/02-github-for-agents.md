@@ -235,13 +235,13 @@ When picking up a GitHub Issue:
 6. Update the issue label from "in-progress" to "in-review"
 ```
 
-### 3. Add a `fix-issue` Skill for One-Command Ticket Pickup
+### 3. Add a `ship-issue` Skill for One-Command Ticket Pickup
 
-Create `.claude/skills/fix-issue/SKILL.md` — this becomes `/fix-issue 42` in any Claude Code session:
+Create `.claude/skills/ship-issue/SKILL.md` — this becomes `/ship-issue 42` in any Claude Code session:
 
 ```yaml
 ---
-name: fix-issue
+name: ship-issue
 description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. Otherwise creates a branch, implements, runs tests, and opens a PR.
 user-invocable: true
 context: fork
@@ -291,7 +291,7 @@ If tests fail, fix them before proceeding.
 Report a summary of what was changed and the PR URL.
 ```
 
-**Usage:** In any Claude Code session, type `/fix-issue 42` and Claude handles the rest. If the issue is labeled `effort:large`, it decomposes automatically — you review the new sub-issues and move them to "Agent-Ready" when ready.
+**Usage:** In any Claude Code session, type `/ship-issue 42` and Claude handles the rest. If the issue is labeled `effort:large`, it decomposes automatically — you review the new sub-issues and move them to "Agent-Ready" when ready.
 
 ### 4. Add a `decompose-issue` Skill for Large Ticket Breakdown
 
@@ -300,7 +300,7 @@ When an issue is too large to implement in one session, the agent should break i
 ```yaml
 ---
 name: decompose-issue
-description: Break a large GitHub issue into 3-5 smaller, agent-ready sub-issues. Called automatically by fix-issue when effort:large is detected, or invoked directly.
+description: Break a large GitHub issue into 3-5 smaller, agent-ready sub-issues. Called automatically by ship-issue when effort:large is detected, or invoked directly.
 user-invocable: true
 allowed-tools: Bash(gh *), Read, Grep, Glob
 argument-hint: "[issue number]"
@@ -388,7 +388,7 @@ Output a summary:
 - Recommended order of implementation
 ```
 
-**Usage:** `/decompose-issue 42` — or triggered automatically by `/fix-issue 42` when `effort:large` is detected.
+**Usage:** `/decompose-issue 42` — or triggered automatically by `/ship-issue 42` when `effort:large` is detected.
 
 **What "too large" means in practice:**
 - The issue requires changes to more than ~10 files
@@ -646,7 +646,7 @@ iOS only
 `main`
 ```
 
-This ticket can be handed to Claude Code with `/fix-issue 42` and executed without a single follow-up question.
+This ticket can be handed to Claude Code with `/ship-issue 42` and executed without a single follow-up question.
 
 ---
 
@@ -891,7 +891,7 @@ From practitioner reports and filed issues:
 - [ ] Write a shell script wrapping the Projects v2 GraphQL mutation for status updates
 
 ### Skills & Agents
-- [ ] Create `.claude/skills/fix-issue/SKILL.md`
+- [ ] Create `.claude/skills/ship-issue/SKILL.md`
 - [ ] Create `.claude/skills/decompose-issue/SKILL.md`
 - [ ] Create `.claude/agents/ios-developer.md`
 - [ ] Create `.claude/agents/android-developer.md`

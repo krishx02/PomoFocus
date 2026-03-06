@@ -242,7 +242,7 @@ This doc builds on `research/02-github-for-agents.md` which defines:
 - Issue template YAML files (feature-agent.yml, bug-agent.yml)
 - 8 writing rules for agent-ready tickets
 - Label strategy (agent-ready, needs-human, effort:small/large, etc.)
-- `/fix-issue` and `/decompose-issue` skill specs
+- `/ship-issue` and `/decompose-issue` skill specs
 - Platform subagent configurations
 
 What this doc adds:

@@ -11,7 +11,7 @@
 | File | Title | TL;DR |
 |------|-------|-------|
 | [01-agent-workflow-experts.md](./01-agent-workflow-experts.md) | AI-Assisted Development: Expert Synthesis | Five universal patterns from Boris Cherny, Karpathy, Simon Willison, swyx, and others. CLAUDE.md is the single highest-leverage investment. Tests are the agent's feedback loop. |
-| [02-github-for-agents.md](./02-github-for-agents.md) | GitHub Issues & Projects for AI Agent Workflows | How to write tickets that agents can execute without hand-holding. GitHub MCP server, Projects v2 API, issue templates, `fix-issue` skill, and label strategy. **Updated Mar 2026:** AGENTS.md convention, GitHub Agentic Workflows, WRAP framework, Claude Code Action v1.0 GA, Copilot coding agent updates, Playwright MCP, failure patterns. |
+| [02-github-for-agents.md](./02-github-for-agents.md) | GitHub Issues & Projects for AI Agent Workflows | How to write tickets that agents can execute without hand-holding. GitHub MCP server, Projects v2 API, issue templates, `ship-issue` skill, and label strategy. **Updated Mar 2026:** AGENTS.md convention, GitHub Agentic Workflows, WRAP framework, Claude Code Action v1.0 GA, Copilot coding agent updates, Playwright MCP, failure patterns. |
 | [03-github-actions-ci-cd.md](./03-github-actions-ci-cd.md) | GitHub Actions CI/CD for Multi-Platform Apps | Full delivery surface (web, iOS, iOS widget, watchOS, Android, VS Code, Mac widget) from one monorepo. Claude Code Action for AI-assisted auto-fix loops. Cloudflare, App Store, and Play Store pipelines. |
 | [04-stack-recommendations.md](./04-stack-recommendations.md) | Tech Stack Recommendations 2025-2026 | Supabase + CF Durable Objects + Supabase Auth (MVP→Better Auth) + Expo + SwiftUI widget + Nx + Vercel + MCP server. MVP cost: $0/month. |
 | [05-startups-and-oss-solving-this.md](./05-startups-and-oss-solving-this.md) | Startups & OSS Solving Agent Dev Workflows | Landscape of tools for "agent picks up Issue and ships PR." Aider + Sweep AI + OpenHands are the install-today picks. Devin is powerful but $500/month. Height is shut down. |
@@ -46,7 +46,7 @@
 
 ```
 GitHub Issues (labeled "agent-ready")
-         ↓ (webhook or manual /fix-issue N)
+         ↓ (webhook or manual /ship-issue N)
 Claude Code reads issue via GitHub MCP server
          ↓
 Creates feature branch, enters plan mode
@@ -97,7 +97,7 @@ Create separate agent configurations (`.claude/agents/`) for iOS, Android, share
 1. **Write `CLAUDE.md`** at repo root — this is the briefing document for every agent session
 2. **Create GitHub Issue templates** (`.github/ISSUE_TEMPLATE/feature-agent.yml`) so every ticket is agent-ready by default
 3. **Set up GitHub Projects v2** with 5 columns: Backlog → Agent-Ready → In Progress → In Review → Done
-4. **Create the `/fix-issue` skill** (`.claude/skills/fix-issue/SKILL.md`) for one-command issue pickup
+4. **Create the `/ship-issue` skill** (`.claude/skills/ship-issue/SKILL.md`) for one-command issue pickup
 5. **Install GitHub MCP server** in `.claude/settings.json`
 6. **Add Sweep AI** as a GitHub App for automatic issue → PR on labeled tickets
 7. **Set up GitHub Actions** for CI (lint + test + deploy to preview per platform)

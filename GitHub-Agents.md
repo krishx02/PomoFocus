@@ -31,7 +31,7 @@
 ```
 GitHub Issue (labeled "agent-ready")
          ↓
-/fix-issue N  (Claude Code session)
+/ship-issue N  (Claude Code session)
          ↓
 Read issue → check effort:large → if yes: /decompose-issue N, stop
          ↓ (issue is effort:small or unlabeled)
@@ -57,7 +57,7 @@ Human reviews and merges
 
 ```bash
 # Pick up an issue
-/fix-issue 42
+/ship-issue 42
 
 # Decompose a large issue into sub-issues
 /decompose-issue 42
@@ -209,7 +209,7 @@ Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 iOS only
 ```
 
-This ticket can be executed with `/fix-issue 42` without a single follow-up question.
+This ticket can be executed with `/ship-issue 42` without a single follow-up question.
 
 ---
 
@@ -241,7 +241,7 @@ Created (draft)
 Backlog (project column)
     ↓ [verify agent-ready criteria met]
 Agent-Ready (column + label)
-    ↓ [/fix-issue N or agent pickup]
+    ↓ [/ship-issue N or agent pickup]
 In Progress (column + label)
     ↓ [PR opened]
 In Review (column + label)
@@ -308,15 +308,15 @@ gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 
 ## 4. Skills Reference
 
-### `/fix-issue [number]`
+### `/ship-issue [number]`
 
-**File:** `.claude/skills/fix-issue/SKILL.md`
+**File:** `.claude/skills/ship-issue/SKILL.md`
 
 **What it does:** Picks up a GitHub issue by number. Checks for `effort:large` label; if found, delegates to `/decompose-issue` and stops. Otherwise: creates branch, reads affected files, implements, runs tests, opens PR, updates labels.
 
 **Usage:**
 ```
-/fix-issue 42
+/ship-issue 42
 ```
 
 **Key behaviors:**

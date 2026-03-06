@@ -371,7 +371,7 @@ claude --permission-mode plan
 
 ### Pattern 4: Skills as Team Workflows
 ```bash
-/fix-issue 123       # Fix a GitHub issue by number
+/ship-issue 123       # Fix a GitHub issue by number
 /deploy production   # Deploy with all checks
 /pr-review           # Review and suggest improvements
 ```
