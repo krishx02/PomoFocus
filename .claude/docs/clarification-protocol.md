@@ -88,7 +88,7 @@ Writes a spec to `.claude/specs/YYYY-MM-DD-<goal>.md`, asks for user confirmatio
 Specs are persisted in `.claude/specs/` and committed to git. They serve as:
 - Implementation contracts for agent sessions
 - Audit trail for what was intended vs. what was built
-- Input for future `/fix-issue` skill sessions
+- Input for future `/ship-issue` skill sessions
 
 ---
 

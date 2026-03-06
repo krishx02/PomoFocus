@@ -217,7 +217,7 @@ The iterative questioning approach is the core interaction pattern: don't let th
         ↓
 ADR key points added to CLAUDE.md
         ↓
-Future /fix-issue sessions read CLAUDE.md
+Future /ship-issue sessions read CLAUDE.md
         ↓
 Agents automatically respect the decision
 ```
@@ -277,7 +277,7 @@ Phase 5: Integration
      ↓
 /clarify → "What's the exact scope of this implementation task?"
      ↓
-/fix-issue → "Implement it."
+/ship-issue → "Implement it."
 ```
 
 ---

@@ -71,7 +71,7 @@ pomofocus/
 │   └── workflows/            # CI/CD (Nx affected + platform-specific)
 ├── .claude/
 │   ├── agents/               # Platform subagent definitions
-│   ├── skills/               # /fix-issue, /decompose-issue, /clarify
+│   ├── skills/               # /ship-issue, /decompose-issue, /clarify
 │   ├── hooks/                # UserPromptSubmit ambiguity check
 │   └── specs/                # Written specs from /clarify sessions
 ├── AGENTS.md                 # This file — cross-agent context
@@ -180,7 +180,7 @@ PR body must include: Closes #42
 
 ## Workflow Summary
 
-1. Pick up a GitHub Issue labeled `agent-ready` (or run `/fix-issue N`)
+1. Pick up a GitHub Issue labeled `agent-ready` (or run `/ship-issue N`)
 2. If labeled `effort:large` → run `/decompose-issue N` instead, stop
 3. Create branch: `feature/issue-N-<slug>`
 4. Read all files in the issue's "Affected Files" section
