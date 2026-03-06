@@ -23,9 +23,9 @@ Verify that `/fix-issue` has already run.
 git branch --show-current
 ```
 
-Confirm the branch name starts with `feature/issue-` or `fix/issue-`. If on `main`, stop:
+Confirm the branch is NOT `main` or `master`. If it is, stop:
 ```
-ERROR: You are on main. /pre-finalize must run on a feature or fix branch after /fix-issue has completed.
+ERROR: You are on main. /pre-finalize must run on a feature or fix branch, not the default branch.
 ```
 
 Verify there are no uncommitted changes:
