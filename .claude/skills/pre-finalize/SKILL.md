@@ -1,6 +1,6 @@
 ---
 name: pre-finalize
-description: Runs build verification, integration tests, E2E tests, and cross-package dependency tests for all platforms affected by the current branch. Sits between /fix-issue and /finalize. Auto-fixes failures up to 3 times, then escalates.
+description: Runs build verification, integration tests, E2E tests, and cross-package dependency tests for all platforms affected by the current branch. Sits between /ship-issue and /finalize. Auto-fixes failures up to 3 times, then escalates.
 user-invocable: true
 context: fork
 allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Bash(maestro *), Bash(node *), Bash(npx *), Bash(ls *), Bash(test *), Read, Edit, Write, Grep, Glob
@@ -9,7 +9,7 @@ argument-hint: "[issue number]"
 
 Issue number: $ARGUMENTS
 
-You are the pre-finalize testing orchestrator. `/fix-issue` has already run: unit tests pass, type-check is clean, code is committed and pushed. Your job is to run broader verification — build, integration tests, E2E tests, cross-package dependency tests — before the PR is created.
+You are the pre-finalize testing orchestrator. `/ship-issue` has already run: unit tests pass, type-check is clean, code is committed and pushed. Your job is to run broader verification — build, integration tests, E2E tests, cross-package dependency tests — before the PR is created.
 
 Do NOT create a PR. Do NOT update issue labels (beyond `needs-human` on failure). You verify; `/finalize` ships.
 
@@ -17,7 +17,7 @@ Do NOT create a PR. Do NOT update issue labels (beyond `needs-human` on failure)
 
 ## Step 1 — Validate Preconditions
 
-Verify that `/fix-issue` has already run.
+Verify that `/ship-issue` has already run.
 
 ```bash
 git branch --show-current
@@ -35,7 +35,7 @@ git status --porcelain
 
 If there are uncommitted changes, stop:
 ```
-ERROR: Uncommitted changes detected. /fix-issue should have committed all changes. Commit or stash first.
+ERROR: Uncommitted changes detected. /ship-issue should have committed all changes. Commit or stash first.
 ```
 
 Verify the branch has been pushed (push if not):
@@ -317,7 +317,7 @@ Integration or E2E tests are still failing after 3 fix attempts in `/pre-finaliz
 **Failing test(s):** [list the specific test command(s) that failed]
 **Last failure output:** [summary of the error — the actionable part, not the full log]
 
-Unit tests pass (via `/fix-issue`). The failure is in broader integration or E2E tests,
+Unit tests pass (via `/ship-issue`). The failure is in broader integration or E2E tests,
 which may require infrastructure changes, environment setup, or a design decision.
 
 Please review the test failure and resolve the root cause manually.
