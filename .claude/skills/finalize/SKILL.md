@@ -99,9 +99,9 @@ Set `CI_ATTEMPT = 1` and `MAX_CI_ATTEMPTS = 2`.
 
 **CI loop** — repeat until all checks pass or max attempts exceeded:
 
-Poll until CI checks complete (up to 10 minutes, checking every 30 seconds):
+Poll until CI checks complete (up to 10 minutes):
 ```bash
-gh pr checks $PR_NUMBER --watch --timeout 600
+timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10 minutes"
 ```
 
 **If all checks pass:** proceed to Step 4.
