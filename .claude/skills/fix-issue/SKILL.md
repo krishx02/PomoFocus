@@ -184,7 +184,7 @@ Implementation complete for issue #$ARGUMENTS.
 Branch pushed: [BRANCH_NAME]
 
 Start a new Claude Code session and run:
-  /finalize $ARGUMENTS
+  /pre-finalize $ARGUMENTS
 ```
 
-Do NOT call `/finalize` here. Do NOT create the PR or update labels. Stop completely — finalize runs in a separate context window to avoid carrying implementation history into the PR and review phase.
+Do NOT call `/pre-finalize` here. Do NOT create the PR or update labels. Stop completely — each workflow phase runs in a separate context window to avoid carrying implementation history forward.
