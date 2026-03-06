@@ -18,6 +18,7 @@
 | [06-product-research-methodology.md](./06-product-research-methodology.md) | Product Research & Discovery Methodologies | Survey of BMAD, GitHub Spec Kit, Osmani's spec-first approach, Shape Up, Torres' Continuous Discovery, Wondel.ai skills, and more. Recommends a `/discover` Claude Code skill for interactive product research. |
 | [07-design-decision-frameworks.md](./07-design-decision-frameworks.md) | Technical Design Decision Frameworks | Synthesis of Google Design Docs (Malte Ubl), MADR 4.0, C4 Model (Simon Brown), Osmani's spec-first workflow, and Cherny's CLAUDE.md pattern. Informs the `/tech-design` skill for structured architecture decisions. |
 | [07-design-philosophy.md](./07-design-philosophy.md) | Design Philosophy — Grounded Principles for PomoFocus | Cross-disciplinary design philosophy synthesized from Ryo Lu, Dieter Rams, Naoto Fukasawa, Kenya Hara, Jasper Morrison, Jony Ive, Don Norman, Teenage Engineering, Playdate, and design movements (wabi-sabi, Shaker, Scandinavian, Calm Technology, quiet luxury). 10 principles + decision framework. Powers the `/design-review` skill. |
+| [08-testing-frameworks.md](./08-testing-frameworks.md) | Testing Framework Recommendations | Playwright (web E2E), Maestro (mobile E2E), @vscode/test-electron (VS Code), Swift Testing + XCTest (Apple), Vitest (all TypeScript). Expert-sourced from State of JS 2025, Expo docs, Apple WWDC 2024, ThoughtWorks Radar. Powers the `/pre-finalize` skill. |
 
 ---
 

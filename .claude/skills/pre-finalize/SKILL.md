@@ -120,6 +120,8 @@ Build verification: SKIPPED — no build targets configured yet
 
 ## Step 4 — Run Integration and E2E Tests
 
+> **Tool choices** are documented in [`research/08-testing-frameworks.md`](../../research/08-testing-frameworks.md) and [`technical-design-decisions.md`](../../technical-design-decisions.md). Playwright (web), Maestro (mobile), @vscode/test-electron (VS Code), Swift Testing + XCTest (Apple), Vitest (all TypeScript).
+
 For each affected platform bucket, run the corresponding test command. **Before each command, check that the test infrastructure exists.** If it does not, skip with a clear message.
 
 ### web
@@ -149,21 +151,21 @@ else
 fi
 ```
 
-### mcp-server
+### mcp-server (Vitest)
 ```bash
 if pnpm nx show project @pomofocus/mcp-server --json 2>/dev/null | grep -q '"test"'; then
   pnpm nx test @pomofocus/mcp-server
 else
-  echo "SKIP: mcp-server test target not configured"
+  echo "SKIP: mcp-server test target not configured (expects Vitest)"
 fi
 ```
 
-### api-client
+### api-client (Vitest + Supertest)
 ```bash
 if pnpm nx show project @pomofocus/api-client --json 2>/dev/null | grep -q '"test"'; then
   pnpm nx test @pomofocus/api-client
 else
-  echo "SKIP: api-client test target not configured"
+  echo "SKIP: api-client test target not configured (expects Vitest + Supertest)"
 fi
 ```
 
