@@ -1,7 +1,7 @@
-# PomoFocus — Product Brief v0.6
+# PomoFocus — Product Brief v0.7
 
-> **Status:** Phase 5 complete (Research — Section 13 threads verified, Section 14 expanded).
-> **Last updated:** 2026-03-04
+> **Status:** Phase 6 complete (Research — Section 14 competitive landscape enriched with web-verified data).
+> **Last updated:** 2026-03-05
 > **Author:** Discovery session with founder
 
 ---
@@ -806,6 +806,7 @@ These threads were flagged during discovery as needing verification before final
 
 **v1 relevance:** Threads 1 (commitment devices) and 7 (guilt-productivity cycle) directly validate the core thesis and should inform v1 design decisions. Threads 2 (goal salience) and 3 (environmental design) support the widget and device rationale. Threads 4 (habit timelines), 5 (screen time intervention), and 6 (Pomodoro efficacy) are useful background but won't change what gets built for v1.
 
+
 ---
 
 ### Thread 1: Present Bias & Commitment Devices
@@ -934,46 +935,59 @@ These threads were flagged during discovery as needing verification before final
 
 ## 14. Competitive Landscape
 
+> **Research basis:** Web-verified data as of March 2026. Pricing, user counts, and feature sets confirmed via product websites, app stores, and tech press. Where numbers are approximate, sources are noted.
+
+
 ### Focus Apps (on the distraction device)
 
 | Product | What It Does | Why Users Choose It | PomoFocus Advantage |
 |---------|-------------|---------------------|---------------------|
-| **Forest App** | Gamified phone-down timer — grow a virtual tree during sessions. Social sharing, charity mode. | Visual reward for phone-free time; satisfying completion animation; social bragging | Lives on the phone. No goals. No physical presence. The tree is on the phone you're supposed to put down. |
-| **Focus Keeper / Tide** | Pomodoro timers with ambient sounds. Tide adds nature sounds and breathing exercises. | Low friction, beautiful design, ambient sound aids focus | Timer-only. No goal system. No pattern analytics. On the phone. |
-| **Opal / One Sec** | App blockers and friction tools — Opal blocks apps on schedule, One Sec adds 1-second delay before opening distraction apps. | Treats the symptom directly; works even without motivation | Treats symptoms (block apps) not cause (no structure or purpose). Willpower-based. No positive replacement for the phone habit. |
-| **RescueTime / Toggl Track** | Automatic or manual time tracking across apps and websites. Analytics on where time goes. | Detailed time audit; works in background automatically | Tracks time retrospectively, doesn't create structure prospectively. No goal connection. No behavior change mechanic. |
-| **BeTimeful** | Social media blocker with scheduled access windows | Hard limits on social apps; scheduling reduces mindless checking | Blocking-only. No focus structure, no goal system, no positive replacement behavior. |
+| **Forest App** | Gamified phone-down timer — grow a virtual tree during sessions. Social sharing, charity mode (real trees planted via Trees for the Future). 44M+ downloads, 4.4 rating (759K reviews). Forest Plus launched Dec 2025 adding Enhanced App Block and Healing Sounds. Pricing: free with ads, $3.99/mo subscription, or $1.99 one-time (iOS). | Visual reward for phone-free time; satisfying completion animation; social bragging; real-world impact (charity trees) | Lives on the phone. No goals. No physical presence. The tree is on the phone you're supposed to put down. No session structure beyond "don't touch your phone." |
+| **Centered / Sukha** | AI-powered focus coach (rebranded to The Sukha Company). 150+ hours of neuroscience-designed Flow Music. AI coach detects distraction (off-task sites/apps) and nudges you back. Pomodoro timer with auto-DND. Task sync from Asana, Linear, Todoist. Productivity score and leaderboard. Wellness reminders (breathe, hydrate, stretch). Mac, Windows, web. $20/mo (free 3-day trial). | AI coaching catches distraction in real-time; flow music is purpose-built, not a playlist; combines timer + tasks + analytics in one; leaderboard adds social pressure | Lives on the computer you work on. AI nudges are reactive, not proactive structure. No physical device. No goal hierarchy beyond task lists. Leaderboard is comparison-based (counter to PomoFocus's anti-comparison philosophy). $20/mo is steep for individuals. |
+| **Focus Friend** | Hank Green's gamified focus timer. **Google Play 2025 App of the Year** (Best for Personal Growth). 1M+ installs. Cozy "Bean" character focuses alongside you — gets sad if you interrupt, gives prizes when you complete sessions. Deep Focus Mode locks distracting apps. Break timers using Pomodoro method. Hundreds of decorations for your Bean's room. Free with cosmetic IAP (bean skins, decorations). No ads. Apple Awards 2025 nominee. | Emotional accountability (you don't want to make your Bean sad); cozy aesthetic appeals to younger users; celebrity founder (Hank Green) drives awareness; free core experience; ADHD-friendly design | Gamification without goal connection. No tracking or analytics. No physical device. Emotional pull wears off once novelty fades. Decorating a virtual room doesn't build real-world focus habits. Clever onramp but no depth for serious users. |
+| **Focus Keeper / Tide** | Pomodoro timers with ambient sounds. Tide adds nature sounds, breathing exercises, and sleep stories. Focus Keeper has customizable intervals and detailed session stats. Both free with premium tiers (~$2-4/mo). | Low friction, beautiful design, ambient sound aids focus; Tide doubles as a sleep/relaxation app | Timer-only. No goal system. No pattern analytics beyond session counts. On the phone. No behavior change mechanic. |
+| **Opal** | App blocker with AI-powered screen time insights. 120M+ hours of screen time saved (company claim). $99/yr. Added Friends Profiles + Leaderboards in 2025, plus gamified "gems" system. Now on Android (previously iOS-only). Schedule-based blocking + manual "focus sessions." | Treats the symptom directly; works even without motivation; social features (friends, leaderboards) add accountability; broad platform support | Treats symptoms (block apps) not cause (no structure or purpose). Willpower-based — users can override blocks. No positive replacement for the phone habit. $99/yr is premium pricing for an app blocker. |
+| **One Sec** | Friction-based app intervention — adds a configurable delay (deep breathing, mirror view, math puzzle) before opening target apps. **Max Planck Institute study: 57% reduction in social media app opens.** 100K+ 5-star reviews. Free for 1 app, Pro €14.99/yr or €99.99 lifetime. iOS, Android, browser extension. Integrates with Structured for task-aware blocking. | Peer-reviewed science backing; lightweight friction (not hard blocking); cheap; works across platforms; respects user agency (you can still choose to open the app) | Friction alone doesn't limit scroll time once you're in. No focus structure, no goal system, no positive replacement behavior. Setup requires iOS Shortcuts automations (friction to install the friction tool). |
+| **RescueTime / Toggl Track** | Automatic or manual time tracking across apps and websites. RescueTime runs in background and categorizes time. Toggl Track is manual with one-click timers and 100+ integrations. RescueTime: $12/mo. Toggl Track: free for up to 5 users, $9/user/mo for teams. | Detailed time audit; works in background automatically; Toggl's integrations are best-in-class for freelancers | Tracks time retrospectively, doesn't create structure prospectively. No goal connection. No behavior change mechanic. Knowing where your time went doesn't help you spend it differently tomorrow. |
+| **BeTimeful** | Social media blocker with scheduled access windows. Hides news feed content while keeping search/messaging functional. | Hard limits on social apps; scheduling reduces mindless checking; preserves functional use of apps | Blocking-only. No focus structure, no goal system, no positive replacement behavior. |
 
 ### Accountability & Social Focus
 
 | Product | What It Does | Why Users Choose It | PomoFocus Advantage |
 |---------|-------------|---------------------|---------------------|
-| **Focusmate** | Virtual body doubling — book 25- or 50-minute video sessions with a matched accountability partner. 5M+ sessions, 150+ countries. 90% of users report increased focus. | Live social accountability; especially effective for ADHD (152% productivity increase in company survey); structure from external commitment | Requires scheduling a partner in advance; can't start spontaneously; heavy social overhead for light users; no goal system or long-term tracking |
-| **Study Together / StudyStream** | Discord-based virtual study rooms (largest study Discord, 24/7). Free. Camera/screen share required for accountability rooms. | Free, always available, ambient social presence, student community | No goal structure; no personal tracking; accountability is ambient not specific; not designed for non-students |
-| **Strava** | Social fitness tracking — activities, kudos, segments, clubs. 14B+ kudos given in 2025 (20% YoY). Research shows kudos causally increase running frequency. | Powerful social layer; accountability through audience; 1hr activity per 2min in-app (exceptional ratio) | Fitness-only. But the *kudos model* is the direct inspiration for PomoFocus's Quiet Feed — social validation without comparison metrics. |
+| **Focusmate** | Virtual body doubling — book 25- or 50-minute video sessions with a matched accountability partner. 5M+ sessions, 150+ countries. Free tier: 3 sessions/week. Paid: unlimited sessions. Company survey: 161% productivity increase for ADHD users. Web traffic up ~20% YoY (SimilarWeb). Web-only (no native apps). | Live social accountability; especially effective for ADHD; structure from external commitment; research-backed; free tier is generous enough to form a habit | Requires scheduling a partner in advance; can't start spontaneously; heavy social overhead for light users; no goal system or long-term tracking; web-only limits mobile use |
+| **Flow Club** | Virtual coworking community. Y Combinator S21, raised $5M (investors include Paul Graham, founders of Dropbox, Mercury, Quora). 2,000+ sessions/week, 900+ member-hosts. Structured sprints with music, timers, and host check-ins. ADHD-friendly body doubling. Guided Clubs for multi-week accountability groups. $40/mo or $33/mo annually. | Massive session volume — always one available; member-hosted means diverse vibes; strong neurodivergent community; accountability + flexibility; Y Combinator credibility | Requires video + social interaction every session; $40/mo is premium; no goal system; no personal analytics; no physical device; social overhead compounds over time; doesn't work offline or asynchronously |
+| **Flown** | Facilitated virtual deep work platform. ~50 "Flocks" (group sessions) per week led by trained facilitators. Recharge sessions (guided breaks, breathing, movement). ~£20/mo (~$25). Browser-based, no download. ADHD-friendly. | Professional facilitation (not peer-hosted); recharge sessions address burnout; calmer/smaller groups than Flow Club; includes rest, not just work | Fewer sessions than Flow Club (~50/week vs 2,000+); requires scheduling; no goal system; no tracking; no physical device; facilitator quality varies; UK-centric community |
+| **Study Together / StudyStream** | Virtual study rooms — merged platforms with 270K+ active users. 24/7 rooms with camera/screen share. Added AI note-taker and quiz tools. Free core experience, premium tier available. Largest study community on Discord. | Free, always available, ambient social presence, student community; AI study tools add value beyond just "being watched" | No goal structure; no personal tracking; accountability is ambient not specific; not designed for non-students; AI tools are study-specific, not general focus |
+| **Strava** | Social fitness tracking — activities, kudos, segments, clubs. 14B+ kudos given in 2025 (20% YoY). Research shows kudos causally increase running frequency. 125M+ athletes. | Powerful social layer; accountability through audience; 1hr activity per 2min in-app (exceptional engagement ratio) | Fitness-only. But the *kudos model* is the direct inspiration for PomoFocus's Quiet Feed — social validation without comparison metrics. |
 
 ### Visual Planning & Scheduling
 
 | Product | What It Does | Why Users Choose It | PomoFocus Advantage |
 |---------|-------------|---------------------|---------------------|
-| **Tiimo** | Visual planner for ADHD/autism. Visual timers, AI planning, sensory-friendly design, 500K+ users. Apple 2025 iPhone App of the Year. | Purpose-built for neurodiverse users; visual time representation; reduces overwhelm | Planning-focused, not focus-session focused. No accountability mechanic, no social layer, no physical device. Great at "what to do"; not at "doing it." |
-| **Structured** | Visual daily timeline planner with icons/colors. 1.5M active users, 4.8/5 App Store. Apple Watch + Mac. | Beautiful visual design; drag-and-drop time blocking; calm aesthetic | Timeline planning, not structured work sessions. No Pomodoro intervals, no focus accountability, no goal hierarchy. Solves the planning problem, not the execution problem. |
-| **Todoist / Things 3** | Task management with GTD-style organization. Powerful capture, projects, priorities. | Comprehensive task system; great for complex projects | Task *capture* and *planning*; no focus session structure, no environment change, no behavioral design. The tasks still live on the phone. |
+| **Tiimo** | Visual planner for ADHD/autism. Visual timers, AI Co-Planner (added 2025), sensory-friendly design. **Apple 2025 iPhone App of the Year.** 1M+ users, 3M+ downloads. $12/mo or $54/yr. iOS, Android, Apple Watch. | Purpose-built for neurodiverse users; visual time representation; reduces overwhelm; AI planning reduces blank-page anxiety; Apple endorsement builds trust | Planning-focused, not focus-session focused. No accountability mechanic, no social layer, no physical device. Great at "what to do"; not at "doing it." AI Co-Planner helps plan but doesn't help execute. |
+| **Structured** | Visual daily timeline planner with icons/colors. "Loved by millions" (company claim). 4.8/5 App Store. Apple Watch, Mac, **Android (launched 2025)**. AI Planner added. Subtasks in timeline. Pro: $19.99/yr or $64.99 lifetime. Integrates with One Sec for distraction blocking during tasks. | Beautiful visual design; drag-and-drop time blocking; calm aesthetic; cross-platform; one-time purchase option; One Sec integration bridges planning and execution | Timeline planning, not structured work sessions. No Pomodoro intervals, no focus accountability, no goal hierarchy. Solves the planning problem, not the execution problem. One Sec integration is a bolt-on, not native behavior design. |
+| **Todoist / Things 3** | Task management with GTD-style organization. Powerful capture, projects, priorities. Todoist: 40M+ users, free + $5/mo Pro. Things 3: one-time $49.99 (Mac), $9.99 (iPhone). | Comprehensive task system; great for complex projects; Todoist's natural language input is best-in-class | Task *capture* and *planning*; no focus session structure, no environment change, no behavioral design. The tasks still live on the phone. |
 
 ### Physical Timers & Devices
 
 | Product | What It Does | Why Users Choose It | PomoFocus Advantage |
 |---------|-------------|---------------------|---------------------|
-| **Time Timer** | Visual analog timer — a red disk that shrinks as time elapses. Used in ADHD/autism education, 504 plan accommodation, classrooms. | Tangible time visualization; no screens; works without apps; education-tested | No goal connection. No tracking. No BLE. No app. It's a timer — nothing more. PomoFocus is a system; Time Timer is a tool. |
-| **Timeular** | Physical time-tracking die — flip to the face representing your current activity category. App syncs and shows time distribution. | Tactile time tracking; automatic capture; great for freelancers | Tracks time categories, doesn't create structure. No focus blocks, no goals, no distraction-blocking mechanic. Retrospective, not prospective. |
-| **Pomodoro mechanical timers** | Kitchen timer in tomato shape. The original physical timer. | Cheap, no setup, no phone required, satisfying tactile click | No goal connection. No tracking. No system. No BLE. The tomato timer was the 1987 version of this idea. |
+| **Time Timer** | Visual analog timer — a red disk that shrinks as time elapses. Used in ADHD/autism education, 504 plan accommodation, classrooms. Multiple form factors (desk, watch, app). | Tangible time visualization; no screens; works without apps; education-tested; trusted by therapists | No goal connection. No tracking. No BLE. No app integration. It's a timer — nothing more. PomoFocus is a system; Time Timer is a tool. |
+| **Timeular / EARLY** | Physical 8-sided time-tracking die — flip to the face representing your current activity category. Rebranded to EARLY (March 2025). 150K+ users. $9/mo. AI time entry suggestions added. App syncs and shows time distribution. | Tactile time tracking; automatic capture; AI reduces manual entry; great for freelancers and consultants | Tracks time categories, doesn't create structure. No focus blocks, no goals, no distraction-blocking mechanic. Retrospective, not prospective. Time *tracking* die, not a focus *device*. |
+| **ZONE Timer** | Minimalist desk productivity timer by New Things Lab. Displays only minutes (no ticking seconds). Soft-touch silicone, 7x7 pixel display. **iF 2025 Design Award.** $56+. Kickstarter-funded. | Beautiful industrial design; no-distraction display philosophy; award-winning aesthetics; satisfying physical interaction | No BLE connectivity. No app. No goal connection. No tracking beyond the current session. A beautifully designed but fundamentally dumb timer. |
+| **Flow Timer** | Solid metal Pomodoro timer by Minimal Desk Setups. Dual-display for work/rest. Dial for interval adjustments. Kickstarter Aug 2025, ~$79 RRP ($39 early bird). ~21 hrs battery. | Premium materials (metal); dual work/rest display; desk-aesthetic appeal; Pomodoro-native design | No BLE. No app. No goal connection. No session history. Premium price for a timer without software intelligence. |
+| **BUSY Bar** | Productivity multi-tool with LED pixel screen. Focus mode with distraction blocker. Pomodoro timer. Status display. Wi-Fi + Bluetooth. Matter-compatible (Apple Home, Google Home). Physical buttons for screenless control. Mobile app. | Smart home integration; status signaling to housemates/coworkers; physical buttons for screenless use; Matter compatibility future-proofs it | Closest to PomoFocus in ambition but focused on *status signaling* not *goal execution*. No goal hierarchy. No behavioral science foundation. No community/social layer. Status display ≠ focus system. |
+| **Focush** | Connected productivity timer with touchscreen LCD. BLE 5.0. Add to-do items via smartphone. 1,500mAh battery. Interface buttons + touch. | BLE connectivity; task input from phone; modern touchscreen interface | Closest BLE competitor. But task input is shallow (to-do list, not goal hierarchy). No analytics. No behavioral design. No community. Hardware exists but the software intelligence doesn't. |
+| **modue** | Physical focus timer for office workers. Open SDK for developer plugins. 5,000+ community members (company claim). Pre-orders shipping late 2025. | Open SDK appeals to developers; positions as anti-burnout tool; community-driven development | Open SDK is interesting but niche. Pre-order stage = unproven. No goal system. SDK openness means fragmented experience. |
+| **Pomodoro mechanical timers** | Kitchen timer in tomato shape. The original physical timer (1987). | Cheap (~$10), no setup, no phone required, satisfying tactile click | No goal connection. No tracking. No system. No BLE. The tomato timer was the 1987 version of this idea. |
 
 ### Wearable Data Loops (hardware analogy)
 
 | Product | What It Does | Why Users Choose It | PomoFocus Analogy |
 |---------|-------------|---------------------|-------------------|
-| **Oura Ring** | Continuous biometric tracking (sleep, recovery, readiness). Daily "crown" reward system. Behavioral tag correlation. | Actionable daily readiness score; jewelry-grade hardware; strong habit loop (daily crowns) | The Oura/Whoop model is the closest hardware analog to what PomoFocus is doing in the focus domain. Both are device + app data loops where the device captures what the app interprets. The behavioral tag journal (Whoop) is structurally similar to PomoFocus's post-session reflection. |
-| **WHOOP** | Wearable strain/recovery tracker with daily journal (tag habits, correlate with metrics). Subscription-only, no hardware purchase. | Deep habit correlation data; athlete community; subscription model without upfront cost | Same analogy as Oura. Neither tracks focus or goals — but the *product architecture* (passive device + active reflection → personal insights → behavior change) is the template. |
+| **Oura Ring** | Continuous biometric tracking (sleep, recovery, readiness). Daily "crown" reward system. Behavioral tag correlation. $299 hardware + $5.99/mo subscription. | Actionable daily readiness score; jewelry-grade hardware; strong habit loop (daily crowns) | The Oura/Whoop model is the closest hardware analog to what PomoFocus is doing in the focus domain. Both are device + app data loops where the device captures what the app interprets. The behavioral tag journal (Whoop) is structurally similar to PomoFocus's post-session reflection. |
+| **WHOOP** | Wearable strain/recovery tracker with daily journal (tag habits, correlate with metrics). $30/mo subscription-only, no hardware purchase. | Deep habit correlation data; athlete community; subscription model without upfront cost | Same analogy as Oura. Neither tracks focus or goals — but the *product architecture* (passive device + active reflection → personal insights → behavior change) is the template. |
 
 ### Design Inspirations (not direct competitors)
 
@@ -983,11 +997,33 @@ These threads were flagged during discovery as needing verification before final
 | **Strava** | Kudos model: social validation without ranking or comparison. Research confirms kudos causally increase behavior frequency. |
 | **Oura Ring** | Device + app data loop. Passive capture → active insight → behavior change. Hardware that makes the app more valuable, not the other way around. |
 | **Light Phone** | The "minimum viable phone" framing. Not a replacement for your smartphone — a different object for different contexts. |
+| **Focus Friend** | Emotional design: the "Bean is sad if you quit" mechanic proves that character-driven accountability works for younger audiences. PomoFocus can learn from this without copying the gamification. |
 
 ---
+
+### The Competitive Gap
+
+The landscape has matured significantly since 2024. Three waves are visible:
+
+1. **App blockers & friction tools** (Opal, One Sec, BeTimeful) — treat symptoms, not causes. Willpower-dependent. No positive replacement behavior.
+
+2. **Virtual coworking** (Focusmate, Flow Club, Flown, StudyStream) — social accountability works, but requires scheduling, video, and social energy. $25-40/mo. None connect sessions to personal goals or provide offline capability.
+
+3. **Smart physical timers** (ZONE, Flow Timer, BUSY Bar, Focush, modue) — a 2025-2026 wave of Kickstarter-funded desk hardware. Beautiful objects, but fundamentally dumb: no goal hierarchy, no behavioral analytics, no software intelligence beyond basic countdown.
 
 **The gap:** No product combines a physical focus device + goal-connected software + behavioral science foundation. Physical timers have no brains. Apps live on the distraction device. Accountability tools (Focusmate) require scheduling overhead. Planning apps (Tiimo, Structured) solve "what to do" not "actually doing it." Nothing bridges the physical-digital divide with goals, tracking, and environmental replacement in one system.
 
+**What nobody does:** No product combines a physical focus device + goal-connected software + behavioral science foundation + anti-comparison social layer. Specifically:
+
+- **Centered/Sukha** has AI coaching but lives on the work computer and uses comparison-based leaderboards ($20/mo).
+- **Flow Club** has social accountability but requires video and $40/mo, with no goal tracking.
+- **Focush** has BLE 5.0 but only shallow task input — no goal hierarchy, no analytics, no behavior design.
+- **BUSY Bar** has smart home integration but is a status signal, not a focus system.
+- **Tiimo** + **Structured** solve planning but not execution — and they live on the phone.
+- **Forest** + **Focus Friend** gamify phone avoidance but don't build real focus habits or connect to goals.
+
+PomoFocus occupies the intersection: physical device that creates an environmental cue (behavioral science) → software that connects sessions to goals (not just tasks) → social layer that validates without comparing (Quiet Feed) → analytics that reveal patterns over time (not just count sessions). The closest architectural analog is Oura Ring for focus instead of sleep.
+
 ---
 
-*Phase 4 complete. v1 shaped and bounded.*
+*Phase 6 complete. Competitive landscape web-verified and enriched.*
