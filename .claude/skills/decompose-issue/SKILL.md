@@ -1,6 +1,6 @@
 ---
 name: decompose-issue
-description: Break a large GitHub issue (labeled effort:large) into 3-5 smaller, agent-ready sub-issues using the data→logic→UI split pattern. Called automatically by /fix-issue when effort:large is detected, or invoked directly. Creates each sub-issue with full agent-ready fields, comments a tracking task list on the parent, and relabels the parent as decomposed.
+description: Break a large GitHub issue (labeled effort:large) into 3-5 smaller, agent-ready sub-issues using the data→logic→UI split pattern. Called automatically by /ship-issue when effort:large is detected, or invoked directly. Creates each sub-issue with full agent-ready fields, comments a tracking task list on the parent, and relabels the parent as decomposed.
 user-invocable: true
 allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Read, Grep, Glob
 argument-hint: "[issue number]"
@@ -103,7 +103,7 @@ This issue has been broken into smaller, agent-ready pieces:
 
 **Implementation order:** #[sub1] → #[sub2] → #[sub3]
 
-Each sub-issue is labeled \`agent-ready\` and can be picked up with \`/fix-issue N\`.
+Each sub-issue is labeled \`agent-ready\` and can be picked up with \`/ship-issue N\`.
 This issue will be closed manually when all sub-issues are merged.
 EOF
 )"

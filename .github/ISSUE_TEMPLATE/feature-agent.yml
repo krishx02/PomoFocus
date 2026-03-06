@@ -98,7 +98,7 @@ body:
     id: effort
     attributes:
       label: Effort Estimate
-      description: "effort:large issues will be auto-decomposed into sub-issues by /fix-issue."
+      description: "effort:large issues will be auto-decomposed into sub-issues by /ship-issue."
       options:
         - "effort:small (< 1 hour, < 10 files, implement directly)"
         - "effort:large (decompose into sub-issues first)"
