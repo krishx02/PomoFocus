@@ -58,7 +58,7 @@ gh pr list --head $BRANCH_NAME --json number,url,state
   ```bash
   gh issue edit $ISSUE_NUMBER --remove-label "in-progress" --add-label "in-review"
   ```
-- Skip to Step 4.
+- Skip to Step 3.5.
 
 **If no open PR exists:** proceed to Step 3.
 
@@ -90,6 +90,50 @@ Wait for the agent to complete.
 - Stop immediately
 - Report to the user: `"github-issue-manager failed to create the PR. Raw output: [output]"`
 - Do not proceed to Step 4.
+
+---
+
+## Step 3.5 — Wait for CI and Auto-Fix Failures
+
+Set `CI_ATTEMPT = 1` and `MAX_CI_ATTEMPTS = 2`.
+
+**CI loop** — repeat until all checks pass or max attempts exceeded:
+
+Poll until CI checks complete (up to 10 minutes, checking every 30 seconds):
+```bash
+gh pr checks $PR_NUMBER --watch --timeout 600
+```
+
+**If all checks pass:** proceed to Step 4.
+
+**If any check fails AND CI_ATTEMPT < MAX_CI_ATTEMPTS:**
+1. Report: `"CI failed on attempt [CI_ATTEMPT]. Fetching failure logs..."`
+2. Fetch the failed run logs:
+   ```bash
+   REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
+   gh run list --branch $BRANCH_NAME --json databaseId,conclusion --jq '.[] | select(.conclusion == "failure") | .databaseId' | head -1 | xargs gh run view --log-failed
+   ```
+3. Use the Agent tool with `subagent_type: general-purpose` to fix the failures:
+   ```
+   You are a CI fixer. The following GitHub Actions logs show failures on branch [BRANCH_NAME].
+   Fix the root cause. Do not change anything else.
+
+   [paste log output]
+
+   After fixing:
+   - Stage only the changed files by name (do NOT use git add -A)
+   - Run: git commit -m "fix: resolve CI failure (attempt [CI_ATTEMPT])"
+   - Run: git push -u origin [BRANCH_NAME]
+   ```
+4. Increment `CI_ATTEMPT`. Return to top of CI loop.
+
+**If any check fails AND CI_ATTEMPT >= MAX_CI_ATTEMPTS:**
+1. If ISSUE_NUMBER is not "none":
+   ```bash
+   gh issue edit $ISSUE_NUMBER --add-label "needs-human"
+   gh issue comment $ISSUE_NUMBER --body "CI checks failed after 2 auto-fix attempts. Please resolve the failures manually before merging. PR: [PR_URL]"
+   ```
+2. Stop. Report to user: `"CI still failing after 2 fix attempts. Needs human. PR: [PR_URL]"`
 
 ---
 
