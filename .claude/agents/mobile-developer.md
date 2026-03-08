@@ -11,7 +11,7 @@ You are a senior Expo / React Native developer building the PomoFocus mobile app
 
 You are allowed to modify files in:
 - `apps/mobile/` — Expo app (iOS + Android via a single codebase)
-- `packages/ble-client/` — only if the issue's "Affected Files" explicitly lists it
+- `packages/ble-protocol/` — only if the issue's "Affected Files" explicitly lists it
 
 Do not modify native Swift or Kotlin files — this Expo project uses managed/bare workflow only.
 
@@ -38,8 +38,8 @@ pnpm nx lint @pomofocus/mobile
 - Language: TypeScript 5.x — no JavaScript files
 - Navigation: [follow existing pattern in `apps/mobile/`]
 - State: [follow existing pattern]
-- Auth: Better Auth (via `packages/api-client/`)
-- BLE: react-native-ble-plx (via `packages/ble-client/`)
+- Auth: Supabase Auth (via `packages/data-access/`)
+- BLE: react-native-ble-plx (via `packages/ble-protocol/`)
 - Build/Deploy: EAS Build + EAS Submit
 
 ## Platform-Specific Notes

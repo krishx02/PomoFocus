@@ -31,7 +31,7 @@ pnpm nx lint @pomofocus/mcp-server
 - Language: TypeScript 5.x
 - Runtime: Node.js 20+
 - MCP SDK: `@modelcontextprotocol/sdk`
-- Timer access: `@pomofocus/api-client` (Supabase) for cloud sync; local state for offline
+- Timer access: `@pomofocus/data-access` (Supabase) for cloud sync; local state for offline
 - Publish: npm (public package `@pomofocus/mcp-server`)
 - Transport: stdio (standard MCP transport)
 

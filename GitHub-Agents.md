@@ -2,7 +2,7 @@
 
 > Comprehensive reference for the agent-first development workflow. Every agent and human working on PomoFocus should read this before picking up a ticket.
 >
-> **Stack:** Nx + pnpm monorepo · Supabase · Cloudflare Workers · Better Auth · Expo/React Native · SwiftUI · Vercel
+> **Stack:** Nx + pnpm monorepo · Supabase · Cloudflare Workers · Supabase Auth · Expo/React Native · SwiftUI · Vercel
 > **Status:** Pre-code — setting up agent infrastructure before writing app code.
 
 ---
@@ -528,7 +528,7 @@ pnpm nx affected --target=lint --base=origin/main --head=HEAD
 |-------------|-----------|-------------|-------------|
 | `packages/core` | Vitest | `pnpm nx test @pomofocus/core` | 100% (state machine) |
 | `packages/types` | TypeScript (type-level) | `pnpm type-check` | N/A |
-| `packages/api-client` | Vitest (mocked) | `pnpm nx test @pomofocus/api-client` | 80% |
+| `packages/data-access` | Vitest (mocked) | `pnpm nx test @pomofocus/data-access` | 80% |
 | `apps/web` | Vitest + Playwright | `pnpm nx test @pomofocus/web` | 70% |
 | `apps/mobile` | Jest + Detox/Maestro | `pnpm nx test @pomofocus/mobile` | 70% |
 | `apps/vscode-extension` | Jest | `pnpm nx test @pomofocus/vscode-extension` | 70% |

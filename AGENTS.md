@@ -55,12 +55,13 @@ pomofocus/
 │   ├── mcp-server/           # Claude Code MCP server → npm
 │   └── ble-gateway/          # BLE/MQTT gateway (Phase 3, Railway)
 ├── packages/
-│   ├── core/                 # Timer state machine — pure TypeScript, 100% tested
-│   ├── types/                # Shared TypeScript interfaces
-│   ├── api-client/           # Supabase SDK + auth helpers
-│   ├── ui-components/        # Shared React components
-│   ├── ble-client/           # BLE abstraction (react-native-ble-plx + Web Bluetooth)
-│   └── config/               # Shared ESLint, TypeScript, Vitest configs
+│   ├── types/                # Auto-generated TS types from Postgres schema
+│   ├── core/                 # Pure domain logic (timer, goals, sessions) — 100% tested
+│   ├── analytics/            # Focus Score and insights
+│   ├── data-access/          # All Supabase interaction (queries, auth, sync)
+│   ├── state/                # Zustand stores + TanStack Query hooks
+│   ├── ui/                   # Shared React/RN components
+│   └── ble-protocol/         # BLE GATT profile (types from Protobuf)
 ├── native/
 │   └── apple/                # SwiftUI Xcode workspace (outside Nx)
 │       ├── mac-widget/       # macOS menu bar target (MenuBarExtra + WidgetKit)
@@ -90,7 +91,7 @@ pomofocus/
 | Database | Supabase (Postgres + RLS + Realtime) | Latest |
 | Sync/Edge | Cloudflare Workers + Durable Objects | Latest |
 | Web hosting | Vercel | Latest |
-| Auth | Better Auth | Latest |
+| Auth | Supabase Auth | Latest |
 | Mobile | Expo / React Native | SDK 51+ |
 | Mac widget | SwiftUI + WidgetKit + MenuBarExtra | macOS 13+ |
 | iOS widget | SwiftUI + WidgetKit | iOS 17+ |
@@ -159,9 +160,8 @@ PR body must include: Closes #42
 
 **Ask first:**
 - Before modifying `package.json` or adding new dependencies
-- Before touching authentication code in `packages/api-client/`
+- Before touching authentication code in `packages/data-access/`
 - Before changing any TypeScript interfaces in `packages/types/`
-- Before modifying shared configs in `packages/config/`
 - Before any database migration or schema change
 - If the task would touch more than 10 files
 - If the acceptance criteria are ambiguous

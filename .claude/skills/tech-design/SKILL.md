@@ -262,7 +262,7 @@ For Level 1–2 decisions, also write to `research/designs/kebab-case-title.md`:
 
 ## Phase 5 — Integration
 
-Goal: Connect this decision to the rest of the project.
+Goal: Connect this decision to the rest of the project AND propagate changes to every file affected by it.
 
 After writing the artifacts:
 
@@ -270,8 +270,33 @@ After writing the artifacts:
 
 2. **Cross-reference**: If existing ADRs are related, note the relationship in both directions.
 
-3. **Report** what was produced:
-   - File path(s) written
+3. **Propagation audit (MANDATORY)**: This decision may change facts recorded in prior ADRs, design docs, or project files. You MUST run this audit before reporting results.
+
+   **Step 3a — Identify what changed.** List every concrete fact this decision introduces or modifies. Examples: new package added, import direction changed, new library dependency, new Nx tag, folder structure changed, new design principle (e.g., "polling-first").
+
+   **Step 3b — Search for every file that references those facts.** Use Grep to find all files mentioning the affected terms (package names, dependency graphs, folder structures, import directions, count of packages, Nx tags, etc.). Check at minimum:
+   - `CLAUDE.md` (agent rules)
+   - `technical-design-decisions.md` (checklist summaries)
+   - All existing ADRs in `research/decisions/`
+   - All existing design docs in `research/designs/`
+   - `AGENTS.md` and `GitHub-Agents.md` if they reference the affected domain
+   - `.claude/agents/` subagent files if they reference affected packages or conventions
+
+   **Step 3c — Update every stale reference.** For each file found in 3b, check whether the content is now outdated and update it. Common things that go stale:
+   - Package counts (e.g., "6 packages" → "7 packages")
+   - Folder structure diagrams missing the new package
+   - Dependency graph diagrams missing new nodes or edges
+   - Nx module boundary tag tables missing new tags
+   - Package responsibility tables missing new rows
+   - App dependency lists missing new packages
+   - Import direction descriptions missing new layers
+   - Summary tables in the checklist missing new entries
+
+   **Step 3d — Report the propagation.** List every file you checked and whether it needed an update. This makes it auditable.
+
+4. **Report** what was produced:
+   - File path(s) written (new)
+   - File path(s) updated (propagation)
    - The decision in one sentence
    - Key trade-off accepted
    - Recommended next action (usually: use `/clarify` to scope the first implementation task, or `/decompose-issue` to create tickets)
