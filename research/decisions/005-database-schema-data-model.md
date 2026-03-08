@@ -4,7 +4,7 @@
 **Date:** 2026-03-07
 **Decision-makers:** Project lead
 **Zoom level:** Level 1 (System)
-**Platforms:** All (schema is platform-agnostic; all platforms access via Supabase API)
+**Platforms:** All (schema is platform-agnostic; all platforms access via Hono REST API on CF Workers, which forwards to Supabase — see [ADR-007](./007-api-architecture.md))
 
 ## Context and Problem Statement
 
@@ -97,3 +97,4 @@ Chosen option: **"Normalized relational schema (12 tables, 3NF)"**, because it m
 - [ADR-002: Auth Architecture](./002-auth-architecture.md) — RLS uses `auth.uid()` via `get_user_id()` helper; deferred sign-up preserves user ID
 - [ADR-003: Client State Management](./003-client-state-management.md) — TanStack Query polls schema data at 30s intervals; social visibility functions called from `data-access/`
 - [ADR-004: Timer State Machine](./004-timer-state-machine.md) — timer config reads from `user_preferences`; `ReflectionData` type maps to `sessions.focus_quality` + `sessions.distraction_type`; abandonment reason collected optionally by app layer after timer reaches `abandoned` state; `reflection_enabled` preference controls whether reflection state is entered
+- [ADR-007: API Architecture](./007-api-architecture.md) — all client access routes through the Hono REST API on CF Workers, which forwards user JWTs to Supabase. RLS policies and `get_user_id()` work unchanged.

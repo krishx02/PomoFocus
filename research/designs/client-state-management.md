@@ -20,7 +20,7 @@ PomoFocus needs a state management architecture that serves 9 platforms from one
 - Selector-based Zustand access for performant timer rendering
 
 **Non-Goals:**
-- Designing the full offline sync/conflict resolution strategy (deferred to Offline-First Sync Architecture /tech-design)
+- Designing the full offline sync/conflict resolution strategy (decided in [ADR-006: Offline-First Sync Architecture](../decisions/006-offline-first-sync-architecture.md) — custom outbox pattern)
 - Choosing the timer state machine implementation (decided — see [ADR-004](../decisions/004-timer-state-machine.md): hand-rolled TypeScript reducer)
 - Implementing Supabase Realtime WebSocket subscriptions (deferred; polling meets all v1 latency requirements)
 - Designing native platform bridge implementations (iOS widget App Group, WatchConnectivity, BLE GATT — each is a separate concern)
@@ -77,6 +77,11 @@ types ← core ← data-access ← state ← apps
                          ┌──────────────────────┐
                          │     Supabase DB       │
                          │  (source of truth)    │
+                         └──────────┬────────────┘
+                                    │
+                         ┌──────────┴────────────┐
+                         │   CF Workers API      │
+                         │   (Hono, ADR-007)     │
                          └──────────┬────────────┘
                                     │
                           HTTP polling (30s)
@@ -217,7 +222,7 @@ Each bridge writes/reads the same data shapes defined in `@pomofocus/types`. The
 
 ### Legend State (All-in-One)
 
-Rejected despite superior performance benchmarks because v3 (with Supabase sync) is still in beta, the community is ~10x smaller than Zustand's (affecting agent code quality), and it locks in a sync strategy before the Offline-First Sync Architecture decision. If v3 reaches stable before the sync architecture decision, it should be reconsidered as the sync layer (potentially replacing TanStack Query, while keeping Zustand for local state).
+Rejected despite superior performance benchmarks because v3 (with Supabase sync) is still in beta, the community is ~10x smaller than Zustand's (affecting agent code quality), and it locks in a sync strategy that differs from the custom outbox pattern chosen in [ADR-006](../decisions/006-offline-first-sync-architecture.md).
 
 ### Jotai + TanStack Query
 
@@ -232,11 +237,11 @@ Rejected as the default data-fetching strategy. Supabase free tier limits concur
 - **Security:** No state management-specific security concerns. Auth tokens are managed by `@pomofocus/data-access` (see ADR-002). Zustand stores never hold raw tokens — `core/` functions receive `userId: string`, not sessions.
 - **Cost:** Polling-first strategy means zero WebSocket connections by default, staying well within Supabase's free tier. TanStack Query's 30s polling interval is ~2,880 requests/user/day for active use — negligible at Supabase's scale.
 - **Observability:** TanStack Query DevTools (web) for debugging cache state. Zustand DevTools middleware for store inspection. Both are dev-only, zero production overhead.
-- **Migration path:** If the Offline-First Sync Architecture decision later recommends a different sync approach (PowerSync, ElectricSQL, Legend State sync), TanStack Query hooks in `packages/state/queries/` are the replacement surface — `data-access/` and `core/` remain untouched.
+- **Migration path:** [ADR-006](../decisions/006-offline-first-sync-architecture.md) chose custom outbox sync. If a future decision recommends a managed sync engine (PowerSync, ElectricSQL), TanStack Query hooks in `packages/state/queries/` are the replacement surface — `data-access/` and `core/` remain untouched.
 
 ## Open Questions
 
-1. **Offline sync & conflict resolution** — How do sessions created offline merge with server state? What happens when the same goal is edited on two devices? Deferred to Offline-First Sync Architecture /tech-design.
+1. **Offline sync & conflict resolution** — Decided in [ADR-006: Offline-First Sync Architecture](../decisions/006-offline-first-sync-architecture.md). Custom outbox queue in `core/sync/` + `data-access/sync/`. Append-only data uses idempotent inserts (UUID + ON CONFLICT DO NOTHING). Updatable data uses optimistic version locking.
 2. **Timer state machine design** — Decided in [ADR-004](../decisions/004-timer-state-machine.md). Pure `transition(state, event) → newState` function in `packages/core/timer/`. Zustand stores wrap `transition()` and own the timer interval. 9 states: idle, focusing, paused, short_break, long_break, break_paused, reflection, completed, abandoned.
 3. **App Group native module** — How does the Expo app write to App Group UserDefaults? Deferred to iOS Widget Architecture /tech-design.
 4. **Realtime upgrade criteria** — Under what specific conditions would polling be insufficient and Realtime be added? Answer: if user research shows that Library Mode presence with >30s latency degrades the experience.

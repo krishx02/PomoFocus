@@ -56,13 +56,13 @@ pomofocus/
 │   │   ├── package.json         # @pomofocus/analytics — depends on @pomofocus/types, @pomofocus/core
 │   │   └── project.json         # tags: ["type:domain", "scope:shared"]
 │   │
-│   ├── data-access/             # Data layer — Supabase queries, sync, auth
+│   ├── data-access/             # Data layer — API client (generated from OpenAPI), auth token mgmt, sync drivers
 │   │   ├── src/
-│   │   │   ├── client.ts        # Supabase client initialization
-│   │   │   ├── sessions.ts      # Session CRUD queries
-│   │   │   ├── goals.ts         # Goal CRUD queries
-│   │   │   ├── auth.ts          # Auth helpers (login, signup, deferred auth)
-│   │   │   ├── sync.ts          # Real-time subscription wrappers
+│   │   │   ├── client.ts        # Generated OpenAPI client initialization (openapi-fetch)
+│   │   │   ├── sessions.ts      # Session CRUD via API client
+│   │   │   ├── goals.ts         # Goal CRUD via API client
+│   │   │   ├── auth.ts          # Auth helpers (login, signup, JWT refresh)
+│   │   │   ├── sync.ts          # Outbox sync drivers (upload via API, queue persistence)
 │   │   │   └── index.ts
 │   │   ├── package.json         # @pomofocus/data-access — depends on @pomofocus/types, @pomofocus/core
 │   │   └── project.json         # tags: ["type:data-access", "scope:shared"]
@@ -105,6 +105,16 @@ pomofocus/
 │       └── project.json         # tags: ["type:infra", "scope:shared"]
 │
 ├── apps/                        # Runnable applications
+│   ├── api/                     # Hono REST API → Cloudflare Workers (ADR-007)
+│   │   ├── src/
+│   │   │   ├── routes/          # Route definitions with Zod schemas (@hono/zod-openapi)
+│   │   │   ├── middleware/      # Auth (JWT validation), rate limiting, error handling
+│   │   │   └── index.ts         # Hono app entry point
+│   │   ├── wrangler.toml        # CF Workers config
+│   │   ├── openapi.json         # Generated OpenAPI 3.1 spec (committed)
+│   │   ├── package.json         # depends on: types, core
+│   │   └── project.json         # tags: ["type:app", "scope:api"]
+│   │
 │   ├── web/                     # Next.js web app
 │   │   ├── package.json         # depends on: types, core, analytics, data-access, state, ui
 │   │   └── project.json         # tags: ["type:app", "scope:web"]
@@ -113,7 +123,7 @@ pomofocus/
 │   │   ├── package.json         # depends on: types, core, analytics, data-access, state, ui, ble-protocol
 │   │   └── project.json         # tags: ["type:app", "scope:mobile"]
 │   │
-│   ├── vscode/                  # VS Code extension
+│   ├── vscode-extension/         # VS Code extension
 │   │   ├── package.json         # depends on: types, core, data-access, state, ui
 │   │   └── project.json         # tags: ["type:app", "scope:vscode"]
 │   │
@@ -122,12 +132,13 @@ pomofocus/
 │       └── project.json         # tags: ["type:app", "scope:mcp"]
 │
 ├── native/                      # Native Apple code (SwiftUI, managed by Xcode)
-│   ├── shared/
-│   │   ├── DatabaseTypes.swift  # AUTO-GENERATED: supabase gen types --lang swift
-│   │   └── BLETypes.swift       # AUTO-GENERATED: protoc --swift_out
-│   ├── ios-widget/              # SwiftUI + WidgetKit (iOS 17+)
-│   ├── mac-widget/              # SwiftUI + MenuBarExtra
-│   └── watchos/                 # SwiftUI + WatchKit (watchOS 10+)
+│   └── apple/                   # Xcode workspace (outside Nx)
+│       ├── shared/
+│       │   ├── DatabaseTypes.swift  # AUTO-GENERATED: supabase gen types --lang swift
+│       │   └── BLETypes.swift       # AUTO-GENERATED: protoc --swift_out
+│       ├── mac-widget/          # macOS menu bar target (MenuBarExtra + WidgetKit)
+│       ├── ios-widget/          # iOS home screen widget target (WidgetKit, iOS 17+)
+│       └── watchos-app/         # Apple Watch app target (SwiftUI, watchOS 10+)
 │
 ├── firmware/                    # ESP32 device firmware
 │   └── device/
@@ -217,7 +228,7 @@ Two dimensions: **type** (architectural layer) and **scope** (platform/domain).
 ```bash
 # Run in CI or on schema change
 supabase gen types --lang typescript --project-id $PROJECT_ID > packages/types/src/database.ts
-supabase gen types --lang swift --swift-access-control public --project-id $PROJECT_ID > native/shared/DatabaseTypes.swift
+supabase gen types --lang swift --swift-access-control public --project-id $PROJECT_ID > native/apple/shared/DatabaseTypes.swift
 ```
 
 **Source of truth: Protobuf → TypeScript + Swift + C++**
@@ -225,7 +236,7 @@ supabase gen types --lang swift --swift-access-control public --project-id $PROJ
 ```bash
 # Run in CI or on proto change
 protoc --ts_out=packages/ble-protocol/src/generated \
-       --swift_out=native/shared \
+       --swift_out=native/apple/shared \
        --cpp_out=firmware/device/src/generated \
        packages/ble-protocol/proto/pomofocus.proto
 ```
@@ -239,7 +250,7 @@ protoc --ts_out=packages/ble-protocol/src/generated \
 | `@pomofocus/types` | Nothing | TS interfaces, enums, constants | Auto-generated from Postgres. No logic. |
 | `@pomofocus/core` | `types` | Timer reducer, goal model, session logic | Pure functions. No IO, no React, no Supabase. |
 | `@pomofocus/analytics` | `types`, `core` | Focus Score, insights | Read-only consumer of core types. Pure computation. |
-| `@pomofocus/data-access` | `types`, `core` | Supabase CRUD, auth, sync | All IO lives here. Core never knows about Supabase. |
+| `@pomofocus/data-access` | `types`, `core` | API client (OpenAPI), auth token mgmt, sync drivers | All IO lives here. Uses generated OpenAPI client to talk to CF Workers API (ADR-007). Core never knows about the API. |
 | `@pomofocus/state` | `types`, `core`, `data-access` | Zustand stores, TanStack Query hooks | React state wiring. Thin wrapper around core + data-access. See [ADR-003](../decisions/003-client-state-management.md). |
 | `@pomofocus/ui` | `types` | React/RN components | Presentational. Props typed from types. No business logic. |
 | `@pomofocus/ble-protocol` | `types` | BLE GATT profile, connection mgmt | Protocol definition from Protobuf. Only mobile + web consume. |
@@ -252,7 +263,7 @@ protoc --ts_out=packages/ble-protocol/src/generated \
 
 ## Cross-Cutting Concerns
 
-- **Security:** Package boundaries don't affect security directly. Auth logic lives in `data-access/` which wraps Supabase Auth. No package exposes credentials.
+- **Security:** Package boundaries don't affect security directly. Auth token management lives in `data-access/` which wraps the generated OpenAPI client. All client-server communication routes through the Hono API on CF Workers (ADR-007) — no Supabase credentials are exposed to clients.
 - **Cost:** No cost implications. Nx + pnpm is free. Type generation runs in existing CI.
 - **Observability:** Each package can be independently versioned and its build/test times tracked by Nx's task runner. This will be useful for identifying packages that slow down CI.
 - **Migration path:** If `core/` grows too large, split it into `timer/`, `goals/`, `sessions/` using Nx's `@nx/workspace:move` generator. Import paths update automatically. The `types/` package already exists as the shared interface layer, so the split is clean.

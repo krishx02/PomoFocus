@@ -23,7 +23,7 @@ This design defines: (1) the state model — which states exist and which transi
 **Non-Goals:**
 - Timer interval management (owned by platform-specific timer drivers, not `core/`)
 - Sound/haptic feedback on transitions (side effects handled by consumers)
-- BLE device sync conflict resolution (deferred to BLE Protocol / Offline-First Sync ADRs)
+- BLE device sync conflict resolution (BLE device syncs sessions through phone app via outbox queue — see [ADR-006](../decisions/006-offline-first-sync-architecture.md); BLE Protocol ADR still pending)
 - Analytics recording of completed sessions (handled by consumers calling `data-access/`)
 - UI rendering of timer state (handled by `packages/state/` Zustand stores and `packages/ui/`)
 
@@ -207,4 +207,4 @@ The `startedAt` timestamp (milliseconds since epoch) is the key field that makes
 
 1. **~~Reflection flow details~~** — **Resolved by ADR-005.** Reflection collects `focus_quality` (locked_in / decent / struggled) and conditionally `distraction_type` (if struggled). Skippable — controlled by `user_preferences.reflection_enabled`. Abandonment reason ("Had to stop" / "Gave up") collected optionally by app layer after timer reaches `abandoned` state. `ReflectionData = { focusQuality?: FocusQuality; distractionType?: DistractionType }`.
 2. **Background timer accuracy:** On iOS, `setInterval` accuracy degrades when the app is backgrounded. Should the React Native timer driver use a native module for accurate background timing, or is timestamp-based rehydration sufficient? (Deferred to implementation — test actual behavior first.)
-3. **BLE device timer sync:** When the device and phone both have timer state, which is authoritative? What happens on reconnection? (Deferred to BLE Protocol / Offline-First Sync ADRs.)
+3. **BLE device timer sync:** When the device and phone both have timer state, which is authoritative? What happens on reconnection? (Sync architecture decided in [ADR-006](../decisions/006-offline-first-sync-architecture.md) — device syncs sessions through phone via outbox queue. Timer conflict resolution deferred to BLE Protocol ADR.)

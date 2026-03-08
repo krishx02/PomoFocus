@@ -13,7 +13,7 @@
 | [01-agent-workflow-experts.md](./01-agent-workflow-experts.md) | AI-Assisted Development: Expert Synthesis | Five universal patterns from Boris Cherny, Karpathy, Simon Willison, swyx, and others. CLAUDE.md is the single highest-leverage investment. Tests are the agent's feedback loop. |
 | [02-github-for-agents.md](./02-github-for-agents.md) | GitHub Issues & Projects for AI Agent Workflows | How to write tickets that agents can execute without hand-holding. GitHub MCP server, Projects v2 API, issue templates, `ship-issue` skill, and label strategy. **Updated Mar 2026:** AGENTS.md convention, GitHub Agentic Workflows, WRAP framework, Claude Code Action v1.0 GA, Copilot coding agent updates, Playwright MCP, failure patterns. |
 | [03-github-actions-ci-cd.md](./03-github-actions-ci-cd.md) | GitHub Actions CI/CD for Multi-Platform Apps | Full delivery surface (web, iOS, iOS widget, watchOS, Android, VS Code, Mac widget) from one monorepo. Claude Code Action for AI-assisted auto-fix loops. Cloudflare, App Store, and Play Store pipelines. |
-| [04-stack-recommendations.md](./04-stack-recommendations.md) | Tech Stack Recommendations 2025-2026 | Supabase + CF Durable Objects + Supabase Auth + Expo + SwiftUI widget + Nx + Vercel + MCP server. MVP cost: $0/month. |
+| [04-stack-recommendations.md](./04-stack-recommendations.md) | Tech Stack Recommendations 2025-2026 | Supabase + Hono API on CF Workers + Supabase Auth + Expo + SwiftUI widget + Nx + Vercel + MCP server. MVP cost: $0/month. See [ADR-007](./decisions/007-api-architecture.md). |
 | [05-startups-and-oss-solving-this.md](./05-startups-and-oss-solving-this.md) | Startups & OSS Solving Agent Dev Workflows | Landscape of tools for "agent picks up Issue and ships PR." Aider + Sweep AI + OpenHands are the install-today picks. Devin is powerful but $500/month. Height is shut down. |
 | [06-product-research-methodology.md](./06-product-research-methodology.md) | Product Research & Discovery Methodologies | Survey of BMAD, GitHub Spec Kit, Osmani's spec-first approach, Shape Up, Torres' Continuous Discovery, Wondel.ai skills, and more. Recommends a `/discover` Claude Code skill for interactive product research. |
 | [07-design-decision-frameworks.md](./07-design-decision-frameworks.md) | Technical Design Decision Frameworks | Synthesis of Google Design Docs (Malte Ubl), MADR 4.0, C4 Model (Simon Brown), Osmani's spec-first workflow, and Cherny's CLAUDE.md pattern. Informs the `/tech-design` skill for structured architecture decisions. |
@@ -27,8 +27,8 @@
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Database | **Supabase** (Postgres + RLS + Realtime) | TypeScript SDK, self-hostable, row-level security |
-| Sync/Edge | **Cloudflare Workers + Durable Objects** | Stateful real-time WebSockets per user, globally distributed |
-| Long-lived processes | **Railway** (defer until Phase 3) | BLE gateway daemon, background jobs |
+| API | **Hono on Cloudflare Workers** (REST + OpenAPI 3.1) | Hides Supabase from clients, validates input, rate limits, generates TS + Swift clients. See [ADR-007](./decisions/007-api-architecture.md). |
+| Long-lived processes | **CF Workers + Cron Triggers** (v1); Railway deferred to post-v1 | BLE syncs through phone (ADR-006); Railway only if batch cross-user analytics at scale requires it (ADR-008) |
 | Web hosting | **Vercel** | Next.js deployment |
 | Auth | **Supabase Auth** (sole provider, long-term) | Seamless RLS integration, zero cost at MVP scale. See [ADR-002](./decisions/002-auth-architecture.md). |
 | Mobile | **Expo / React Native** | Code sharing with web + VS Code, BLE via react-native-ble-plx |

@@ -33,14 +33,14 @@ Chosen option: **"Zustand + TanStack Query"**, because it provides the best comb
 ### Key Architecture Principles
 
 1. **`@pomofocus/core` owns domain truth** — timer logic, goal models, session recording are pure functions in `core/`. Zustand stores are thin React wrappers that call into `core/`, not replacements for it.
-2. **Polling-first, no WebSockets by default** — all server data uses TanStack Query polling at 30-second intervals. Supabase Realtime is available but deferred until a feature demands sub-second updates. A Pomodoro app's data (sessions, goals, analytics, friend activity) does not require real-time push.
+2. **Polling-first, no WebSockets by default** — all server data uses TanStack Query polling at 30-second intervals via the Hono REST API on Cloudflare Workers ([ADR-007](./007-api-architecture.md)). Clients poll the API, not Supabase directly. Supabase Realtime is available but deferred until a feature demands sub-second updates. A Pomodoro app's data (sessions, goals, analytics, friend activity) does not require real-time push.
 3. **Shared `packages/state/`** — Zustand stores and TanStack Query hooks live in a shared package consumed by all React apps. Platform-specific persistence adapters (MMKV, localStorage, VS Code globalState) are injected by each app at initialization.
 4. **Native platforms use platform bridges** — iOS widget (App Group), watchOS (WatchConnectivity), BLE device (GATT characteristics). These are platform-mandated and independent of the React state library choice.
 
 ### Consequences
 
 - **Good:** Maximum ecosystem support and documentation for agent-written code. Clean separation of local state (Zustand) and server state (TanStack Query). Polling-first eliminates WebSocket connection scaling concerns. Shared state package prevents store duplication across 3+ React apps.
-- **Bad:** Two libraries to coordinate instead of one integrated solution. Manual glue code needed for offline sync/conflict resolution (deferred to Offline-First Sync Architecture /tech-design session). Zustand requires selector discipline for performant timer updates.
+- **Bad:** Two libraries to coordinate instead of one integrated solution. Manual glue code needed for offline sync/conflict resolution (decided in [ADR-006](./006-offline-first-sync-architecture.md) — custom outbox pattern in `core/sync/` + `data-access/sync/`). Zustand requires selector discipline for performant timer updates.
 - **Neutral:** Adds a 7th package (`packages/state/`) to the monorepo structure established in ADR-001. The import direction (`types <- core <- data-access <- state`, apps consume all) remains consistent.
 
 ## Pros and Cons of the Options
@@ -99,5 +99,6 @@ Chosen option: **"Zustand + TanStack Query"**, because it provides the best comb
 - [ADR-002: Auth Architecture](./002-auth-architecture.md) — auth state flows through `data-access/`, consumed by `state/` via TanStack Query hooks
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — TanStack Query polls session/goal data; social visibility via scoped functions in `data-access/`
 - Database: Supabase (Postgres + RLS + Realtime) — accepted, see `research/04-stack-recommendations.md`
-- Offline-First Sync Architecture — pending /tech-design. This ADR defers sync/conflict resolution to that session.
+- [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — custom outbox sync with pure protocol in `core/sync/`, drivers in `data-access/sync/`. Polling-first strategy (this ADR) feeds the pull side; outbox handles the push side.
+- [ADR-007: API Architecture](./007-api-architecture.md) — TanStack Query polls the Hono API on CF Workers, not Supabase directly. Same polling interval, same caching behavior — different transport target.
 - [ADR-004: Timer State Machine](./004-timer-state-machine.md) — hand-rolled TypeScript reducer in `core/`. Zustand stores wrap `transition()` and own the timer interval.

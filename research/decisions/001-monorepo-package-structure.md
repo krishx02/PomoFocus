@@ -82,3 +82,4 @@ Chosen option: **"Layered Hybrid (6 packages)"**, because it splits at natural a
 - Testing frameworks — accepted, see `research/08-testing-frameworks.md`
 - [ADR-003: Client State Management](./003-client-state-management.md) — adds `packages/state/` as the 7th shared package
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — schema drives `packages/types/` via `supabase gen types`
+- [ADR-007: API Architecture](./007-api-architecture.md) — adds `apps/api/` (Hono on CF Workers). `packages/data-access/` changes from "wraps Supabase SDK" to "wraps generated OpenAPI client."
