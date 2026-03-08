@@ -54,7 +54,7 @@ xcodebuild test \
 - macOS widget: WidgetKit + NSStatusItem / MenuBarExtra (macOS 13+)
 - iOS widget: WidgetKit + AppIntents (iOS 17+, for interactive widgets)
 - Apple Watch: SwiftUI + WatchKit + WKExtendedRuntimeSession (watchOS 10+)
-- Sync: Supabase Swift SDK or shared state via App Group
+- Sync: Generated Swift OpenAPI client (`swift-openapi-generator`) for API access, or shared state via App Group
 - Min targets: macOS 13 (Ventura), iOS 17, watchOS 10
 
 ## Platform-Specific Notes

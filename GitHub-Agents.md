@@ -349,6 +349,54 @@ gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 
 **What it does:** Runs a structured 5-question intake interview before implementing anything. Saves output as a written spec to `.claude/specs/`. Required for any request that would touch >3 files.
 
+### `/discover`
+
+**File:** `.claude/skills/discover/SKILL.md`
+
+**What it does:** Runs an interactive product discovery session using structured frameworks (Continuous Discovery, Mom Test, JTBD, Shape Up). Produces a versioned `product-brief.md`.
+
+### `/tech-design [topic]`
+
+**File:** `.claude/skills/tech-design/SKILL.md`
+
+**What it does:** Runs a structured technical design interview. Researches options, challenges assumptions with devil's advocate questioning, and produces an Architecture Decision Record (MADR 4.0).
+
+### `/data-model`
+
+**File:** `.claude/skills/data-model/SKILL.md`
+
+**What it does:** Runs a three-level data modeling session (conceptual → logical → physical) with review gates. Produces Mermaid ER diagrams and SQL DDL.
+
+### `/align-repo`
+
+**File:** `.claude/skills/align-repo/SKILL.md`
+
+**What it does:** Audits all repo files for consistency against ADR decisions. Finds stale names, wrong tool references, outdated counts, contradictory claims. Auto-fixes mechanical drift, reports semantic ambiguity.
+
+### `/finalize`
+
+**File:** `.claude/skills/finalize/SKILL.md`
+
+**What it does:** Orchestrates end-of-implementation: launches github-issue-manager to create PR + update labels, then launches code-reviewer for inline review. Loops up to 3 times if critical issues found.
+
+### `/pre-finalize`
+
+**File:** `.claude/skills/pre-finalize/SKILL.md`
+
+**What it does:** Runs build verification, integration tests, E2E tests, and cross-package dependency tests for all affected platforms. Sits between `/ship-issue` and `/finalize`.
+
+### `/design-review`
+
+**File:** `.claude/skills/design-review/SKILL.md`
+
+**What it does:** Evaluates design decisions through the PomoFocus design philosophy. Use for UI, interaction, visual, or material choices on any platform.
+
+### `/ask-claude`
+
+**File:** `.claude/skills/ask-claude/SKILL.md`
+
+**What it does:** Ask a question about Claude Code features, workflows, and best practices.
+
 ### Planned Skills (Not Yet Created)
 
 | Skill | Purpose |
@@ -484,24 +532,33 @@ Auto-enforce agent-ready format on every new issue. See `.github/ISSUE_TEMPLATE/
 
 ## 7. CI/CD Reference
 
+> **ADR:** [009-ci-cd-pipeline-design](./research/decisions/009-ci-cd-pipeline-design.md) | **Design:** [ci-cd-pipeline-design](./research/designs/ci-cd-pipeline-design.md)
+
 ### Workflow Map
 
-| Workflow File | Trigger | Platforms |
-|--------------|---------|-----------|
-| `.github/workflows/ci.yml` | PR to main | All (Nx affected) |
-| `.github/workflows/claude.yml` | `@claude` comment | Any |
-| `.github/workflows/deploy-web.yml` | Push to main, `apps/web/**` changes | Web → Vercel |
-| `.github/workflows/mobile.yml` | Push to main, `apps/mobile/**` changes | iOS + Android → EAS |
-| `.github/workflows/mac-widget.yml` | Push to main, `native/apple/mac-widget/**` | macOS → Xcode Cloud |
-| `.github/workflows/vscode.yml` | Tag push (`v*`) | VS Code Marketplace |
+| Workflow File | Trigger | Platforms | Status |
+|--------------|---------|-----------|--------|
+| `.github/workflows/ci.yml` | PR to main, push to main | All TS (Nx affected lint/test/type-check/build) | Active from day one |
+| `.github/workflows/deploy-api.yml` | Push to main, `apps/api/**` changes | API → CF Workers | Dormant until `apps/api/` exists |
+| `.github/workflows/deploy-web.yml` | Push to main, `apps/web/**` changes | Web → Vercel CLI (fallback) | Dormant — Vercel GitHub integration is primary |
+| `.github/workflows/mobile.yml` | Push to main, `apps/mobile/**` changes | iOS + Android → EAS Build | Dormant until `apps/mobile/` exists |
+| `.github/workflows/supabase.yml` | PR, `supabase/**` changes | Migration validation + type drift | Dormant until `supabase/` exists |
+| `.github/workflows/vscode.yml` | Push to main, `apps/vscode-extension/**` | VS Code Marketplace | Post-v1 |
+| `.github/workflows/mcp.yml` | Tag `mcp-server-v*` | npm publish | Post-v1 |
+| `.github/workflows/firmware.yml` | PR, `firmware/**` changes | PlatformIO compile + test | Post-v1 |
+
+**Dormant workflows** have path filters that don't match yet — they activate automatically when their platform's code is added. **Do not delete dormant workflows.**
+
+**Not included:** Claude Code Action (`@claude` in PRs) — deferred; agent work stays local via Max subscription. Native Swift CI — deferred; build from Xcode locally.
 
 ### What Agents Must Know About CI
 
 - Nx affected detection requires `fetch-depth: 0` in checkout
 - Path filters prevent cross-platform interference: a web change doesn't trigger mobile CI
-- Preview deployments are auto-created on PR open (Vercel)
-- Required checks are platform-specific — a failing iOS build doesn't block a web-only PR
+- Preview deployments are auto-created on PR open (Vercel GitHub integration — no workflow needed)
+- Branch protection uses a single "CI Complete" required check (success gate job)
 - `pnpm nx affected --target=test --base=origin/main --head=HEAD` is the canonical test command for CI
+- Mobile builds use **Expo EAS Build** (cloud) — never Fastlane, never macOS GitHub Actions runners
 
 ### Nx Affected Detection
 
@@ -530,8 +587,8 @@ pnpm nx affected --target=lint --base=origin/main --head=HEAD
 | `packages/types` | TypeScript (type-level) | `pnpm type-check` | N/A |
 | `packages/data-access` | Vitest (mocked) | `pnpm nx test @pomofocus/data-access` | 80% |
 | `apps/web` | Vitest + Playwright | `pnpm nx test @pomofocus/web` | 70% |
-| `apps/mobile` | Jest + Detox/Maestro | `pnpm nx test @pomofocus/mobile` | 70% |
-| `apps/vscode-extension` | Jest | `pnpm nx test @pomofocus/vscode-extension` | 70% |
+| `apps/mobile` | Vitest + Maestro | `pnpm nx test @pomofocus/mobile` | 70% |
+| `apps/vscode-extension` | @vscode/test-electron + Vitest | `pnpm nx test @pomofocus/vscode-extension` | 70% |
 | `apps/mcp-server` | Vitest | `pnpm nx test @pomofocus/mcp-server` | 80% |
 | `native/apple/mac-widget` | XCTest | `xcodebuild test -scheme PomoFocusMac` | 70% |
 
@@ -674,7 +731,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 
 | Tool | Purpose | Trigger |
 |------|---------|---------|
-| Railway | BLE gateway daemon, background jobs | Phase 3 |
+| Railway | Background jobs at scale (batch cross-user analytics) | Post-v1 (ADR-008) |
 | Devin | Fully autonomous agent | When budget allows ($500/month) |
 | Xcode Cloud | macOS widget CI | When Swift code exists |
 

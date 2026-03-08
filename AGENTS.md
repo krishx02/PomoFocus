@@ -49,16 +49,17 @@ xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,
 ```
 pomofocus/
 ├── apps/
+│   ├── api/                  # Hono REST API → Cloudflare Workers
 │   ├── web/                  # Next.js web app → Vercel
 │   ├── mobile/               # Expo (iOS + Android) → EAS Build
 │   ├── vscode-extension/     # VS Code Extension API
 │   ├── mcp-server/           # Claude Code MCP server → npm
-│   └── ble-gateway/          # BLE/MQTT gateway (Phase 3, Railway)
+│   └── (future apps as needed)
 ├── packages/
 │   ├── types/                # Auto-generated TS types from Postgres schema
-│   ├── core/                 # Pure domain logic (timer, goals, sessions) — 100% tested
+│   ├── core/                 # Pure domain logic (timer, goals, sessions, sync protocol) — 100% tested
 │   ├── analytics/            # Focus Score and insights
-│   ├── data-access/          # All Supabase interaction (queries, auth, sync)
+│   ├── data-access/          # All server interaction via generated OpenAPI client (queries, auth, sync)
 │   ├── state/                # Zustand stores + TanStack Query hooks
 │   ├── ui/                   # Shared React/RN components
 │   └── ble-protocol/         # BLE GATT profile (types from Protobuf)
@@ -89,7 +90,7 @@ pomofocus/
 | Language | TypeScript | 5.x — no JS files |
 | Monorepo | Nx + pnpm | Nx 19+, pnpm 9+ |
 | Database | Supabase (Postgres + RLS + Realtime) | Latest |
-| Sync/Edge | Cloudflare Workers + Durable Objects | Latest |
+| API | Hono on Cloudflare Workers (REST + OpenAPI 3.1) | Latest |
 | Web hosting | Vercel | Latest |
 | Auth | Supabase Auth | Latest |
 | Mobile | Expo / React Native | SDK 51+ |
@@ -99,7 +100,7 @@ pomofocus/
 | VS Code extension | VS Code Extension API | Latest |
 | BLE | react-native-ble-plx + Web Bluetooth | Latest |
 | Test (TS) | Vitest | Latest |
-| Test (Swift) | XCTest | Latest |
+| Test (Swift) | Swift Testing + XCTest | Latest |
 | Lint | ESLint + Prettier | Latest |
 
 ---
