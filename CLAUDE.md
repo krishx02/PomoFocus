@@ -2,7 +2,7 @@
 
 ## Project Context
 
-Multi-platform Pomodoro productivity app. Targets: iOS, iOS home screen widget, Apple Watch (watchOS), macOS menu bar, Android, web, VS Code extension, Claude Code (MCP), physical BLE device. Cloud sync = paid subscription. Stack: Expo/React Native, SwiftUI/WatchKit, Nx/pnpm monorepo, Supabase (database + auth), Cloudflare Workers.
+Multi-platform Pomodoro productivity app. Targets: iOS, iOS home screen widget, Apple Watch (watchOS), macOS menu bar, Android, web, VS Code extension, Claude Code (MCP), physical BLE device. Cloud sync = paid subscription. Stack: Expo/React Native, SwiftUI/WatchKit, Nx/pnpm monorepo, Supabase (database + auth), Hono REST API on Cloudflare Workers.
 
 **Current status:** Pre-code. No app code exists yet. Setting up dev workflow.
 
@@ -15,9 +15,9 @@ See @research/README.md for full stack decisions and research.
 IMPORTANT: Follow these import rules when writing app code.
 
 - `packages/types/` — Auto-generated from Postgres schema via `supabase gen types`. **Never edit manually.**
-- `packages/core/` — Pure domain logic (timer, goals, sessions). **No IO, no React, no Supabase imports.**
+- `packages/core/` — Pure domain logic (timer, goals, sessions, sync protocol). **No IO, no React, no Supabase imports.**
 - `packages/analytics/` — Focus Score and insights. Depends on `types/` and `core/` only.
-- `packages/data-access/` — All Supabase interaction (queries, auth, sync). **All auth imports live here.** Core never imports this.
+- `packages/data-access/` — All server interaction via generated OpenAPI client (queries, auth token management, sync drivers). **All auth imports live here.** Sync outbox persistence and upload logic live here. Core never imports this. Clients never talk to Supabase directly — all requests go through the Hono API on Cloudflare Workers.
 - `packages/state/` — Zustand stores + TanStack Query hooks. Depends on `core/`, `data-access/`, `types/`. **All React apps import from here.**
 - `packages/ui/` — Shared React/RN components. Depends on `types/` only.
 - `packages/ble-protocol/` — BLE GATT profile. Types auto-generated from Protobuf.
@@ -59,6 +59,30 @@ IMPORTANT: Follow these conventions when writing database code.
 - Actual migrations via `supabase migration new` — never apply DDL directly.
 
 See [ADR-005](./research/decisions/005-database-schema-data-model.md) for full rationale.
+
+## API
+
+IMPORTANT: All client-server communication goes through a Hono REST API on Cloudflare Workers (`apps/api/`). Clients never talk to Supabase directly — no Supabase URL, no anon key, no raw table structures are exposed. The API forwards the user's Supabase JWT to Supabase so RLS remains active as defense-in-depth. Route schemas are defined with `@hono/zod-openapi` (Zod validates requests AND generates OpenAPI 3.1 spec). TypeScript clients use `openapi-fetch` (generated from spec). Swift clients use Apple's `swift-openapi-generator` (generated from same spec). The `service_role` key is server-side only, used for admin operations.
+
+See [ADR-007](./research/decisions/007-api-architecture.md) for full rationale.
+
+## Sync
+
+IMPORTANT: The sync architecture is a custom outbox pattern. Pure sync protocol (queue FSM, conflict rules, retry policy) lives in `packages/core/sync/` — no IO, no network calls, no platform imports. Sync drivers (API upload via generated OpenAPI client, queue persistence, network detection) live in `packages/data-access/sync/`. Swift platforms reimplement the same protocol using SwiftData. Never add network calls or persistence logic to `core/sync/` — it must remain a pure state machine, same pattern as the timer (ADR-004). All writes use client-generated UUIDs as idempotency keys — server uses `ON CONFLICT (id) DO NOTHING` to deduplicate retries. All sync traffic goes through the Hono API on CF Workers (ADR-007), not directly to Supabase.
+
+See [ADR-006](./research/decisions/006-offline-first-sync-architecture.md) for full rationale.
+
+## CI/CD
+
+IMPORTANT: Follow these conventions for CI/CD workflows.
+
+- CI validates all TypeScript via Nx affected: `lint`, `test`, `type-check`, `build` on `ubuntu-latest`.
+- Mobile builds use **Expo EAS Build** — never Fastlane. No macOS GitHub Actions runners.
+- Deploy workflow templates in `.github/workflows/` may be "dormant" (path filters don't match yet). **Do not delete dormant workflows** — they activate when their platform's code is added.
+- Agent work (implementation) runs locally via Claude Code CLI. **Do not add Claude Code Action workflows** unless explicitly approved.
+- Native Swift targets (macOS widget, iOS widget, watchOS) are built locally from Xcode — no CI.
+
+See [ADR-009](./research/decisions/009-ci-cd-pipeline-design.md) for full rationale.
 
 ---
 

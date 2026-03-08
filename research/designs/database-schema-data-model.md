@@ -2,8 +2,8 @@
 
 **Date:** 2026-03-07
 **Status:** Accepted
-**Related ADR:** [ADR-005](../decisions/004-database-schema-data-model.md)
-**Platforms:** All (schema is platform-agnostic; all platforms access via Supabase API)
+**Related ADR:** [ADR-005](../decisions/005-database-schema-data-model.md)
+**Platforms:** All (schema is platform-agnostic; all platforms access via Hono REST API on CF Workers — see [ADR-007](../decisions/007-api-architecture.md))
 
 ## Context & Scope
 

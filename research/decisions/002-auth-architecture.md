@@ -101,3 +101,4 @@ Supabase Auth is the sole long-term auth provider. Better Auth was evaluated as 
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — RLS uses `auth.uid()` via `get_user_id()` helper; deferred sign-up preserves user ID on identity promotion
 - Database: Supabase (Postgres + RLS + Realtime) — accepted, see `research/04-stack-recommendations.md`
 - Testing frameworks — accepted, see `research/08-testing-frameworks.md`
+- [ADR-007: API Architecture](./007-api-architecture.md) — auth flow routes through the Hono API on CF Workers. API validates user's Supabase JWT and forwards to Supabase — RLS and `get_user_id()` work unchanged. Clients manage JWT refresh via shared auth interceptors.

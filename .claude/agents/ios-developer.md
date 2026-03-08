@@ -54,7 +54,7 @@ xcodebuild test \
 - macOS widget: WidgetKit + NSStatusItem / MenuBarExtra (macOS 13+)
 - iOS widget: WidgetKit + AppIntents (iOS 17+, for interactive widgets)
 - Apple Watch: SwiftUI + WatchKit + WKExtendedRuntimeSession (watchOS 10+)
-- Sync: Supabase Swift SDK or shared state via App Group
+- Sync: Generated Swift OpenAPI client (`swift-openapi-generator`) for API access, or shared state via App Group
 - Min targets: macOS 13 (Ventura), iOS 17, watchOS 10
 
 ## Platform-Specific Notes
@@ -78,8 +78,8 @@ xcodebuild test \
 - Complications via WidgetKit on watchOS 10+ (Smart Stack, watch face)
 - Connectivity options:
   - `WatchConnectivity` (`WCSession`) for real-time messages when paired iPhone is nearby
-  - Supabase Realtime directly on cellular Apple Watch for independent operation
-- Recommend companion-only for MVP (simpler, no cellular backend required)
+  - Cellular Apple Watch syncs via CF Workers API (ADR-007) — Supabase Realtime deferred (ADR-003)
+- Recommend companion-only for MVP — watch syncs through phone via WatchConnectivity (ADR-006)
 - Watch app lives in `native/apple/watchos-app/`
 
 **Entitlements:**

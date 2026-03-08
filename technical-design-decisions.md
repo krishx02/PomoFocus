@@ -19,7 +19,7 @@ These are tool/framework choices that are understood and committed. No `/tech-de
 
 | Choice | Why |
 |--------|-----|
-| **Supabase** (Postgres + RLS + Realtime) | TypeScript SDK, self-hostable, row-level security, real-time subscriptions, generous free tier. Zero-cost MVP infrastructure. |
+| **Supabase** (Postgres + RLS) | TypeScript SDK, self-hostable, row-level security, generous free tier. Zero-cost MVP infrastructure. Clients access Supabase exclusively through the Hono REST API on CF Workers (ADR-007) — never directly via Supabase SDK. Realtime WebSockets deferred (ADR-003). |
 
 ---
 
@@ -63,7 +63,7 @@ These are tool/framework choices that are understood and committed. No `/tech-de
 
 | Choice | Why |
 |--------|-----|
-| **SwiftUI + WidgetKit + MenuBarExtra** | Only real option for a native macOS menu bar widget. Separate Xcode project in `native/mac-widget/`. |
+| **SwiftUI + WidgetKit + MenuBarExtra** | Only real option for a native macOS menu bar widget. Separate Xcode project in `native/apple/mac-widget/`. |
 
 ---
 
@@ -172,12 +172,12 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 |-------|----------|---------------|
 | Contracts | `@pomofocus/types` | Auto-generated from Postgres schema. Zero logic. |
 | Domain | `@pomofocus/core` (timer + goals + sessions), `@pomofocus/analytics` | Pure functions. No IO, no React, no Supabase. |
-| Data | `@pomofocus/data-access` | All Supabase IO. Core never knows about Supabase. |
+| Data | `@pomofocus/data-access` | All server IO via generated OpenAPI client. Core never knows about the API. |
 | State | `@pomofocus/state` | Zustand stores + TanStack Query hooks. Wraps core + data-access for React apps. See [ADR-003](./research/decisions/003-client-state-management.md). |
 | Presentation | `@pomofocus/ui` | Shared React/RN components. Props typed from types. |
 | Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile from Protobuf. Only mobile + web. |
 
-Apps: `web/` (Next.js), `mobile/` (Expo), `vscode/`, `mcp-server/` (placeholder). Native: `ios-widget/`, `mac-widget/`, `watchos/`. Firmware: `device/` (ESP32).
+Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). Native: `native/apple/ios-widget/`, `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (ESP32).
 
 Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types`. Protobuf → TS + Swift + C++ via `protoc`. Zero manual sync.
 
@@ -251,27 +251,40 @@ Architecture: pure `transition(state, event) → newState` function in `packages
 
 ---
 
-### API Design
+### API Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 6 (session CRUD), 9 (social features API), 10 (analytics queries)
-> **What I need to learn:** Whether we need a custom API layer at all vs using Supabase client SDK directly. If we do, REST vs tRPC vs GraphQL. How the Cloudflare Workers edge layer fits into the API architecture. Pagination patterns for feeds and analytics.
-> **Key questions:**
-> - Supabase client SDK directly vs a custom API layer — when is direct access fine and when do we need server-side logic?
-> - If we need an API layer, does it live on Cloudflare Workers or Vercel serverless functions?
-> - What API patterns do social features need (friend requests, presence, feed)?
+> **Date:** 2026-03-07
+> **Status:** Accepted
+> **ADR:** [research/decisions/007-api-architecture.md](./research/decisions/007-api-architecture.md)
+> **Design doc:** [research/designs/api-architecture.md](./research/designs/api-architecture.md)
+
+| Layer | Choice | Key Principle |
+|-------|--------|---------------|
+| Runtime | **Cloudflare Workers** | Best cold starts (<10ms), cheapest ($5/month for 10M requests, zero egress), 300+ edge locations |
+| Framework | **Hono** | Web Standards-based, runtime-portable, first-class OpenAPI support |
+| API style | **REST + OpenAPI 3.1** | Language-agnostic (serves TS + Swift clients), generates SDKs |
+| Schema validation | **Zod** via `@hono/zod-openapi` | Single source of truth: validates requests AND generates OpenAPI spec |
+| TS client | **openapi-typescript + openapi-fetch** | Type-safe fetch client generated from OpenAPI spec |
+| Swift client | **Apple swift-openapi-generator** | Async/await Swift client from same OpenAPI spec |
+| Auth model | **JWT forwarding** | API validates user's Supabase JWT, forwards to Supabase — RLS applies as defense-in-depth |
+| App location | **`apps/api/`** | Hono API lives alongside other apps; consumes `packages/core/` |
+
+Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Remaining open: auth flow for initial login/signup, OpenAPI versioning strategy, local dev setup.
 
 ---
 
 ### Offline-First Sync Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 5 (device works offline), 12 (rabbit hole: "don't build a custom CRDT"), 6 (sessions recorded offline)
-> **What I need to learn:** What "offline-first" actually means in implementation. How Supabase's real-time sync works and its limitations. Whether we need something like PowerSync or ElectricSQL for true local-first. Conflict resolution strategies when the same data is modified on multiple devices.
-> **Key questions:**
-> - Supabase real-time only vs PowerSync/ElectricSQL — what are the actual tradeoffs for our use case?
-> - What happens when a user completes sessions offline on both their phone and the web — how do conflicts resolve?
-> - How much local caching do we need? SQLite on device? AsyncStorage? Something else?
+> **Date:** 2026-03-07
+> **Status:** Accepted
+> **ADR:** [research/decisions/006-offline-first-sync-architecture.md](./research/decisions/006-offline-first-sync-architecture.md)
+> **Design doc:** [research/designs/offline-first-sync-architecture.md](./research/designs/offline-first-sync-architecture.md)
+
+| Choice | Why |
+|--------|-----|
+| **Custom outbox sync** (shared protocol, two implementations) | PomoFocus's data is append-heavy and single-writer — simpler than the CRDT problem that PowerSync/ElectricSQL solve. Pure sync FSM in `packages/core/sync/`, platform drivers in `data-access/` (TS) and `native/` (Swift). Mirrors the timer pattern (ADR-004). |
+
+Architecture: outbox queue (client -> server) + polling pull (server -> client, 30s per ADR-003). All sync traffic routes through the Hono API on CF Workers (ADR-007), not directly to Supabase. Idempotent inserts via client-generated UUIDs + ON CONFLICT DO NOTHING. Optimistic version locking for updates. Watch syncs through phone via WatchConnectivity. BLE device syncs through phone. Free users: outbox exists locally but upload is disabled. Paid users: full sync enabled.
 
 ---
 
@@ -281,37 +294,44 @@ Architecture: pure `transition(state, event) → newState` function in `packages
 
 ### Edge / Sync Layer
 
-> **Status:** Needs /tech-design
+> **Date:** 2026-03-07
+> **Status:** Resolved — fully covered by ADR-006 + ADR-007
 > **Product brief ref:** Sections 5 (device sync), 9 (Library Mode presence), 12 (cloud sync)
-> **What I need to learn:** What Cloudflare Workers and Durable Objects actually are — I understand them at a high level but not how they work in practice. Why an edge layer at all instead of just talking to Supabase directly. What specific problems the edge layer solves (presence? rate limiting? BLE relay? real-time sync?).
-> **Key questions:**
-> - What is a Durable Object and when would I use one vs a regular Worker?
-> - What specific PomoFocus features require an edge layer that Supabase alone can't handle?
-> - Is this needed for v1 or can we defer it until we need real-time presence (Library Mode)?
+> **Resolution:** The Hono API on CF Workers (ADR-007) serves as the edge layer. Custom outbox sync (ADR-006) handles offline-first data flow. Polling-first (ADR-003) handles server-to-client updates. Durable Objects are NOT used for v1 — polling at 5-10s intervals is sufficient for Library Mode presence (a 25-minute session tolerates 10s staleness). If sub-second presence is needed, Durable Objects + WebSockets can be added within the CF Workers ecosystem — no architectural change required, just a new Worker class. No separate ADR needed.
 
 ---
 
 ### Long-lived Processes
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 5 (BLE gateway), 10 (analytics aggregation)
-> **What I need to learn:** What "long-lived processes" means in the context of serverless. Why Cloudflare Workers (which have execution time limits) can't handle certain tasks. What Railway is and how it fits. Whether this is needed for v1 at all.
-> **Key questions:**
-> - What specific tasks can't run on Workers due to time/resource limits?
-> - Is any long-lived process needed for v1, or is this entirely post-v1?
-> - If needed, Railway vs Fly.io vs a simple always-on server — what's the simplest option?
+> **Date:** 2026-03-07
+> **Status:** Accepted
+> **ADR:** [research/decisions/008-long-lived-processes.md](./research/decisions/008-long-lived-processes.md)
+>
+> | Choice | Why |
+> |--------|-----|
+> | **No always-on server for v1 — CF Workers + Cron Triggers only** | Every v1 use case is handled by Workers: BLE syncs through phone (ADR-006), analytics are per-user SQL queries (milliseconds), scheduled tasks use CF Cron Triggers. Railway/Fly.io deferred to post-v1 if batch cross-user analytics at scale requires it. |
 
 ---
 
 ### CI/CD Pipeline Design
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Section 12 (iOS + web + ESP32 device), research: [03-github-actions-ci-cd.md](./research/03-github-actions-ci-cd.md)
-> **What I need to learn:** How to set up GitHub Actions for a monorepo with multiple platforms. What Fastlane is and whether we need it for iOS. How preview deployments work per PR. How Claude Code Action fits into CI. How to build and deploy firmware for ESP32.
-> **Key questions:**
-> - What GitHub Actions workflows do we need? One per platform or a matrix build?
-> - Is Fastlane worth the setup cost for a solo developer, or can Expo EAS handle iOS builds?
-> - How do we CI/CD firmware — can we compile and test ESP32 code in GitHub Actions?
+> **Date:** 2026-03-07
+> **Status:** Accepted
+> **ADR:** [research/decisions/009-ci-cd-pipeline-design.md](./research/decisions/009-ci-cd-pipeline-design.md)
+> **Design doc:** [research/designs/ci-cd-pipeline-design.md](./research/designs/ci-cd-pipeline-design.md)
+>
+> | Layer | Choice | Key Principle |
+> |-------|--------|---------------|
+> | Strategy | **Hybrid Incremental** | Shared `ci.yml` from day one; dormant deploy workflow templates activate as each platform becomes shippable |
+> | TS CI | **Nx affected** (lint, test, type-check, build) | `ubuntu-latest`, `actions/cache` for `.nx/cache` |
+> | Mobile builds | **Expo EAS Build** (not Fastlane) | Cloud builds, no macOS runner, free tier: 15 iOS + 15 Android/month |
+> | Web deploys | **Vercel GitHub integration** | Zero config — connect repo, get preview deploys |
+> | API deploys | **`cloudflare/wrangler-action@v3`** | Preview on PR, production on merge |
+> | Firmware CI | **PlatformIO** on `ubuntu-latest` | `platformio run` + `platformio test` |
+> | Agent CI | **None (local only)** | `/ship-issue` runs locally (Max subscription); Claude Code Action deferred |
+> | Native Swift CI | **Deferred** | Build from Xcode locally; no macOS runners |
+>
+> Branch protection: single "CI Complete" required check. Secrets added incrementally per-platform (6 for v1). Cost: $0/month.
 
 ---
 
