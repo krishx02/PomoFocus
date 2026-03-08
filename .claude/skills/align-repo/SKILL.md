@@ -15,7 +15,9 @@ Mode: $ARGUMENTS
 
 ---
 
-## Phase 1 — Extract Facts from ADRs
+## Phase 0 — ADR Self-Consistency Check
+
+ADRs are the source of truth, but they can contradict each other — especially when a newer ADR changes facts established by an older one (e.g., ADR-006 adds a package, making ADR-001's "7 packages" stale). This phase catches that.
 
 Read every ADR file in `research/decisions/`:
 
@@ -23,7 +25,46 @@ Read every ADR file in `research/decisions/`:
 Glob: research/decisions/*.md
 ```
 
-For each ADR, extract a structured fact list. These are the concrete, verifiable assertions that downstream files must reflect. Categories:
+For each ADR, extract its **date** and **status** (from the MADR frontmatter). Sort by number (ascending = chronological).
+
+### Cross-ADR contradiction checks
+
+Compare every pair of ADRs for overlapping claims. Common contradiction patterns:
+
+1. **Package count drift** — ADR-001 says "7 packages" but a later ADR adds or removes one
+2. **Package responsibility drift** — ADR-001 says `data-access` handles X, but a later ADR assigns X to a different package
+3. **Tool/library contradictions** — one ADR chooses Zustand, another mentions a different state library as chosen
+4. **Import direction contradictions** — one ADR allows an import path another ADR forbids
+5. **Database schema drift** — table/enum counts in ADR-005 don't match tables described in other ADRs
+6. **Superseded decisions** — an ADR with status "Superseded" is still being treated as current
+
+### What to do with contradictions
+
+- **If the newer ADR explicitly supersedes the older one** (says "supersedes ADR-NNN" or the older ADR's status is "Superseded"): the newer ADR wins. Update the older ADR's status to "Superseded by ADR-NNN" and fix its stale facts. This is an auto-fixable change.
+
+- **If both ADRs are status "Accepted" and they contradict**: this is NOT auto-fixable. Stop and ask the user which ADR reflects the current intent. Present the contradiction clearly:
+  ```
+  ADR conflict detected:
+  - ADR-001 (2026-03-06) says: [claim]
+  - ADR-006 (2026-03-15) says: [contradictory claim]
+  Which is correct? I'll update the other one.
+  ```
+
+- **If counts have drifted** (e.g., ADR-001 says "7 packages" but scanning all ADRs reveals 8 are now defined): auto-fix the count in the older ADR if the newer ADR is clear about the addition. Otherwise ask.
+
+After resolving any contradictions (or confirming none exist), proceed. The resolved ADR set becomes the ground truth for all remaining phases.
+
+```
+ADR self-consistency: [N ADRs checked, N contradictions found, N resolved, N need human input]
+```
+
+If any contradictions need human input and mode is "fix", pause here and wait for the user's answer before continuing. If mode is "report", note the contradictions and continue.
+
+---
+
+## Phase 1 — Extract Facts from ADRs
+
+Using the resolved ADR set from Phase 0, extract a structured fact list from each ADR. These are the concrete, verifiable assertions that downstream files must reflect.
 
 ### Fact categories to extract
 
@@ -50,7 +91,7 @@ Extracted N facts from M ADRs:
 These are ALL files that must be checked, grouped by priority. The source of truth hierarchy is:
 
 ```
-ADRs (research/decisions/*.md)           <- GROUND TRUTH (read-only in this skill)
+ADRs (research/decisions/*.md)           <- GROUND TRUTH (mutable only in Phase 0 to resolve inter-ADR contradictions)
   |
   v  propagates to
 Design docs (research/designs/*.md)      <- Detailed architecture
@@ -88,7 +129,7 @@ Glob: *.md
 ```
 
 Exclude from checking:
-- `research/decisions/*.md` — these ARE the source of truth
+- `research/decisions/*.md` — already handled in Phase 0 (inter-ADR consistency)
 - `research/0[1-8]-*.md` — these are research exploration docs, not decision records. "Better Auth" or "Turborepo" mentioned as *evaluated alternatives* is correct in these files. Only flag if they state a rejected option as the *chosen* decision.
 - `product-brief.md` — product doc, not architecture
 - `.claude/docs/` — Claude Code documentation, not project-specific
