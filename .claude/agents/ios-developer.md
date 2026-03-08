@@ -78,8 +78,8 @@ xcodebuild test \
 - Complications via WidgetKit on watchOS 10+ (Smart Stack, watch face)
 - Connectivity options:
   - `WatchConnectivity` (`WCSession`) for real-time messages when paired iPhone is nearby
-  - Supabase Realtime directly on cellular Apple Watch for independent operation
-- Recommend companion-only for MVP (simpler, no cellular backend required)
+  - Cellular Apple Watch syncs via CF Workers API (ADR-007) — Supabase Realtime deferred (ADR-003)
+- Recommend companion-only for MVP — watch syncs through phone via WatchConnectivity (ADR-006)
 - Watch app lives in `native/apple/watchos-app/`
 
 **Entitlements:**

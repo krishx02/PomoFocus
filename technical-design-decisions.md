@@ -19,7 +19,7 @@ These are tool/framework choices that are understood and committed. No `/tech-de
 
 | Choice | Why |
 |--------|-----|
-| **Supabase** (Postgres + RLS + Realtime) | TypeScript SDK, self-hostable, row-level security, real-time subscriptions, generous free tier. Zero-cost MVP infrastructure. |
+| **Supabase** (Postgres + RLS) | TypeScript SDK, self-hostable, row-level security, generous free tier. Zero-cost MVP infrastructure. Clients access Supabase exclusively through the Hono REST API on CF Workers (ADR-007) — never directly via Supabase SDK. Realtime WebSockets deferred (ADR-003). |
 
 ---
 
