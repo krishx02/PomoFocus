@@ -209,7 +209,7 @@ Tables: `profiles`, `user_preferences`, `long_term_goals`, `process_goals`, `ses
 |--------|-----|
 | **Supabase Auth** (sole provider, all platforms) | Seamless RLS integration via `auth.uid()`. Zero cost at MVP scale (50k MAUs free). Built-in anonymous auth for deferred sign-up. Apple Sign-In + Google + email/password supported. |
 
-OAuth providers: Apple Sign-In (required), Google, email/password. Deferred sign-up via `signInAnonymously()` → `linkIdentity()`. Per-platform token distribution: browser OAuth (web/mobile), token sharing via Keychain/App Group (widgets/watch), stored tokens (VS Code/MCP), phone-as-proxy (BLE device). Supabase Auth is the sole long-term provider — no planned migration to Better Auth. Auth imports confined to `packages/data-access/`; `packages/core/` receives `userId: string`.
+OAuth providers: Apple Sign-In (required), Google, email/password. Deferred sign-up via `signInAnonymously()` → `linkIdentity()`. Per-platform token distribution: browser OAuth (web/mobile), token sharing via Keychain/App Group (widgets/watch), stored tokens (VS Code/MCP), phone-as-proxy (BLE device). Better Auth noted as future escape hatch if vendor lock-in or cost becomes a concern at scale. Auth imports confined to `packages/data-access/`; `packages/core/` receives `userId: string`.
 
 ---
 
