@@ -174,14 +174,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
+
+      - uses: pnpm/action-setup@v4
 
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
         working-directory: apps/mobile
 
       - name: Build on EAS

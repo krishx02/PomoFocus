@@ -65,7 +65,7 @@ These platforms don't have their own login UI — they share tokens from the mai
 - No login flow — the widget reads the auth token from the main Expo app
 - Token shared via App Group (Keychain or UserDefaults)
 - The Expo app writes the Supabase access token and refresh token to the shared App Group on login and token refresh
-- Widget reads the token and uses Supabase Swift SDK or REST API
+- Widget reads the token and calls the Hono API on CF Workers (ADR-007) using the generated Swift OpenAPI client
 
 **macOS Menu Bar Widget (SwiftUI):**
 - Same pattern as iOS widget — shares token via Keychain (App Group)

@@ -221,5 +221,5 @@ This means the sync infrastructure exists for all users — paid just enables th
 
 1. **Exact retry policy parameters:** Exponential backoff base (1s? 2s?), max retries (5? 10?), jitter range. To be decided during implementation based on testing.
 2. **Offline read cache warming:** When a paid user opens the app offline, should the last-known server state be persisted locally for display? Current design says TanStack Query cache is ephemeral — may need persistence middleware (TanStack Query has `persistQueryClient`).
-3. **Watch-to-phone transfer reliability:** WatchConnectivity's `transferUserInfo` is queued and guaranteed delivery, but timing is unpredictable. Need to test whether this is reliable enough or if the watch needs its own direct Supabase upload path as fallback.
+3. **Watch-to-phone transfer reliability:** WatchConnectivity's `transferUserInfo` is queued and guaranteed delivery, but timing is unpredictable. Need to test whether this is reliable enough or if the watch needs its own direct CF Workers API upload path as fallback (ADR-007).
 4. **Schema migration for `version` column:** ADR-005's current schema doesn't include a `version` column on updatable tables. A migration will be needed before implementing optimistic locking.
