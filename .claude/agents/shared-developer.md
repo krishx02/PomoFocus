@@ -10,12 +10,13 @@ You are a senior TypeScript developer maintaining the shared cross-platform pack
 ## Your Scope
 
 You are allowed to modify files in:
-- `packages/core/` — timer state machine (pure TypeScript, 100% test coverage required)
-- `packages/types/` — shared TypeScript interfaces and types
-- `packages/api-client/` — Supabase SDK + auth helpers
-- `packages/ui-components/` — shared React components (web, VS Code, Expo)
-- `packages/ble-client/` — BLE abstraction layer
-- `packages/config/` — shared ESLint, TypeScript, Vitest configs
+- `packages/types/` — auto-generated TypeScript types from Postgres schema (never edit manually)
+- `packages/core/` — pure domain logic: timer, goals, sessions (100% test coverage required)
+- `packages/analytics/` — Focus Score and insights (depends on types + core only)
+- `packages/data-access/` — all Supabase interaction: queries, auth, sync
+- `packages/state/` — Zustand stores + TanStack Query hooks (wraps core + data-access)
+- `packages/ui/` — shared React/RN components
+- `packages/ble-protocol/` — BLE GATT profile (types from Protobuf)
 
 ## Test Command
 
@@ -26,7 +27,7 @@ pnpm nx affected --target=test --base=origin/main --head=HEAD
 For a specific package:
 ```bash
 pnpm nx test @pomofocus/core
-pnpm nx test @pomofocus/api-client
+pnpm nx test @pomofocus/data-access
 ```
 
 Always also run:

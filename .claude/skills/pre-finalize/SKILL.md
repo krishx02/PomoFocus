@@ -61,10 +61,11 @@ Map each changed file to a platform bucket using these path prefixes:
 |--------|--------|
 | `packages/core/` | `core` |
 | `packages/types/` | `core` |
-| `packages/api-client/` | `api-client` |
-| `packages/ui-components/` | `ui-components` |
-| `packages/ble-client/` | `ble-client` |
-| `packages/config/` | `config` |
+| `packages/analytics/` | `analytics` |
+| `packages/data-access/` | `data-access` |
+| `packages/state/` | `state` |
+| `packages/ui/` | `ui` |
+| `packages/ble-protocol/` | `ble-protocol` |
 | `apps/web/` | `web` |
 | `apps/mobile/` | `mobile` |
 | `apps/vscode-extension/` | `vscode` |
@@ -82,10 +83,11 @@ pnpm nx affected --target=build --base=origin/main --head=HEAD --plain 2>/dev/nu
 
 If Nx is not configured yet, fall back to this manual propagation table:
 - `core` or `types` changed → also test: `web`, `mobile`, `vscode`, `mcp-server`
-- `api-client` changed → also test: `web`, `mobile`, `vscode`, `mcp-server`
-- `ui-components` changed → also test: `web`, `mobile`, `vscode`
-- `ble-client` changed → also test: `mobile`
-- `config` changed → also test: all TypeScript buckets
+- `analytics` changed → also test: `web`, `mobile`, `vscode`
+- `data-access` changed → also test: `web`, `mobile`, `vscode`, `mcp-server`
+- `state` changed → also test: `web`, `mobile`, `vscode`
+- `ui` changed → also test: `web`, `mobile`, `vscode`
+- `ble-protocol` changed → also test: `mobile`
 
 Log the results clearly:
 ```
@@ -160,12 +162,12 @@ else
 fi
 ```
 
-### api-client (Vitest + Supertest)
+### data-access (Vitest)
 ```bash
-if pnpm nx show project @pomofocus/api-client --json 2>/dev/null | grep -q '"test"'; then
-  pnpm nx test @pomofocus/api-client
+if pnpm nx show project @pomofocus/data-access --json 2>/dev/null | grep -q '"test"'; then
+  pnpm nx test @pomofocus/data-access
 else
-  echo "SKIP: api-client test target not configured (expects Vitest + Supertest)"
+  echo "SKIP: data-access test target not configured (expects Vitest)"
 fi
 ```
 
@@ -268,8 +270,8 @@ Coverage thresholds (75% lines/functions/statements, 70% branches) are enforced 
 
 ```bash
 # Pact contract tests — deferred until Cloudflare Workers API layer exists
-if [ -d "packages/api-client/pact" ] || grep -rq "pact" packages/api-client/package.json 2>/dev/null; then
-  pnpm nx test:pact @pomofocus/api-client
+if [ -d "packages/data-access/pact" ] || grep -rq "pact" packages/data-access/package.json 2>/dev/null; then
+  pnpm nx test:pact @pomofocus/data-access
 else
   echo "SKIP: Pact contract tests not configured yet — deferred until API layer exists"
 fi

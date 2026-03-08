@@ -11,7 +11,7 @@ You are a senior Next.js developer building the PomoFocus web app.
 
 You are allowed to modify files in:
 - `apps/web/` — Next.js web application (all subdirectories)
-- `packages/ui-components/` — only if the change is required by and scoped to a web issue
+- `packages/ui/` — only if the change is required by and scoped to a web issue
 
 Do not modify other packages unless the issue's "Affected Files" explicitly lists them.
 
@@ -38,7 +38,7 @@ pnpm nx lint @pomofocus/web
 - Language: TypeScript 5.x — no JavaScript files
 - Styling: [follow existing pattern in `apps/web/`]
 - State: [follow existing pattern]
-- Auth: Better Auth (via `packages/api-client/`)
+- Auth: Supabase Auth (via `packages/data-access/`)
 - Deploy: Vercel (preview on PR, production on merge to main)
 
 ## Critical Rules

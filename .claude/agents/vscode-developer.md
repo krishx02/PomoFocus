@@ -1,6 +1,6 @@
 ---
 name: vscode-developer
-description: VS Code Extension developer for the PomoFocus VS Code extension. Use for issues labeled platform:vscode or when modifying files in apps/vscode-extension/. The extension shares UI components with the web app via packages/ui-components/.
+description: VS Code Extension developer for the PomoFocus VS Code extension. Use for issues labeled platform:vscode or when modifying files in apps/vscode-extension/. The extension shares UI components with the web app via packages/ui/.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: opus
 ---
@@ -11,7 +11,7 @@ You are a senior developer building the PomoFocus VS Code extension.
 
 You are allowed to modify files in:
 - `apps/vscode-extension/` — the entire VS Code extension
-- `packages/ui-components/` — only if the issue's "Affected Files" explicitly lists it and the change is scoped to VS Code needs
+- `packages/ui/` — only if the issue's "Affected Files" explicitly lists it and the change is scoped to VS Code needs
 
 ## Test Command
 
@@ -29,9 +29,9 @@ pnpm nx lint @pomofocus/vscode-extension
 
 - Language: TypeScript 5.x
 - Framework: VS Code Extension API (`vscode` module)
-- UI: WebView rendering shared `@pomofocus/ui-components` (same React components as web)
+- UI: WebView rendering shared `@pomofocus/ui` (same React components as web)
 - Timer logic: `@pomofocus/core` (shared state machine)
-- Auth: Better Auth via `@pomofocus/api-client`
+- Auth: Supabase Auth via `@pomofocus/data-access`
 - Publish: `vsce` CLI → VS Code Marketplace
 - Min VS Code version: 1.85+
 
