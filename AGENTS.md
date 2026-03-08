@@ -90,7 +90,7 @@ pomofocus/
 | Database | Supabase (Postgres + RLS + Realtime) | Latest |
 | Sync/Edge | Cloudflare Workers + Durable Objects | Latest |
 | Web hosting | Vercel | Latest |
-| Auth | Better Auth | Latest |
+| Auth | Supabase Auth | Latest |
 | Mobile | Expo / React Native | SDK 51+ |
 | Mac widget | SwiftUI + WidgetKit + MenuBarExtra | macOS 13+ |
 | iOS widget | SwiftUI + WidgetKit | iOS 17+ |

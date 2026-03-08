@@ -2,7 +2,7 @@
 
 > Comprehensive reference for the agent-first development workflow. Every agent and human working on PomoFocus should read this before picking up a ticket.
 >
-> **Stack:** Nx + pnpm monorepo · Supabase · Cloudflare Workers · Better Auth · Expo/React Native · SwiftUI · Vercel
+> **Stack:** Nx + pnpm monorepo · Supabase · Cloudflare Workers · Supabase Auth · Expo/React Native · SwiftUI · Vercel
 > **Status:** Pre-code — setting up agent infrastructure before writing app code.
 
 ---
