@@ -30,7 +30,7 @@ These are tool/framework choices that are understood and committed. No `/tech-de
 
 | Choice | Why |
 |--------|-----|
-| **Supabase Auth (MVP)** → Better Auth (Phase 2) | Zero extra cost/infra for MVP. Deferred sign-up supported natively. Migrate to Better Auth when vendor lock-in becomes a concern. |
+| **Supabase Auth** (sole provider, long-term) | Seamless RLS integration via `auth.uid()`. Zero cost at MVP scale (50k MAUs free). Built-in anonymous auth for deferred sign-up. See [ADR-002](./research/decisions/002-auth-architecture.md). |
 
 ---
 
@@ -163,37 +163,53 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 
 ### Monorepo Package Structure
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Section 12 (v1 platforms: iOS, web, ESP32 device)
-> **What I need to learn:** How Nx workspaces are organized in practice. What goes in `packages/` vs `apps/`. How to share code between Expo, Next.js, and VS Code without import headaches. Where Swift native code lives relative to the Nx workspace.
-> **Key questions:**
-> - What are the actual package boundaries? (`@pomofocus/core`, `@pomofocus/ui`, `@pomofocus/api-client`, etc.)
-> - How does Nx handle mixed TypeScript + Swift projects in one repo?
-> - What's the dependency graph — which packages depend on which?
+> **Date:** 2026-03-06
+> **Status:** Accepted
+> **ADR:** [research/decisions/001-monorepo-package-structure.md](./research/decisions/001-monorepo-package-structure.md)
+> **Design doc:** [research/designs/monorepo-package-structure.md](./research/designs/monorepo-package-structure.md)
+
+| Layer | Packages | Key Principle |
+|-------|----------|---------------|
+| Contracts | `@pomofocus/types` | Auto-generated from Postgres schema. Zero logic. |
+| Domain | `@pomofocus/core` (timer + goals + sessions), `@pomofocus/analytics` | Pure functions. No IO, no React, no Supabase. |
+| Data | `@pomofocus/data-access` | All Supabase IO. Core never knows about Supabase. |
+| State | `@pomofocus/state` | Zustand stores + TanStack Query hooks. Wraps core + data-access for React apps. See [ADR-003](./research/decisions/003-client-state-management.md). |
+| Presentation | `@pomofocus/ui` | Shared React/RN components. Props typed from types. |
+| Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile from Protobuf. Only mobile + web. |
+
+Apps: `web/` (Next.js), `mobile/` (Expo), `vscode/`, `mcp-server/` (placeholder). Native: `ios-widget/`, `mac-widget/`, `watchos/`. Firmware: `device/` (ESP32).
+
+Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types`. Protobuf → TS + Swift + C++ via `protoc`. Zero manual sync.
 
 ---
 
 ### Database Schema & Data Model
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 3 (three-layer goal model), 6 (session flow), 10 (analytics tiers), 9 (social features)
-> **What I need to learn:** How to translate the three-layer goal model (long-term → process → session intention) into Postgres tables. RLS policy design for multi-user data. How to store session data efficiently for analytics queries. Schema design for social features (friends, presence, feed).
-> **Key questions:**
-> - What tables are needed, and what are their relationships?
-> - How do RLS policies enforce "users can only see their own data" while enabling social features (friends, Library Mode)?
-> - What indexes are needed for the analytics queries (Focus Score, weekly insights, monthly breakdowns)?
+> **Date:** 2026-03-07
+> **Status:** Accepted
+> **ADR:** [research/decisions/005-database-schema-data-model.md](./research/decisions/005-database-schema-data-model.md)
+> **Design doc:** [research/designs/database-schema-data-model.md](./research/designs/database-schema-data-model.md)
+
+| Choice | Why |
+|--------|-----|
+| **Normalized relational schema (12 tables, 3NF)** | Maps 1:1 to product brief concepts. All analytics queries are straightforward SQL. RLS on every table via `get_user_id()` helper. Privacy enforced at database level (friends never see raw session data). |
+
+Tables: `profiles`, `user_preferences`, `long_term_goals`, `process_goals`, `sessions`, `breaks`, `devices`, `device_sync_log`, `friend_requests`, `friendships`, `encouragement_taps` + Supabase-managed `auth.users`. 9 Postgres enums. UUID v4 PKs, `timestamptz` always, hard deletes. Social visibility via scoped functions (`is_friend_focusing`, `did_friend_focus_today`) — not broad RLS. Dual-row friendship pattern for query/RLS simplicity. Types auto-generated via `supabase gen types`.
 
 ---
 
 ### Auth Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 8 (deferred sign-up), 12 (Supabase Auth for v1)
-> **What I need to learn:** How Supabase Auth handles deferred sign-up (anonymous → authenticated). What OAuth providers to support and how they integrate with Expo + Next.js. How tokens flow between client, Supabase, and the edge layer. What the migration path to Better Auth looks like.
-> **Key questions:**
-> - How does deferred sign-up work with Supabase Auth? Can anonymous sessions be promoted to full accounts without data loss?
-> - Which OAuth providers (Apple, Google, email/password) and how do they work in Expo vs web?
-> - What does the Better Auth migration path look like — what should we avoid locking into now?
+> **Date:** 2026-03-06
+> **Status:** Accepted
+> **ADR:** [research/decisions/002-auth-architecture.md](./research/decisions/002-auth-architecture.md)
+> **Design doc:** [research/designs/auth-architecture.md](./research/designs/auth-architecture.md)
+
+| Choice | Why |
+|--------|-----|
+| **Supabase Auth** (sole provider, all platforms) | Seamless RLS integration via `auth.uid()`. Zero cost at MVP scale (50k MAUs free). Built-in anonymous auth for deferred sign-up. Apple Sign-In + Google + email/password supported. |
+
+OAuth providers: Apple Sign-In (required), Google, email/password. Deferred sign-up via `signInAnonymously()` → `linkIdentity()`. Per-platform token distribution: browser OAuth (web/mobile), token sharing via Keychain/App Group (widgets/watch), stored tokens (VS Code/MCP), phone-as-proxy (BLE device). Supabase Auth is the sole long-term provider — no planned migration to Better Auth. Auth imports confined to `packages/data-access/`; `packages/core/` receives `userId: string`.
 
 ---
 
@@ -203,25 +219,35 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 
 ### Client State Management
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 6 (session flow with multiple states), 4 (device-app relationship), 12 (iOS + web platforms)
-> **What I need to learn:** The landscape of React state management in 2025-2026. How Zustand compares to Context + useReducer for app-level state. How to handle server state (Supabase real-time) alongside local UI state. Hydration strategy for Next.js SSR + client state.
-> **Key questions:**
-> - Zustand vs Context+hooks vs Jotai — which fits a cross-platform Expo+Next.js app best?
-> - How does server state (TanStack Query / Supabase real-time) coexist with local state?
-> - How do we hydrate state on Next.js without flash-of-empty-content?
+> **Date:** 2026-03-06
+> **Status:** Accepted
+> **ADR:** [research/decisions/003-client-state-management.md](./research/decisions/003-client-state-management.md)
+> **Design doc:** [research/designs/client-state-management.md](./research/designs/client-state-management.md)
+
+| Layer | Tool | Key Principle |
+|-------|------|---------------|
+| Local/UI state | **Zustand** | Thin wrapper around `@pomofocus/core`. Selector-based access for performance. |
+| Server state | **TanStack Query** | Wraps `@pomofocus/data-access` functions. 30s polling, no WebSockets by default. |
+| Shared package | **`packages/state/`** (7th package) | Stores + query hooks shared across all React apps. Apps inject persistence adapter. |
+| Persistence | **MMKV** (mobile), **localStorage** (web), **globalState** (VS Code) | Injected per-app via adapter pattern. |
+| Data fetching | **Polling-first** (30s `refetchInterval`) | Supabase Realtime deferred — polling meets all v1 latency requirements. |
+
+`@pomofocus/core` owns domain truth. Zustand stores are React rendering wrappers, not the source of truth. Native platforms (iOS widget, watchOS, BLE device) use platform bridges (App Group, WatchConnectivity, GATT), independent of the React state layer.
 
 ---
 
 ### Timer State Machine
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 6 (session flow: focus → break → reflection), 5 (device runs timer independently), 12 (configurable intervals)
-> **What I need to learn:** State machine design for a timer with multiple phases (idle → focusing → paused → break → reflection → complete → abandoned). Whether to use a library (XState, Robot) or a simple reducer. How the timer runs on the device independently and syncs state when in BLE range. Background timer behavior on iOS/web.
-> **Key questions:**
-> - XState vs a hand-rolled reducer — what's the right complexity level for our timer states?
-> - How does the device's independent timer sync its state back to the app? What happens during conflicts (timer finished on device while app shows "focusing")?
-> - How do we keep a timer running when the app is backgrounded (iOS) or the tab is inactive (web)?
+> **Date:** 2026-03-07
+> **Status:** Accepted
+> **ADR:** [research/decisions/004-timer-state-machine.md](./research/decisions/004-timer-state-machine.md)
+> **Design doc:** [research/designs/timer-state-machine.md](./research/designs/timer-state-machine.md)
+
+| Choice | Why |
+|--------|-----|
+| **Hand-rolled TypeScript state machine** (discriminated unions + pure reducer) | Zero dependencies, cross-platform portable (TS → Swift `enum` → C++ `enum class`), keeps `packages/core/` pure. XState documented as escape hatch if complexity exceeds ~10 states. |
+
+Architecture: pure `transition(state, event) → newState` function in `packages/core/timer/`. No intervals, no IO, no side effects. Each platform owns its own timer driver (setInterval for React apps, Foundation Timer for Swift, millis() for ESP32). States: idle → focusing → paused → short/long break → break_paused → reflection → completed/abandoned. Persistence via `startedAt` timestamps for rehydration after app kill.
 
 ---
 
