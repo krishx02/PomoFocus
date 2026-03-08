@@ -38,7 +38,8 @@ pnpm nx lint @pomofocus/web
 - Language: TypeScript 5.x — no JavaScript files
 - Styling: [follow existing pattern in `apps/web/`]
 - State: [follow existing pattern]
-- Auth: Supabase Auth (via `packages/data-access/`)
+- API: All server calls go through the Hono REST API on CF Workers (`apps/api/`) — never call Supabase directly (ADR-007)
+- Auth: Supabase Auth (via `packages/data-access/`, which uses generated OpenAPI client)
 - Deploy: Vercel (preview on PR, production on merge to main)
 
 ## Critical Rules

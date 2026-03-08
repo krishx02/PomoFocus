@@ -31,7 +31,8 @@ pnpm nx lint @pomofocus/vscode-extension
 - Framework: VS Code Extension API (`vscode` module)
 - UI: WebView rendering shared `@pomofocus/ui` (same React components as web)
 - Timer logic: `@pomofocus/core` (shared state machine)
-- Auth: Supabase Auth via `@pomofocus/data-access`
+- API: All server calls go through the Hono REST API on CF Workers (`apps/api/`) — never call Supabase directly (ADR-007)
+- Auth: Supabase Auth via `@pomofocus/data-access` (which uses generated OpenAPI client)
 - Publish: `vsce` CLI → VS Code Marketplace
 - Min VS Code version: 1.85+
 
