@@ -297,6 +297,12 @@ After writing the artifacts:
 
    **Step 3d — Report the propagation.** List every file you checked and whether it needed an update. This makes it auditable.
 
+   **Step 3e — Capture discovered decisions.** Review the entire session (all phases) for any technical decisions that were surfaced but not resolved — things like "we also need to decide X", "that depends on Y which isn't decided yet", or open questions deferred to a future session. For each:
+   1. Check whether it already exists in `technical-design-decisions.md` (either in "Decided" or "Needs `/tech-design`").
+   2. If it does NOT exist, add it as a new entry in the "Needs `/tech-design`" section under the appropriate category (Foundation, Core App Systems, Edge & Infrastructure, Device & Hardware, Platform-Specific, Features, or Post-v1). Use the same format as existing entries — include `> **Status:** Needs /tech-design`, a brief description of what needs to be decided, and 2-3 key questions.
+   3. If it already exists, skip it (no duplicates).
+   4. Report what was added (or "no new decisions discovered").
+
 4. **Report** what was produced:
    - File path(s) written (new)
    - File path(s) updated (propagation)
