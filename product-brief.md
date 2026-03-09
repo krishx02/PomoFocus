@@ -127,20 +127,23 @@ The device must work **without the phone nearby.** If the device requires a live
 
 ### Hardware direction
 
+> **Decided:** See [ADR-010](./research/decisions/010-physical-device-hardware-platform.md) and [design doc](./research/designs/physical-device-hardware-platform.md).
+
 | Component | Choice | Why |
 |-----------|--------|-----|
-| Microcontroller | **ESP32** (e.g., LILYGO T-Display S3) | $3-5 chip, BLE + WiFi built in, flash storage, massive community. The standard for this kind of project. |
-| Display | **E-ink** (lean) or OLED (alternative) | E-ink: paper-like, readable in sunlight, uses battery only on screen change (timer shows mostly static content). Matches the calm/focused aesthetic. Battery lasts weeks. OLED: brighter, faster refresh, but higher power draw and burn-in risk from static content. |
-| Input | **1-3 physical buttons** or a small rotary dial | Enough to: scroll goals, select, start timer, pause, done. Minimal and tactile. |
-| Power | **USB-C** (for desk use) + battery for portability | Rechargeable LiPo battery. E-ink display means battery lasts much longer. |
-| Connectivity | **BLE only** (no WiFi needed on device) | Phone is the relay to the cloud. Keeps device simple, cheap, low-power. |
-| Enclosure | **Off-the-shelf dev board** → later 3D-printed case | Start with a bare LILYGO board. Enclosure is cosmetic and can come later. |
+| MCU + Board | **Seeed XIAO ePaper EN04** (nRF52840 Plus built in) | Best BLE power efficiency (~15mA active vs ~94-250mA ESP32). No WiFi needed — device syncs through phone. EN04 integrates MCU, battery charging, FPC display connector. ~$10. |
+| Display | **4.26" e-ink (B/W), 800x480** | Paper-like, readable in sunlight, zero power to hold image. 219 PPI for sharp text. Hybrid refresh: 1/min during focus, every 10s in last minute. Readable from desk distance (~2 feet). |
+| Input | **Rotary encoder + push button** | Teenage Engineering approach — one control, many functions. Rotate to navigate goals, click to start/pause, long-press to abandon. |
+| Feedback | **Vibration motor + LED** | Calm technology: vibration respects social norms. LED confirms state visually. |
+| Power | **AKZYTUE 1200mAh LiPo + USB-C charging** | ~8-10 weeks battery life. Monthly charging. Kindle-like experience. ⚠ Check JST polarity before connecting. |
+| Connectivity | **BLE 5.0 only** (phone-first hub) | Phone is the relay to the cloud. One connection at a time. Passkey pairing via e-ink display. |
+| Enclosure | **EN04 board + breadboard** → later 3D-printed case | Start with EN04 + display on breadboard. Enclosure is Phase 9. |
 
-**Reference products to look up:**
-- "LILYGO T5 e-paper" — ESP32 + e-ink display dev board
-- "LILYGO T-Display S3" — ESP32 + small color LCD dev board
-- "Watchy" — open-source ESP32 e-ink smartwatch (shows what's possible)
-- "Adafruit SSD1306 128x64 OLED" — common small OLED for hardware projects
+**Reference products:**
+- "Seeed XIAO nRF52840" — ultra-low-power BLE dev board
+- "Seeed XIAO ePaper DIY Kit" — nRF52840 + e-ink breakout
+- "Rukenshia/pomodoro" (GitHub) — ESP32 + e-paper + rotary encoder Pomodoro timer (design reference)
+- "Watchy" — open-source e-ink smartwatch (shows what's possible with e-ink + BLE)
 
 ### Device interaction model
 

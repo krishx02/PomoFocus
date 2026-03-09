@@ -8,7 +8,7 @@
 
 ## Context and Problem Statement
 
-The Pomodoro timer is the core feature of PomoFocus. It cycles through phases (focus, break, reflection) with pause/resume capability, configurable durations, and session counting (short break vs long break logic). The timer must run on all 9 platforms — including platforms without a JavaScript runtime (iOS widget via WidgetKit, watchOS, macOS menu bar via SwiftUI, BLE device via ESP32 firmware). The decision covers: how to implement the timer state machine in `packages/core/`, and whether to use a state machine library (XState) or a hand-rolled TypeScript approach.
+The Pomodoro timer is the core feature of PomoFocus. It cycles through phases (focus, break, reflection) with pause/resume capability, configurable durations, and session counting (short break vs long break logic). The timer must run on all 9 platforms — including platforms without a JavaScript runtime (iOS widget via WidgetKit, watchOS, macOS menu bar via SwiftUI, BLE device via nRF52840 firmware). The decision covers: how to implement the timer state machine in `packages/core/`, and whether to use a state machine library (XState) or a hand-rolled TypeScript approach.
 
 ## Decision Drivers
 
@@ -52,7 +52,7 @@ XState is documented as an escape hatch: if the state machine grows beyond ~10 s
 - Good, because existing [Pomodoro implementations in XState](https://dev.to/andrecrimberg/pomodoro-state-machine-using-xstate-384p) to reference
 - Bad, because ~40KB minified bundle size
 - Bad, because learning curve: statecharts have formal terminology (actors, guards, invoke, spawn) unfamiliar to the developer
-- Bad, because JavaScript-only runtime — cannot run on iOS widget (WidgetKit), watchOS, macOS (SwiftUI), or ESP32 (C++) platforms
+- Bad, because JavaScript-only runtime — cannot run on iOS widget (WidgetKit), watchOS, macOS (SwiftUI), or nRF52840 (C++) platforms
 - Bad, because v4→v5 migration broke many community tutorials; some examples are outdated
 - Bad, because invoked services assume a single JavaScript runtime — conflicts with 9-platform timer driver architecture
 
@@ -60,7 +60,7 @@ XState is documented as an escape hatch: if the state machine grows beyond ~10 s
 
 - Good, because zero dependencies, zero bundle size overhead
 - Good, because TypeScript discriminated unions enforce valid states at compile time; exhaustive switch catches missing cases
-- Good, because maximally portable: discriminated unions map to Swift `enum` (iOS/watchOS/macOS) and C++ `enum class` (ESP32 firmware)
+- Good, because maximally portable: discriminated unions map to Swift `enum` (iOS/watchOS/macOS) and C++ `enum class` (nRF52840 firmware)
 - Good, because pure functions are trivially testable without mocking
 - Good, because simplest mental model for a developer new to state machines
 - Good, because agents generate and modify switch statements more reliably than library-specific DSLs

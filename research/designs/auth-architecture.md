@@ -94,7 +94,7 @@ These platforms authenticate once and store a long-lived token:
 
 #### Tier 4: Device Proxy (BLE Device)
 
-**BLE Device (ESP32):**
+**BLE Device (nRF52840):**
 - The device does NOT authenticate to Supabase
 - The phone app is the auth proxy — all data flows through the authenticated phone
 - Device gets a "device pairing token" — a random UUID generated during BLE pairing, stored in the `devices` table with the user's `user_id`

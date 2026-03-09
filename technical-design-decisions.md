@@ -177,7 +177,7 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 | Presentation | `@pomofocus/ui` | Shared React/RN components. Props typed from types. |
 | Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile from Protobuf. Only mobile + web. |
 
-Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). Native: `native/apple/ios-widget/`, `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (ESP32).
+Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). Native: `native/apple/ios-widget/`, `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (nRF52840, Arduino/C++).
 
 Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types`. Protobuf → TS + Swift + C++ via `protoc`. Zero manual sync.
 
@@ -247,7 +247,7 @@ OAuth providers: Apple Sign-In (required), Google, email/password. Deferred sign
 |--------|-----|
 | **Hand-rolled TypeScript state machine** (discriminated unions + pure reducer) | Zero dependencies, cross-platform portable (TS → Swift `enum` → C++ `enum class`), keeps `packages/core/` pure. XState documented as escape hatch if complexity exceeds ~10 states. |
 
-Architecture: pure `transition(state, event) → newState` function in `packages/core/timer/`. No intervals, no IO, no side effects. Each platform owns its own timer driver (setInterval for React apps, Foundation Timer for Swift, millis() for ESP32). States: idle → focusing → paused → short/long break → break_paused → reflection → completed/abandoned. Persistence via `startedAt` timestamps for rehydration after app kill.
+Architecture: pure `transition(state, event) → newState` function in `packages/core/timer/`. No intervals, no IO, no side effects. Each platform owns its own timer driver (setInterval for React apps, Foundation Timer for Swift, millis() for nRF52840). States: idle → focusing → paused → short/long break → break_paused → reflection → completed/abandoned. Persistence via `startedAt` timestamps for rehydration after app kill.
 
 ---
 
@@ -349,13 +349,19 @@ Architecture: outbox queue (client -> server) + polling pull (server -> client, 
 
 ### Monitoring & Observability
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** All sections (cross-cutting concern)
-> **What I need to learn:** What error tracking, performance monitoring, and logging look like for a multi-platform app. What tools exist (Sentry, LogRocket, Datadog, etc.) and what's appropriate for a solo developer. How to monitor Cloudflare Workers and Supabase health.
-> **Key questions:**
-> - Sentry vs LogRocket vs Datadog vs something simpler — what's right for a solo dev with users on iOS, web, and a BLE device?
-> - What do we monitor from day one vs add later? Error rates, crash reports, API latency?
-> - How does Langfuse (for agent observability) fit alongside app monitoring?
+> **Date:** 2026-03-08
+> **Status:** Accepted
+> **ADR:** [research/decisions/006-monitoring-observability.md](./research/decisions/006-monitoring-observability.md)
+
+| Layer | Tool | Key Principle |
+|-------|------|---------------|
+| Database / Auth / Storage | **Supabase dashboard** (built-in) | Metrics, logs, and reports out of the box. No additional setup. |
+| API (Cloudflare Workers) | **CF Workers dashboard** (built-in) | Automatic tracing (open beta March 2026), request metrics, Workers Logs. |
+| Web hosting | **Vercel dashboard** (built-in) | Function logs, deployment analytics, Web Vitals. |
+| Client-side error tracking | **Sentry** (free tier, deferred) | 5K errors/month, source maps, session replay. Integrate at first staging deploy per platform. |
+| LLM / MCP observability | **Langfuse** (deferred) | Add only when MCP server is built and token cost tracking is needed. |
+
+Philosophy: lean on platform built-ins from day one. Add Sentry per-platform at first staging deploy. Defer everything else until a concrete pain point arises. $0/month budget.
 
 ---
 
@@ -363,39 +369,66 @@ Architecture: outbox queue (client -> server) + polling pull (server -> client, 
 
 ---
 
-### Device Hardware
+### Device Hardware Platform
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 5 (device architecture: display + buttons + BLE), 12 (LILYGO T-Display S3, no e-ink for v1), 13 (BLE research thread)
-> **What I need to learn:** Which specific ESP32 board to buy and why (LILYGO T-Display S3 is mentioned but I don't know its specs). What display options exist (OLED vs LCD vs TFT). What buttons/input mechanisms work. Battery vs USB power. What to actually order to start prototyping — I have no hardware background.
-> **Key questions:**
-> - LILYGO T-Display S3 — what exactly is it, what's included, and is it the right starting point?
-> - What display size/type shows goals + timer readably? What resolution/viewing angle tradeoffs exist?
-> - Battery-powered vs always-plugged-in — what's simpler for v1?
+> **Date:** 2026-03-08
+> **Status:** Accepted
+> **ADR:** [research/decisions/010-physical-device-hardware-platform.md](./research/decisions/010-physical-device-hardware-platform.md)
+> **Design doc:** [research/designs/physical-device-hardware-platform.md](./research/designs/physical-device-hardware-platform.md)
+
+| Component | Choice | Why |
+|-----------|--------|-----|
+| MCU + Board | **Seeed XIAO ePaper EN04** (nRF52840 Plus built in) | Best BLE power efficiency (~15mA active vs ~94-250mA ESP32). No WiFi needed — device syncs through phone. EN04 integrates MCU, battery charging, FPC display connector, 3 user buttons. |
+| Display | **4.26" e-ink (B/W), 800x480, 219 PPI** | Calm technology: paper-like, readable in all lighting, zero power to hold image. Sharp text for goals and reflections. Readable from desk distance (~2 feet). Hybrid refresh: 1/min during focus, every 10s in last minute, full refresh at completion. |
+| Input | **Rotary encoder + push button** | Teenage Engineering approach — one control, many functions. Rotate to navigate goals, click to start/pause, long-press to abandon. |
+| Feedback | **Vibration motor + LED** | Calm technology: vibration respects social norms (no beeping in shared spaces). LED confirms state visually. |
+| Battery | **AKZYTUE 903048 1200mAh LiPo** (JST PH 2.0mm) | ~8-10 weeks battery life. Monthly charging. Kindle-like experience. ⚠ Check polarity before connecting — no universal JST standard. |
+| Connectivity | **BLE 5.0** (phone-first hub) | One connection at a time. Phone relays to cloud. Mac as fallback central. Passkey pairing via e-ink display. |
+| Storage | **Internal flash (~2,500 sessions)** | Outbox sync pattern. ~10 months offline capacity. UUID-based idempotent inserts. |
+
+Prototype BOM: ~$38 (EN04 + display + encoder + motor + LED + AKZYTUE battery). EN04 handles display SPI via FPC — 5 user GPIOs needed (encoder 3, vibration 1, LED 1). nRF52840 Plus has 20 GPIOs total (9 extra via SMD castellations). All parts ordered 2026-03-08.
 
 ---
 
-### BLE Libraries & Protocol
+### BLE GATT Protocol Design
 
 > **Status:** Needs /tech-design
 > **Product brief ref:** Sections 5 (BLE sync between device and app), 12 (goals push to device, sessions push to app), 13 (BLE research thread)
-> **What I need to learn:** How BLE actually works at a protocol level — services, characteristics, GATT profiles. How to design a sync protocol for goal/session data. How react-native-ble-plx and Web Bluetooth APIs work. Pairing and reconnection behavior.
-> **Key questions:**
-> - What does the GATT profile look like for PomoFocus? What services/characteristics do we define?
-> - How does sync work — polling vs notifications vs a custom protocol? What happens when data is larger than one BLE packet?
-> - react-native-ble-plx on iOS + Web Bluetooth on web — how different are the APIs? Can we share any code?
+> **Decided so far (ADR-010):** BLE 5.0, phone-first hub, passkey pairing, outbox sync pattern, Protobuf encoding. GATT services sketched (Timer, Goal, Session, Device Info, DFU).
+> **Still needs /tech-design:**
+> - Exact GATT service UUIDs and characteristic definitions
+> - Characteristic properties (read, write, notify) and data flow direction
+> - Data encoding format details (Nanopb vs full protoc for nRF52840)
+> - MTU negotiation and large-payload chunking strategy
+> - Sync protocol state machine (BLE-level handshake, outbox drain sequence, conflict resolution)
+> - Protobuf message definitions for `packages/ble-protocol/proto/pomofocus.proto`
+
+---
+
+### BLE Client Libraries & Integration
+
+> **Status:** Needs /tech-design
+> **Product brief ref:** Sections 5 (BLE sync between device and app), 12 (goals push to device, sessions push to app)
+> **Context:** After the GATT protocol is defined, each client platform needs a BLE implementation. ADR-010 established: phone is primary central, Mac is fallback central (CoreBluetooth), web is progressive enhancement (Web Bluetooth, Chrome/Edge only). Watch does NOT connect directly — gets data via phone relay (WatchConnectivity).
+> **Still needs /tech-design:**
+> - react-native-ble-plx (mobile) vs alternatives — API evaluation, background BLE on iOS
+> - Web Bluetooth (web) — browser support matrix, fallback UX for Safari/Firefox
+> - Shared BLE abstraction in `packages/ble-protocol/` — how much code can be shared between mobile and web?
+> - Reconnection behavior and automatic sync trigger on reconnect
+> - CoreBluetooth integration for macOS menu bar widget (fallback central)
 
 ---
 
 ### Device Firmware Stack
 
-> **Status:** Needs /tech-design
+> **Status:** Partially addressed by ADR-010; firmware architecture detailed in design doc
 > **Product brief ref:** Sections 5 (device architecture), 12 (timer runs independently, local storage, BLE stack)
-> **What I need to learn:** What language to write ESP32 firmware in — Arduino/C++ vs MicroPython vs Rust. What an RTOS is and whether I need one. How to drive a display from firmware. How to implement BLE on the firmware side. Development workflow (flash, debug, iterate).
-> **Key questions:**
-> - Arduino/C++ vs MicroPython vs ESP-IDF (C) vs Rust — which has the best learning curve for someone with no embedded experience?
-> - Do I need an RTOS (FreeRTOS) or can I get away with a simple loop for v1?
-> - What does the development loop look like — how do I flash, test, and debug firmware?
+> **Decided so far (ADR-010):** Arduino/C++ on EN04 board (nRF52840 Plus built in) via PlatformIO or Arduino IDE. Timer state machine is a C++ port of `packages/core/timer/` (ADR-004). GxEPD2 for 4.26" e-ink (`GxEPD2_426_GDEQ0426T82` class). Session storage in flash circular buffer. BLE DFU for OTA updates. 9-phase prototyping plan defined in design doc.
+> **Still needs /tech-design (or can decide during implementation):**
+> - PlatformIO vs Arduino IDE — decide at Phase 1 start
+> - Nanopb vs full protoc C++ generation — evaluate memory footprint
+> - Deep sleep / wake interrupt configuration specifics
+> - E-ink display sourcing: GDEY029T94 vs Waveshare 2.9" — confirm GxEPD2 compatibility
 
 ---
 

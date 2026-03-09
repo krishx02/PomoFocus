@@ -162,7 +162,7 @@ function transition(state: TimerState, event: TimerEvent): TimerState {
 │Zustand store │ │Swift enum│ │C++ enum class  │
 │+ setInterval │ │+ Timer   │ │+ millis() loop │
 │              │ │          │ │                │
-│React apps:   │ │iOS widget│ │ESP32 BLE device│
+│React apps:   │ │iOS widget│ │nRF52840 device │
 │web, mobile,  │ │watchOS   │ │                │
 │VS Code       │ │macOS bar │ │                │
 └──────────────┘ └──────────┘ └────────────────┘

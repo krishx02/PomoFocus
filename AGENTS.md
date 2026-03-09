@@ -68,6 +68,8 @@ pomofocus/
 │       ├── mac-widget/       # macOS menu bar target (MenuBarExtra + WidgetKit)
 │       ├── ios-widget/       # iOS home screen widget target (WidgetKit, iOS 17+)
 │       └── watchos-app/      # Apple Watch app target (SwiftUI, watchOS 10+)
+├── firmware/
+│   └── device/               # nRF52840 firmware (Arduino/C++)
 ├── .github/
 │   ├── ISSUE_TEMPLATE/       # Agent-ready issue templates (feature + bug)
 │   └── workflows/            # CI/CD (Nx affected + platform-specific)
