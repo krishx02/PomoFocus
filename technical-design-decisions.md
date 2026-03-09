@@ -337,13 +337,22 @@ Architecture: outbox queue (client -> server) + polling pull (server -> client, 
 
 ### Security & Data Privacy
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 7 (paid subscription = user data), 9 (social features = shared data), 5 (BLE pairing)
-> **What I need to learn:** What security measures a consumer app handling focus/productivity data actually needs. GDPR requirements for EU users. How BLE pairing security works (can someone sniff my session data?). OAuth provider deep dive — what data do we get and store from each provider.
-> **Key questions:**
-> - What data do we encrypt at rest vs in transit vs not at all?
-> - What GDPR obligations apply — data export, deletion, consent?
-> - How secure is BLE pairing, and what are the actual risks of someone intercepting timer/goal data?
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/012-security-data-privacy.md](./research/decisions/012-security-data-privacy.md)
+> **Design doc:** [research/designs/security-data-privacy.md](./research/designs/security-data-privacy.md)
+
+| Layer | Choice | Key Principle |
+|-------|--------|---------------|
+| Encryption (transit) | **TLS 1.2+** (Supabase, CF Workers, Vercel — automatic) | Platform-provided, zero configuration |
+| Encryption (at rest) | **AES-256** (Supabase — automatic) | No application-level encryption needed for productivity data |
+| Access control | **RLS + API gateway + JWT validation** | ADR-005 + ADR-007 defense-in-depth |
+| GDPR | **Two endpoints** (`DELETE /v1/me`, `GET /v1/me/export`) + privacy policy + consent at sign-up | Right to erasure, data portability, data minimization from day one |
+| OAuth data | **Minimum storage** — provider `sub`, email, display name only | Apple private relay supported. Apple name cached on first login. |
+| BLE security | **LE Secure Connections + Passkey Entry + Bonding** | 6-digit passkey on e-ink, LTK bonded, AES-CCM 128-bit link encryption |
+| Token storage | **Platform-secure per app** — HttpOnly cookie (web), expo-secure-store (mobile), Keychain (macOS), SecretStorage (VS Code) | No localStorage tokens |
+
+Hard deletes (ADR-005) align with GDPR. No third-party security SDKs. $0/month. Application-level encryption and advanced BLE hardening explicitly deferred — data sensitivity does not justify the complexity.
 
 ---
 
