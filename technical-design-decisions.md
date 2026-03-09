@@ -351,7 +351,7 @@ Architecture: outbox queue (client -> server) + polling pull (server -> client, 
 
 > **Date:** 2026-03-08
 > **Status:** Accepted
-> **ADR:** [research/decisions/006-monitoring-observability.md](./research/decisions/006-monitoring-observability.md)
+> **ADR:** [research/decisions/011-monitoring-observability.md](./research/decisions/011-monitoring-observability.md)
 
 | Layer | Tool | Key Principle |
 |-------|------|---------------|
