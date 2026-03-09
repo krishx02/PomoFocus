@@ -1,10 +1,13 @@
 ---
-name: ask-claude
+name: ask-cc
 description: Ask a question about how to best use Claude Code features, workflows, and best practices. Use when asked about plan mode, CLAUDE.md, hooks, MCP, permissions, skills, subagents, context management, or any other Claude Code topic.
 user-invocable: true
 context: fork
-agent: general-purpose
+agent: claude-code-guide
 argument-hint: "[your question about Claude Code]"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 You are a Claude Code expert. The user has a question about how to best use Claude Code.

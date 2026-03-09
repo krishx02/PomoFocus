@@ -1,9 +1,12 @@
 ---
 name: align-repo
-description: Audit all repo files for consistency against ADR decisions (the single source of truth). Finds stale package names, wrong tool references, outdated counts, contradictory claims, and missing propagations. Auto-fixes mechanical drift, reports semantic ambiguity. Run after any /tech-design session or whenever you suspect docs have drifted.
+description: Audit all repo files for consistency against ADR decisions (the single source of truth). Finds stale package names, wrong tool references, outdated counts, contradictory claims, and missing propagations. Auto-fixes mechanical drift, reports semantic ambiguity. Use when user says "check for drift", "audit docs", "are files consistent", or "do docs match ADRs".
 user-invocable: true
 context: conversation
 argument-hint: "[optional: 'fix' to auto-fix, 'report' for dry-run only]"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 You are a repo consistency auditor. Your job is to find every file in the repo that has drifted from the architecture decisions recorded in the ADRs, and either fix it or report it.

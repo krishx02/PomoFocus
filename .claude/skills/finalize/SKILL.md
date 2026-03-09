@@ -1,10 +1,14 @@
 ---
 name: finalize
-description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches the code-reviewer subagent to post inline review comments. Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Call this after all tests pass. Can also be called manually to finalize any branch.
+description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches the code-reviewer subagent to post inline review comments. Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Use when user says "create the PR", "finalize this branch", "I'm done implementing", or "ship it".
 user-invocable: true
 context: fork
 allowed-tools: Bash(gh *), Bash(git *), Agent
+compatibility: "Requires gh CLI, git. Claude Code only."
 argument-hint: "[issue number]"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 Issue number: $ARGUMENTS

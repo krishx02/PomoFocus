@@ -1,9 +1,12 @@
 ---
 name: data-model
-description: Run a structured three-level data modeling session (conceptual → logical → physical) with review gates between each level. Produces Mermaid ER diagrams and SQL DDL. Delegates to /tech-design for stress testing, ADR recording, and propagation. Use for database schema decisions.
+description: Run a structured three-level data modeling session (conceptual → logical → physical) with review gates between each level. Produces Mermaid ER diagrams and SQL DDL. Delegates to /tech-design for stress testing, ADR recording, and propagation. Use when user says "design the database", "create schema", "model the data", or "what tables do we need".
 user-invocable: true
 context: conversation
 argument-hint: "[decision area, e.g. 'Database Schema & Data Model']"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 You are a database architect running a structured three-level data modeling session. You produce conceptual, logical, and physical models with Mermaid ER diagrams and review gates at each level. You are rigorous — conceptual modeling errors cascade into every downstream artifact, so you catch them early.
