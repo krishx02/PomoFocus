@@ -53,7 +53,7 @@ Chosen option: **"nRF52840 (Seeed XIAO)"**, because it is the most power-efficie
 
 ### Connectivity Architecture
 
-- **Phone is the primary BLE central.** One connection at a time. Phone relays data to cloud via the outbox sync pattern (pending Offline-First Sync Architecture ADR).
+- **Phone is the primary BLE central.** One connection at a time. Phone relays data to cloud via the outbox sync pattern ([ADR-006](./006-offline-first-sync-architecture.md)).
 - **Mac menu bar widget as fallback central** (CoreBluetooth). Same GATT profile — the device doesn't care who connects.
 - **Web Bluetooth as progressive enhancement** (Chrome/Edge only). Same GATT profile.
 - **Apple Watch does NOT connect directly** — gets data through phone relay (WatchConnectivity). watchOS BLE background is too power-constrained.
@@ -131,4 +131,4 @@ Chosen option: **"nRF52840 (Seeed XIAO)"**, because it is the most power-efficie
 - [ADR-001: Monorepo Package Structure](./001-monorepo-package-structure.md) — `packages/ble-protocol/` defines the GATT profile and Protobuf encoding shared between TS, Swift, and C++ (device firmware)
 - [ADR-004: Timer State Machine](./004-timer-state-machine.md) — the pure `transition(state, event) → newState` model translates to C++ `enum class` on the device; device runs its own timer driver using `millis()`
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — `devices` and `device_sync_log` tables support BLE device registration and incremental sync; UUID-based idempotent inserts deduplicate retries
-- Offline-First Sync Architecture (pending /tech-design) — device implements the outbox sync pattern: buffer sessions locally, upload when BLE reconnects, server deduplicates via `ON CONFLICT (id) DO NOTHING`
+- [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — device implements the outbox sync pattern: buffer sessions locally, upload when BLE reconnects, server deduplicates via `ON CONFLICT (id) DO NOTHING`

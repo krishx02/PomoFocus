@@ -4,7 +4,7 @@
 **Date:** 2026-03-07
 **Decision-makers:** Project lead
 **Zoom level:** Level 2 (Container)
-**Platforms:** All (iOS, Android, web, macOS widget, iOS widget, watchOS, VS Code extension, MCP server, Hono API, ESP32 firmware)
+**Platforms:** All (iOS, Android, web, macOS widget, iOS widget, watchOS, VS Code extension, MCP server, Hono API, nRF52840 firmware)
 
 ## Context and Problem Statement
 

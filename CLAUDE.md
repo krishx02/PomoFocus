@@ -96,7 +96,7 @@ See [ADR-009](./research/decisions/009-ci-cd-pipeline-design.md) for full ration
 
 IMPORTANT: Use platform built-in dashboards (Supabase, Cloudflare Workers, Vercel) for infrastructure monitoring. Add Sentry free tier for client-side error tracking when each platform first deploys to staging — not before. Sentry SDK init belongs in app entry points (`apps/` and `native/`), never in shared packages (`packages/`). Defer Langfuse and all other observability tools until a concrete pain point arises.
 
-See [ADR-006](./research/decisions/006-monitoring-observability.md) for full rationale.
+See [ADR-011](./research/decisions/011-monitoring-observability.md) for full rationale.
 
 ---
 

@@ -428,7 +428,7 @@ Prototype BOM: ~$38 (EN04 + display + encoder + motor + LED + AKZYTUE battery). 
 > - PlatformIO vs Arduino IDE — decide at Phase 1 start
 > - Nanopb vs full protoc C++ generation — evaluate memory footprint
 > - Deep sleep / wake interrupt configuration specifics
-> - E-ink display sourcing: GDEY029T94 vs Waveshare 2.9" — confirm GxEPD2 compatibility
+> - ~~E-ink display sourcing~~ — Decided: GDEQ0426T82 (4.26", 800x480, 219 PPI, SSD1677) per ADR-010
 
 ---
 

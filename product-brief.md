@@ -122,7 +122,7 @@ The device must work **without the phone nearby.** If the device requires a live
 - **Goals sync to the device via BLE** whenever the phone is nearby (could be once a day, could be after every session).
 - **The device caches goals locally** (3-5 active goals, stored as short text strings in flash memory — a few KB).
 - **During a session, the device is fully self-sufficient.** User scrolls through cached goals with a button/dial, selects one, starts the timer. Phone can be in another room, turned off, doesn't matter.
-- **Completed sessions are buffered locally** (last ~50 sessions: timestamp, duration, goal ID, completed/abandoned).
+- **Completed sessions are buffered locally** (~2,500 sessions in 256KB flash: timestamp, duration, goal ID, completed/abandoned — ~10 months at 8 sessions/day).
 - **Sync happens when convenient.** Next time the phone is in BLE range, buffered sessions push up to the app/cloud, and any new/changed goals push down to the device. If sync doesn't happen for a week, nothing breaks.
 
 ### Hardware direction
@@ -713,7 +713,7 @@ No fixed calendar deadline — but a fixed *scope*. The shape below is the ceili
 **Platforms:**
 - iOS (native via Expo/React Native)
 - Web (Next.js — zero-friction entry point, shareable URL)
-- ESP32 physical device (BLE sync)
+- nRF52840 physical device (BLE sync)
 - Android is NOT in v1
 
 **Core loop (must ship — this is the product):**

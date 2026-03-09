@@ -57,7 +57,7 @@ The project lead has zero hardware experience. The design must be buildable by a
 │  │   sense)  │                      │
 │  └─────┬─────┘  ┌────────────────┐  │
 │        └────────│ 1200mAh LiPo   │  │ JST PH 2.0mm
-│                 │ (Adafruit)     │  │
+│                 │ (AKZYTUE)     │  │
 │                 │ + USB-C charge  │  │
 │                 └────────────────┘  │
 └──────────┬──────────────────────────┘

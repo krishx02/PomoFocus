@@ -1,4 +1,4 @@
-# ADR-006: Monitoring & Observability Strategy
+# ADR-011: Monitoring & Observability Strategy
 
 **Status:** Accepted
 **Date:** 2026-03-08
