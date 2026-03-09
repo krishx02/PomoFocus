@@ -401,16 +401,20 @@ Prototype BOM: ~$38 (EN04 + display + encoder + motor + LED + AKZYTUE battery). 
 
 ### BLE GATT Protocol Design
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 5 (BLE sync between device and app), 12 (goals push to device, sessions push to app), 13 (BLE research thread)
-> **Decided so far (ADR-010):** BLE 5.0, phone-first hub, passkey pairing, outbox sync pattern, Protobuf encoding. GATT services sketched (Timer, Goal, Session, Device Info, DFU).
-> **Still needs /tech-design:**
-> - Exact GATT service UUIDs and characteristic definitions
-> - Characteristic properties (read, write, notify) and data flow direction
-> - Data encoding format details (Nanopb vs full protoc for nRF52840)
-> - MTU negotiation and large-payload chunking strategy
-> - Sync protocol state machine (BLE-level handshake, outbox drain sequence, conflict resolution)
-> - Protobuf message definitions for `packages/ble-protocol/proto/pomofocus.proto`
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/013-ble-gatt-protocol-design.md](./research/decisions/013-ble-gatt-protocol-design.md)
+> **Design doc:** [research/designs/ble-gatt-protocol-design.md](./research/designs/ble-gatt-protocol-design.md)
+
+| Service | UUID Suffix | Purpose | Key Characteristics |
+|---------|-------------|---------|---------------------|
+| Timer Service | `0001` | Real-time timer state and commands | timer_state (read+notify), timer_command (write) |
+| Goal Service | `0002` | Phone pushes goals, device reports selection | goal_list (write), selected_goal (read+notify) |
+| Session Sync Service | `0003` | Bulk session transfer with chunking protocol | sync_status (read+notify), session_data (notify), sync_control (write) |
+| Device Info Service | `0x180A` (SIG) | Battery, firmware version | Standard BLE SIG service |
+| DFU Service | Nordic standard | OTA firmware updates | Nordic DFU library |
+
+Architecture: Hybrid — structured GATT services for real-time control (timer, goals) + dedicated Session Sync Service with chunked reliable-transfer protocol for outbox drain. Adaptive MTU (16-240 bytes payload per chunk). Protobuf encoding (per ADR-010). 128-bit custom UUIDs with shared base. Open BLE advertising. Phone converts Protobuf → JSON for Hono API (ADR-007).
 
 ---
 
