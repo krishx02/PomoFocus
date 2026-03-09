@@ -391,9 +391,9 @@ gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 
 **What it does:** Evaluates design decisions through the PomoFocus design philosophy. Use for UI, interaction, visual, or material choices on any platform.
 
-### `/ask-claude`
+### `/ask-cc`
 
-**File:** `.claude/skills/ask-claude/SKILL.md`
+**File:** `.claude/skills/ask-cc/SKILL.md`
 
 **What it does:** Ask a question about Claude Code features, workflows, and best practices.
 

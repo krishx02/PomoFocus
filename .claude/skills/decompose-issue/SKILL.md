@@ -1,9 +1,14 @@
 ---
 name: decompose-issue
-description: Break a large GitHub issue (labeled effort:large) into 3-5 smaller, agent-ready sub-issues using the data→logic→UI split pattern. Called automatically by /ship-issue when effort:large is detected, or invoked directly. Creates each sub-issue with full agent-ready fields, comments a tracking task list on the parent, and relabels the parent as decomposed.
+description: Break a large GitHub issue (labeled effort:large) into 3-5 smaller, agent-ready sub-issues using the data→logic→UI split pattern. Called automatically by /ship-issue when effort:large is detected, or invoked directly. Use when user says "break down this issue", "split issue", "this is too large", or "decompose issue #N".
 user-invocable: true
+context: conversation
 allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Read, Grep, Glob
+compatibility: "Requires gh CLI, git. Claude Code only."
 argument-hint: "[issue number]"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 Issue number: $ARGUMENTS

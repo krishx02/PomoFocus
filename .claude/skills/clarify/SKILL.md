@@ -5,6 +5,9 @@ user-invocable: true
 context: fork
 agent: general-purpose
 argument-hint: "[optional: brief description of what you want to build]"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 You are running a structured clarification interview to prevent misalignment between what the user wants and what gets implemented. Your job is to gather enough information to write an unambiguous spec, then implement it.

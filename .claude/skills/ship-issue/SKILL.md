@@ -1,11 +1,15 @@
 ---
 name: ship-issue
-description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. If needs-human, comments a blocker and stops. Otherwise: creates a branch, reads affected files, implements, and runs tests until all pass. Calls /finalize when done — does not manage the PR or labels directly.
+description: Pick up a GitHub issue by number. If effort:large, decomposes it into sub-issues instead of implementing. If needs-human, comments a blocker and stops. Otherwise creates a branch, reads affected files, implements, and runs tests until all pass. Use when user says "implement issue", "pick up issue #N", "work on this issue", or "start issue".
 user-invocable: true
 context: fork
 isolation: worktree
 allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Read, Edit, Write, Grep, Glob
+compatibility: "Requires gh CLI, git, pnpm. Claude Code only."
 argument-hint: "[issue number]"
+metadata:
+  author: PomoFocus
+  version: 1.0.0
 ---
 
 Issue number: $ARGUMENTS
