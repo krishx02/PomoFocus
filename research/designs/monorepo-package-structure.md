@@ -7,7 +7,7 @@
 
 ## Context & Scope
 
-PomoFocus is a multi-platform Pomodoro productivity app built from a single Nx + pnpm monorepo. The monorepo contains TypeScript packages (shared logic, UI, data access), runnable apps (Next.js, Expo, VS Code extension, MCP server), native Apple code (SwiftUI for widgets and watchOS), and ESP32 firmware (C++). This design defines the folder structure, package boundaries, dependency graph, type generation strategy, and Nx module boundary enforcement.
+PomoFocus is a multi-platform Pomodoro productivity app built from a single Nx + pnpm monorepo. The monorepo contains TypeScript packages (shared logic, UI, data access), runnable apps (Next.js, Expo, VS Code extension, MCP server), native Apple code (SwiftUI for widgets and watchOS), and nRF52840 firmware (Arduino/C++). This design defines the folder structure, package boundaries, dependency graph, type generation strategy, and Nx module boundary enforcement.
 
 ## Goals & Non-Goals
 
@@ -140,7 +140,7 @@ pomofocus/
 │       ├── ios-widget/          # iOS home screen widget target (WidgetKit, iOS 17+)
 │       └── watchos-app/         # Apple Watch app target (SwiftUI, watchOS 10+)
 │
-├── firmware/                    # ESP32 device firmware
+├── firmware/                    # nRF52840 device firmware (Arduino/C++)
 │   └── device/
 │       ├── src/
 │       │   ├── generated/       # AUTO-GENERATED: protoc --cpp_out (BLE types)

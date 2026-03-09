@@ -45,6 +45,12 @@ IMPORTANT: The timer state machine is a pure function in `packages/core/timer/`:
 
 See [ADR-004](./research/decisions/004-timer-state-machine.md) for full rationale.
 
+## Device Hardware
+
+IMPORTANT: The physical device uses a Seeed XIAO ePaper EN04 board (nRF52840 Plus built in — NOT a separate pluggable XIAO, NOT ESP32). Firmware is Arduino/C++ in `firmware/device/`, built with PlatformIO or Arduino IDE. The timer state machine in firmware is a direct C++ port of `packages/core/timer/` — same states, same transitions. Display is 4.26" e-ink (800x480, 219 PPI, SSD1677, GDEQ0426T82) connected via EN04's 24-pin FPC connector, driven by the GxEPD2 library (`GxEPD2_426_GDEQ0426T82` class). Battery is AKZYTUE 903048 1200mAh LiPo (JST PH 2.0mm) — check polarity before connecting. BLE protocol types are defined in `packages/ble-protocol/proto/pomofocus.proto` and generated for TS, Swift, and C++ via `protoc`. The device syncs through the phone (BLE) — never directly to the cloud.
+
+See [ADR-010](./research/decisions/010-physical-device-hardware-platform.md) for full rationale.
+
 ## Database
 
 IMPORTANT: Follow these conventions when writing database code.
@@ -83,6 +89,14 @@ IMPORTANT: Follow these conventions for CI/CD workflows.
 - Native Swift targets (macOS widget, iOS widget, watchOS) are built locally from Xcode — no CI.
 
 See [ADR-009](./research/decisions/009-ci-cd-pipeline-design.md) for full rationale.
+
+---
+
+## Observability
+
+IMPORTANT: Use platform built-in dashboards (Supabase, Cloudflare Workers, Vercel) for infrastructure monitoring. Add Sentry free tier for client-side error tracking when each platform first deploys to staging — not before. Sentry SDK init belongs in app entry points (`apps/` and `native/`), never in shared packages (`packages/`). Defer Langfuse and all other observability tools until a concrete pain point arises.
+
+See [ADR-011](./research/decisions/011-monitoring-observability.md) for full rationale.
 
 ---
 

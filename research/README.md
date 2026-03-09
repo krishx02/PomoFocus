@@ -64,7 +64,7 @@ Human reviews and merges
 - [Sweep AI](https://sweep.dev) — GitHub App that turns labeled issues into draft PRs automatically (free for ~5/month)
 - [Aider](https://aider.chat) — CLI pair programmer, deeply git-integrated, pennies per task
 - [OpenHands](https://github.com/All-Hands-AI/OpenHands) — open-source full agent, self-hostable
-- [Langfuse](https://langfuse.com) — free LLM observability (add from day one)
+- [Langfuse](https://langfuse.com) — free LLM observability (deferred until MCP server is built — see [ADR-011](./decisions/011-monitoring-observability.md))
 
 ---
 
@@ -101,7 +101,7 @@ Create separate agent configurations (`.claude/agents/`) for iOS, Android, share
 5. **Install GitHub MCP server** in `.claude/settings.json`
 6. **Add Sweep AI** as a GitHub App for automatic issue → PR on labeled tickets
 7. **Set up GitHub Actions** for CI (lint + test + deploy to preview per platform)
-8. **Add Langfuse** for agent run observability
+8. **Add Langfuse** for agent run observability (deferred — see [ADR-011](./decisions/011-monitoring-observability.md))
 9. **Then write code** — every ticket picked up by an agent
 
 ---
