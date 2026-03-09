@@ -341,7 +341,7 @@ Rejected because, while its deep sleep current (~9.5 μA) approaches the nRF5284
 ## Open Questions
 
 1. **Enclosure design:** Material, color, texture. Should align with design philosophy (wabi-sabi suggests natural materials — wood? concrete?). Deferred to a separate design session.
-2. **BLE GATT profile detail:** Exact service UUIDs, characteristic definitions, data encoding format, MTU negotiation. Should be its own ADR (ADR-011 or similar) since it affects phone-side code in `packages/ble-protocol/`.
+2. **BLE GATT profile detail:** Exact service UUIDs, characteristic definitions, data encoding format, MTU negotiation. Should be its own ADR (ADR-012 or similar) since it affects phone-side code in `packages/ble-protocol/`.
 3. **Firmware build toolchain:** PlatformIO vs Arduino IDE. PlatformIO is more professional (library versioning, CI integration) but Arduino IDE is more beginner-friendly. Decide when starting Phase 1.
 4. **E-ink display sourcing:** Decided — GDEQ0426T82 (Good Display) 4.26" 800x480 via Seeed Studio. GxEPD2 has dedicated class `GxEPD2_426_GDEQ0426T82`. Compatible with EN04 board via 24-pin FPC.
 5. **Protobuf on nRF52840:** Nanopb (lightweight Protobuf for embedded) vs full protoc C++ generation. Nanopb is smaller but has a different API. Need to evaluate memory footprint.
