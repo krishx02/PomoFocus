@@ -510,7 +510,7 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 > | Friend limit | **100 max** per user | Enforced at API level on friend request acceptance. |
 > | Platforms | **Mobile + Web only** for v1 | iOS widget, Watch, VS Code, MCP get no social surfaces. API is platform-agnostic for future extension. |
 >
-> 12 API endpoints total (7 reads, 5 mutations). Social data lives in TanStack Query (server state). Zustand only for UI state (e.g., "is Library Mode screen active"). Mutations invalidate relevant query keys.
+> 12 API endpoints total (6 reads, 6 mutations). Social data lives in TanStack Query (server state). Zustand only for UI state (e.g., "is Library Mode screen active"). Mutations invalidate relevant query keys.
 
 ---
 

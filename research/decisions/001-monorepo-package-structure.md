@@ -22,16 +22,16 @@ PomoFocus targets 9 platforms from a single Nx + pnpm monorepo. Code sharing is 
 
 1. **Fat Core (3 packages)** — one `core/` with all business logic, plus `ui/` and `api-client/`
 2. **Domain-Split (8 packages)** — separate packages per domain: timer, goals, sessions, analytics, types, api-client, ui, ble-protocol
-3. **Layered Hybrid (6 packages)** — tightly coupled domains bundled in `core/`, independent concerns separated: types, core, analytics, data-access, ui, ble-protocol
+3. **Layered Hybrid (7 packages)** — tightly coupled domains bundled in `core/`, independent concerns separated: types, core, analytics, data-access, state, ui, ble-protocol
 
 ## Decision Outcome
 
-Chosen option: **"Layered Hybrid (6 packages)"**, because it splits at natural architectural seams (domain vs data-access vs presentation vs infrastructure) while keeping tightly-coupled domains (timer + goals + sessions) together to avoid circular dependency pain. The naming follows Nike-style layer conventions (contracts/types, domain/core, data-access, presentation/ui).
+Chosen option: **"Layered Hybrid (7 packages)"**, because it splits at natural architectural seams (domain vs data-access vs state vs presentation vs infrastructure) while keeping tightly-coupled domains (timer + goals + sessions) together to avoid circular dependency pain. The naming follows Nike-style layer conventions (contracts/types, domain/core, data-access, state, presentation/ui). Originally 6 packages; `packages/state/` (Zustand + TanStack Query) added as the 7th by [ADR-003](./003-client-state-management.md).
 
 ### Consequences
 
 - **Good:** Clean dependency direction enforced by Nx tags. Each package has a clear purpose. Apps wire packages together without packages knowing about each other. Type generation eliminates manual cross-language sync.
-- **Bad:** `core/` bundles three domains (timer, goals, sessions) — may need splitting if it grows beyond ~3-5k lines. Six packages is moderate overhead for a solo dev pre-code.
+- **Bad:** `core/` bundles three domains (timer, goals, sessions) — may need splitting if it grows beyond ~3-5k lines. Seven packages is moderate overhead for a solo dev pre-code.
 - **Neutral:** The structure accommodates all 9 platforms but most app shells will be empty until post-v1.
 
 ## Pros and Cons of the Options
@@ -53,7 +53,7 @@ Chosen option: **"Layered Hybrid (6 packages)"**, because it splits at natural a
 - Bad, because timer/sessions/goals have real coupling — splitting them risks circular imports
 - Bad, because some packages (goals/, sessions/) may be too thin to justify existence
 
-### Layered Hybrid (6 packages)
+### Layered Hybrid (7 packages)
 
 - Good, because splits at natural seams — domain logic vs data access vs presentation vs infrastructure
 - Good, because keeps tightly-coupled logic together (timer + goals + sessions in core/)
