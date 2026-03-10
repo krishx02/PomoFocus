@@ -290,12 +290,12 @@ Use **Expo (React Native, bare workflow or with custom dev client)** for iOS and
 
 ### Overview
 
-PomoFocus targets three native Apple surfaces, all built in Swift/SwiftUI and housed in a single Xcode workspace at `native/apple/`:
+PomoFocus targets three native Apple surfaces, all built in Swift/SwiftUI. The macOS widget and watchOS app live in a standalone Xcode workspace at `native/apple/`. The iOS widget is managed by `@bacons/apple-targets` and lives at `apps/mobile/targets/ios-widget/`:
 
 | Target | Framework | Min OS | Location |
 |--------|-----------|--------|----------|
 | macOS menu bar widget | SwiftUI + MenuBarExtra | macOS 13 | `native/apple/mac-widget/` |
-| iOS home screen widget | WidgetKit + AppIntents | iOS 17 | `native/apple/ios-widget/` |
+| iOS home screen widget | WidgetKit + AppIntents | iOS 17 | `apps/mobile/targets/ios-widget/` |
 | Apple Watch app | SwiftUI + WatchKit | watchOS 10 | `native/apple/watchos-app/` |
 
 All three share timer state via a common App Group (`group.com.pomofocus.shared`) and Supabase Realtime.
@@ -415,7 +415,7 @@ let endDate = Date(timeIntervalSince1970: sharedDefaults?.double(forKey: "endDat
 - Minimum: iOS 17 (for interactive widgets); iOS 16 for non-interactive WidgetKit
 
 ### Location in Repo
-`native/apple/ios-widget/` — a WidgetKit extension target in the Apple Xcode workspace.
+`apps/mobile/targets/ios-widget/` — a WidgetKit extension target managed by `@bacons/apple-targets` (bundled with the Expo iOS app).
 
 **Sources:**
 - https://developer.apple.com/documentation/widgetkit

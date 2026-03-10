@@ -52,6 +52,8 @@ pomofocus/
 │   ├── api/                  # Hono REST API → Cloudflare Workers
 │   ├── web/                  # Next.js web app → Vercel
 │   ├── mobile/               # Expo (iOS + Android) → EAS Build
+│   │   └── targets/
+│   │       └── ios-widget/   # iOS home screen widget (WidgetKit, @bacons/apple-targets)
 │   ├── vscode-extension/     # VS Code Extension API
 │   ├── mcp-server/           # Claude Code MCP server → npm
 │   └── (future apps as needed)
@@ -66,7 +68,6 @@ pomofocus/
 ├── native/
 │   └── apple/                # SwiftUI Xcode workspace (outside Nx)
 │       ├── mac-widget/       # macOS menu bar target (MenuBarExtra + WidgetKit)
-│       ├── ios-widget/       # iOS home screen widget target (WidgetKit, iOS 17+)
 │       └── watchos-app/      # Apple Watch app target (SwiftUI, watchOS 10+)
 ├── firmware/
 │   └── device/               # nRF52840 firmware (Arduino/C++)

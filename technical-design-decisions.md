@@ -177,7 +177,7 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 | Presentation | `@pomofocus/ui` | Shared React/RN components. Props typed from types. |
 | Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), and Protobuf types. Transport adapters (react-native-ble-plx, Web Bluetooth) live here. |
 
-Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). Native: `native/apple/ios-widget/`, `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (nRF52840, Arduino/C++).
+Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). iOS widget: `apps/mobile/targets/ios-widget/` (managed by `@bacons/apple-targets`). Native: `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (nRF52840, Arduino/C++).
 
 Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types`. Protobuf → TS + Swift + C++ via `protoc`. Zero manual sync.
 
@@ -465,13 +465,13 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 > | Sub-Decision | Choice | Why |
 > |--------------|--------|-----|
 > | Config Plugin | **`@bacons/apple-targets`** | Expo-endorsed, pure Swift widget outside `/ios`, survives `prebuild --clean`. Full WidgetKit API access including `AppIntentConfiguration`. |
-> | Data sharing | **App Group + UserDefaults** | Apple's recommended mechanism for widget data. Tier 1 stats are ~200 bytes — UserDefaults is more than sufficient. |
-> | User customization | **`AppIntentConfiguration`** (iOS 17+) | Users pick which Tier 1 stat to display via Edit Widget sheet. Options: goal progress, weekly dots, streak, completion rate. |
+> | Data sharing | **App Group + UserDefaults** | Apple's recommended mechanism for widget data. Widget stats (Tier 1 + selected Tier 2) are ~200 bytes — UserDefaults is more than sufficient. |
+> | User customization | **`AppIntentConfiguration`** (iOS 17+) | Users pick which stat to display via Edit Widget sheet — Tier 1 and selected Tier 2 metrics (e.g., completion rate). Options: goal progress, weekly dots, streak, completion rate. |
 > | Widget sizes | **Small + Medium + Lock Screen** | Small: single stat. Medium: up to 4 stats or weekly dots. Lock Screen: single number/progress ring. Large skipped — dashboard belongs in app. |
 > | Live Activity | **Deferred** | No live timer countdown for v1. Avoids inconsistency with BLE device. Can be added later via ActivityKit (separate API). |
 > | Cross-language safety | **Shared `WidgetKeys` constants** (TS + Swift) | `/align-repo` checks drift. Upgrade to JSON schema codegen if contract grows beyond ~10 keys. |
 >
-> Data flow: Expo app receives Tier 1 stats from API (ADR-007/ADR-014) → RN native module writes to App Group UserDefaults → calls `WidgetCenter.shared.reloadAllTimelines()` → Swift widget reads from UserDefaults, renders per user's `AppIntentConfiguration` selection. ~40-70 system-managed refreshes per day.
+> Data flow: Expo app receives widget stats (Tier 1 + selected Tier 2) from API (ADR-007/ADR-014) → RN native module writes to App Group UserDefaults → calls `WidgetCenter.shared.reloadAllTimelines()` → Swift widget reads from UserDefaults, renders per user's `AppIntentConfiguration` selection. ~40-70 system-managed refreshes per day.
 
 ---
 

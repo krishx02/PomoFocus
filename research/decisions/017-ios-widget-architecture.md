@@ -8,7 +8,7 @@
 
 ## Context and Problem Statement
 
-The Expo/React Native app needs an iOS home screen and lock screen widget that displays glanceable Tier 1 stats (ADR-014). WidgetKit widgets are native Swift — they run in a separate process and cannot execute JavaScript or React Native code. The core challenge is: how does a TS/RN app share data with a Swift widget, and how do we give users control over what their widget displays?
+The Expo/React Native app needs an iOS home screen and lock screen widget that displays glanceable stats (Tier 1 + selected Tier 2 metrics per ADR-014). WidgetKit widgets are native Swift — they run in a separate process and cannot execute JavaScript or React Native code. The core challenge is: how does a TS/RN app share data with a Swift widget, and how do we give users control over what their widget displays?
 
 ## Decision Drivers
 
@@ -37,7 +37,7 @@ Chosen option: **"`@bacons/apple-targets` + App Group UserDefaults"**, because i
 
 ### Configurable Stats (via AppIntentConfiguration)
 
-Users choose which Tier 1 metric (ADR-014) to display per widget instance via the Edit Widget sheet:
+Users choose which metric to display per widget instance via the Edit Widget sheet — Tier 1 stats (ADR-014) plus selected Tier 2 metrics like completion rate:
 - Today's goal progress (e.g., "3/5 sessions")
 - Weekly dots (7-day completion visualization)
 - Current streak (consecutive days)
@@ -45,7 +45,7 @@ Users choose which Tier 1 metric (ADR-014) to display per widget instance via th
 
 ### Data Flow
 
-1. Expo app computes Tier 1 stats (received from Hono API per ADR-007/ADR-014)
+1. Expo app computes widget stats (Tier 1 + selected Tier 2, received from Hono API per ADR-007/ADR-014)
 2. RN native module writes stats to App Group shared `UserDefaults` (keyed by `WidgetKeys` constants)
 3. RN native module calls `WidgetCenter.shared.reloadAllTimelines()` to trigger widget refresh
 4. Swift widget's `TimelineProvider` reads from shared `UserDefaults`, renders based on user's `AppIntentConfiguration` selection
@@ -108,4 +108,4 @@ Not included for v1. Live Activity uses ActivityKit (separate from WidgetKit) an
 - [ADR-014](./014-analytics-insights-architecture.md) — Defines Tier 1 stats that the widget displays
 - [ADR-007](./007-api-architecture.md) — API that serves the stats data
 - [ADR-003](./003-client-state-management.md) — MMKV persistence in mobile app (evaluated but not chosen for widget)
-- [ADR-001](./001-monorepo-package-structure.md) — Widget target lives in `native/apple/ios-widget/`
+- [ADR-001](./001-monorepo-package-structure.md) — Widget target lives in `apps/mobile/targets/ios-widget/` (follows `@bacons/apple-targets` convention)
