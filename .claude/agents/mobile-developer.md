@@ -13,7 +13,7 @@ You are allowed to modify files in:
 - `apps/mobile/` — Expo app (iOS + Android via a single codebase)
 - `packages/ble-protocol/` — only if the issue's "Affected Files" explicitly lists it
 
-Do not modify native Swift or Kotlin files — this Expo project uses managed/bare workflow only.
+Do not modify native Swift or Kotlin files — this Expo project uses Expo managed workflow.
 
 ## Test Command
 
@@ -34,7 +34,7 @@ pnpm nx lint @pomofocus/mobile
 
 ## Tech Stack
 
-- Framework: Expo (bare workflow)
+- Framework: Expo (managed workflow)
 - Language: TypeScript 5.x — no JavaScript files
 - Navigation: [follow existing pattern in `apps/mobile/`]
 - State: [follow existing pattern]
@@ -67,7 +67,7 @@ pnpm nx lint @pomofocus/mobile
 - `apps/web/` — web app
 - `apps/vscode-extension/` — VS Code extension
 - `apps/mcp-server/` — MCP server
-- `native/apple/mac-widget/` — Swift/Xcode project (separate project entirely)
+- `native/apple/` — Swift/Xcode project (macOS widget, iOS widget, watchOS app)
 - `.github/workflows/` — CI configuration
 
 ## On Completion

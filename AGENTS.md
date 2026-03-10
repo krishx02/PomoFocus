@@ -58,7 +58,7 @@ pomofocus/
 ├── packages/
 │   ├── types/                # Auto-generated TS types from Postgres schema
 │   ├── core/                 # Pure domain logic (timer, goals, sessions, sync protocol) — 100% tested
-│   ├── analytics/            # Focus Score and insights
+│   ├── analytics/            # Component metrics, trends, and insights (no composite Focus Score — ADR-014)
 │   ├── data-access/          # All server interaction via generated OpenAPI client (queries, auth, sync)
 │   ├── state/                # Zustand stores + TanStack Query hooks
 │   ├── ui/                   # Shared React/RN components

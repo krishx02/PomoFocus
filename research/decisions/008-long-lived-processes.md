@@ -30,7 +30,7 @@ Chosen option: **"No always-on server — CF Workers + Cron Triggers only"**, be
 | Use case | Why an always-on server isn't needed |
 |----------|--------------------------------------|
 | BLE gateway daemon | BLE device syncs through the phone app (ADR-006), not a cloud relay |
-| Analytics aggregation | Per-user Focus Score is a single SQL query over ~365 rows — runs in milliseconds within a Worker |
+| Analytics aggregation | Per-user analytics (component metrics, trends — see ADR-014) are single SQL queries over ~365 rows — run in milliseconds within a Worker |
 | Scheduled tasks (daily cleanup, snapshots) | CF [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/) run Workers on a schedule without an HTTP trigger |
 | WebSocket presence (Library Mode) | Deferred to post-v1; when needed, CF Durable Objects handle this within the Workers ecosystem |
 | Push notification dispatch | Separate decision (Notification Strategy); Workers can call APNs/FCM APIs within request limits |
@@ -38,7 +38,7 @@ Chosen option: **"No always-on server — CF Workers + Cron Triggers only"**, be
 ### Consequences
 
 - **Good:** Zero additional infrastructure. Zero additional cost. One runtime environment (CF Workers) for all server-side code. Simpler deployment and monitoring.
-- **Bad:** Batch cross-user analytics (e.g., "compute Focus Score for all users nightly") will exceed Worker time limits at scale. When this is needed, an always-on server or a chunked Worker strategy must be added.
+- **Bad:** Batch cross-user analytics (e.g., "compute analytics for all users nightly") will exceed Worker time limits at scale. When this is needed, an always-on server or a chunked Worker strategy must be added. (Note: ADR-014 explicitly excludes cross-user analytics from v1.)
 - **Neutral:** Railway/Fly.io remain viable escape hatches. Adding one later requires no changes to existing code — it would be additive (new deployment target consuming the same Supabase database).
 
 ## Pros and Cons of the Options

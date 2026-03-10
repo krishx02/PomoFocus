@@ -572,7 +572,7 @@ These are never stored per session — they're calculated across sessions automa
 | **Best days of week** | Focus quality ratings grouped by day of week | Rolling 4 weeks |
 | **Consistency rate** | Days with at least one session / total days in period | Weekly + monthly |
 | **Break usefulness patterns** | Correlation between break ratings and subsequent session quality | Rolling 4 weeks |
-| **Focus Score** (composite) | Weighted blend of: self-reported quality (primary), completion rate, consistency, trend direction | Daily, recalculated |
+| ~~**Focus Score** (composite)~~ | ~~Weighted blend of: self-reported quality (primary), completion rate, consistency, trend direction~~ | ~~Daily, recalculated~~ | **Rejected in [ADR-014](./research/decisions/014-analytics-insights-architecture.md) — replaced by individual component metrics with trend arrows.** |
 
 ### Insight tiers — how data reaches the user
 
@@ -581,7 +581,7 @@ These are never stored per session — they're calculated across sessions automa
 Information the user sees every time they open the app, without navigating anywhere.
 
 - Today's progress: "2/3 sessions done"
-- Focus Score: single composite number (the headline metric)
+- ~~Focus Score: single composite number (the headline metric)~~ *(Rejected in ADR-014 — use component metrics with trend arrows instead)*
 - Total focus time this week: "3h 45m this week"
 - Success rate this month: "82%"
 
@@ -605,20 +605,22 @@ Available in a dedicated stats/insights section. The user navigates here when th
 - Session length insights: do you focus better in 25-minute or 50-minute blocks?
 - Best/worst time and day patterns over a longer window
 
-### Focus Score (composite metric)
+### ~~Focus Score (composite metric)~~ — Rejected in ADR-014
 
-A single number that answers "how's my focus going?" without the user needing to interpret multiple charts. Weighted blend of:
+> **Superseded:** ADR-014 rejected the composite Focus Score in favor of individual component metrics (completion rate, focus quality distribution, consistency, streaks) with trend arrows. Rationale: composite scores with arbitrary weights undermine autonomy (SDT) and create extrinsic motivation. See [ADR-014](./research/decisions/014-analytics-insights-architecture.md).
 
-1. **Self-reported focus quality** (primary weight) — the user's own assessment matters most
-2. **Completion rate** — are you finishing what you start?
-3. **Consistency** — are you showing up regularly?
-4. **Trend direction** — are things getting better or worse?
+~~A single number that answers "how's my focus going?" without the user needing to interpret multiple charts. Weighted blend of:~~
 
-Exact weights need tuning with real user data. The score should feel intuitively right — if a user had a great focus week, the number should reflect that without them needing to check the formula.
+1. ~~**Self-reported focus quality** (primary weight) — the user's own assessment matters most~~
+2. ~~**Completion rate** — are you finishing what you start?~~
+3. ~~**Consistency** — are you showing up regularly?~~
+4. ~~**Trend direction** — are things getting better or worse?~~
+
+~~Exact weights need tuning with real user data. The score should feel intuitively right — if a user had a great focus week, the number should reflect that without them needing to check the formula.~~
 
 ### Open questions (analytics)
 
-- **Focus Score weighting** — needs calibration with real usage data. Initial weights are a hypothesis.
+- ~~**Focus Score weighting** — needs calibration with real usage data. Initial weights are a hypothesis.~~ *(Rejected in ADR-014)*
 - **Break usefulness** — new metric with no precedent in other Pomodoro apps. Worth tracking to see if actionable patterns emerge. If it turns out to be noise, we can remove the question.
 - **Cold start problem** — how many sessions before insights become meaningful? Need to define minimums (e.g., "weekly insights require at least 5 sessions that week") and show appropriate messaging before that threshold.
 
@@ -695,7 +697,7 @@ Mitigating factors:
 These opportunity findings refine several existing sections of the brief:
 
 1. **Post-session reflection (Section 6)** is now understood as a *data collection mechanism* for the craving intervention, not just a self-awareness exercise. This raises its priority.
-2. **Focus Score and analytics (Section 10)** serve double duty: they're both an insight tool AND the ammunition for breaking the guilt spiral. The Tier 1 glanceable stats ("82% success rate", "45 sessions this month") are the craving antidote.
+2. **Analytics (Section 10)** serve double duty: they're both an insight tool AND the ammunition for breaking the guilt spiral. The Tier 1 glanceable stats ("82% success rate", "45 sessions this month") are the craving antidote. *(Note: composite Focus Score rejected in ADR-014 — component metrics with trend arrows instead.)*
 3. **The widget (Section 6)** isn't just a convenience — it's the primary touchpoint for the craving moment. It should show cumulative progress prominently.
 4. **The physical device** is the strongest version of this intervention: a tangible object on your desk that represents your commitment and progress. It breaks the scroll trance through a different sensory channel.
 5. **Tone must be non-judgmental everywhere.** The app observes and reflects accumulated progress — it never scolds. "Look at everything you've built" not "you scrolled for 40 minutes." (Research basis: Sirois & Pychyl 2013; Wohl et al. 2010 — self-judgment reinforces procrastination; self-compassion and self-forgiveness reduce it.)
@@ -726,10 +728,10 @@ No fixed calendar deadline — but a fixed *scope*. The shape below is the ceili
 7. **Accounts** — Supabase Auth. Deferred sign-up (after first session). Free cloud sync for all users in v1.
 
 **Analytics (must ship):**
-- Tier 1 glanceable stats (home screen): sessions today, Focus Score, weekly focus time, success rate
+- Tier 1 glanceable stats (home screen): sessions today, goal progress, weekly continuity dots, streak, success rate *(updated per ADR-014 — no Focus Score)*
 - Tier 2 weekly insight card (pushed proactively): best/worst days, distraction patterns, goal-level progress
 - Tier 3 monthly deep view: goal-by-goal breakdown, focus quality trends, distraction evolution
-- Focus Score composite metric (self-reported quality + completion rate + consistency + trend)
+- ~~Focus Score composite metric (self-reported quality + completion rate + consistency + trend)~~ *(Rejected in ADR-014 — component metrics with trend arrows instead)*
 - Abandonment logic with "had to stop" vs. "gave up" distinction
 
 **Social (must ship):**
@@ -770,7 +772,7 @@ No fixed calendar deadline — but a fixed *scope*. The shape below is the ceili
 These are areas where scope can silently expand. Set a time limit and move on if stuck.
 
 1. **BLE reliability** — Bluetooth is notoriously finicky. Define "good enough" sync: goals update within 30 seconds of phone being in range. Don't chase 100% reliability. Retry logic + local cache handles the rest.
-2. **Focus Score weighting** — Don't over-engineer the formula before having real data. Ship with simple equal weights, tune later with actual user sessions.
+2. ~~**Focus Score weighting** — Don't over-engineer the formula before having real data. Ship with simple equal weights, tune later with actual user sessions.~~ *(Rejected in ADR-014)*
 3. **Widget design** — iOS widgets have strict size/update constraints. Don't fight the platform. Ship a simple widget that shows streak + today's progress. Iterate on design after launch.
 4. **Goal template UX** — The template picker is 20 seconds of onboarding, not a product in itself. Don't build a template editor or let users create/share templates. Six hardcoded templates + "something else."
 5. **Device enclosure** — The device is a bare dev board for v1. No 3D printing, no case design. If testers complain about aesthetics, that's v2.

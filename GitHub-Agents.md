@@ -715,7 +715,6 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 | Tool | Purpose | Setup |
 |------|---------|-------|
 | GitHub MCP server | Claude reads/writes GitHub natively | `.claude/settings.json` |
-| Claude Code Action v1 | `@claude` comments trigger agent | `claude /install-github-app` |
 | Nx Cloud (free tier) | Remote caching, skip unchanged builds | `npx nx connect` |
 
 ### Planned (Set Up Before First App Code)
@@ -723,7 +722,6 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 | Tool | Purpose | Cost |
 |------|---------|------|
 | Sweep AI | Auto-PR from labeled issues | Free ~5/month |
-| Langfuse | Agent observability / trace logging | Free tier |
 | Playwright MCP | Browser automation for agent UI verification | Free |
 | EAS Build (Expo) | iOS/Android cloud builds | Free tier |
 
@@ -731,6 +729,8 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 
 | Tool | Purpose | Trigger |
 |------|---------|---------|
+| Claude Code Action v1 | `@claude` comments trigger agent in PRs | When Anthropic API key available (ADR-009 — agent work stays local via Max subscription) |
+| Langfuse | Agent / LLM observability, trace logging | When MCP server is built and pain point arises (ADR-011) |
 | Railway | Background jobs at scale (batch cross-user analytics) | Post-v1 (ADR-008) |
 | Devin | Fully autonomous agent | When budget allows ($500/month) |
 | Xcode Cloud | macOS widget CI | When Swift code exists |

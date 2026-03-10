@@ -48,9 +48,10 @@ pomofocus/
 │   │   ├── package.json         # @pomofocus/core — depends on @pomofocus/types
 │   │   └── project.json         # tags: ["type:domain", "scope:shared"]
 │   │
-│   ├── analytics/               # Domain — Focus Score, insights computation
+│   ├── analytics/               # Domain — component metrics, trends, insights (ADR-014)
 │   │   ├── src/
-│   │   │   ├── focus-score.ts   # Focus Score formula
+│   │   │   ├── metrics.ts       # Individual metric formulas (completion rate, consistency, etc.)
+│   │   │   ├── trends.ts        # Month-over-month trend computation
 │   │   │   ├── insights.ts      # Weekly/monthly insight generators
 │   │   │   └── index.ts
 │   │   ├── package.json         # @pomofocus/analytics — depends on @pomofocus/types, @pomofocus/core
@@ -249,7 +250,7 @@ protoc --ts_out=packages/ble-protocol/src/generated \
 |---|---|---|---|
 | `@pomofocus/types` | Nothing | TS interfaces, enums, constants | Auto-generated from Postgres. No logic. |
 | `@pomofocus/core` | `types` | Timer reducer, goal model, session logic | Pure functions. No IO, no React, no Supabase. |
-| `@pomofocus/analytics` | `types`, `core` | Focus Score, insights | Read-only consumer of core types. Pure computation. |
+| `@pomofocus/analytics` | `types`, `core` | Component metrics (completion rate, focus quality, consistency, streaks), trend computation, insights | Read-only consumer of core types. Pure computation. No composite Focus Score — individual metrics with trends (ADR-014). |
 | `@pomofocus/data-access` | `types`, `core` | API client (OpenAPI), auth token mgmt, sync drivers | All IO lives here. Uses generated OpenAPI client to talk to CF Workers API (ADR-007). Core never knows about the API. |
 | `@pomofocus/state` | `types`, `core`, `data-access` | Zustand stores, TanStack Query hooks | React state wiring. Thin wrapper around core + data-access. See [ADR-003](../decisions/003-client-state-management.md). |
 | `@pomofocus/ui` | `types` | React/RN components | Presentational. Props typed from types. No business logic. |

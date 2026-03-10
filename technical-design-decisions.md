@@ -467,13 +467,13 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### Analytics & Insights Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Section 10 (three tiers of analytics, Focus Score formula, all metrics defined)
-> **What I need to learn:** How to compute Focus Score efficiently (composite of self-reported quality + completion rate + consistency + trend). Storage strategy — pre-aggregate vs query on demand. Cold start problem (what to show before enough data). How to structure queries for weekly insight cards and monthly deep views.
-> **Key questions:**
-> - Pre-compute aggregates (materialized views? cron job?) vs compute on read — which works at our scale?
-> - What's the cold start strategy? How many sessions before Focus Score and insights are meaningful?
-> - Where does analytics computation run — client-side, Supabase functions, or edge workers?
+> **Status:** Accepted
+> **ADR:** [research/decisions/014-analytics-insights-architecture.md](./research/decisions/014-analytics-insights-architecture.md)
+> **Design doc:** [research/designs/analytics-insights-architecture.md](./research/designs/analytics-insights-architecture.md)
+>
+> | Choice | Why |
+> |--------|-----|
+> | **Hybrid — pure formulas in `packages/analytics/`, executed server-side in CF Worker API** | No composite Focus Score — individual component metrics (completion rate, focus quality, consistency, streaks) with trend arrows instead. Three tiers: Tier 1 glanceable (all platforms incl. BLE device), Tier 2 weekly insights (app only), Tier 3 monthly trends (app only). No pre-aggregation at v1 — per-user queries over ~365 rows are milliseconds (ADR-008). Grounded in Self-Determination Theory: composite scores with arbitrary weights undermine autonomy. |
 
 ---
 

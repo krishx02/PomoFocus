@@ -16,7 +16,7 @@ IMPORTANT: Follow these import rules when writing app code.
 
 - `packages/types/` — Auto-generated from Postgres schema via `supabase gen types`. **Never edit manually.**
 - `packages/core/` — Pure domain logic (timer, goals, sessions, sync protocol). **No IO, no React, no Supabase imports.**
-- `packages/analytics/` — Focus Score and insights. Depends on `types/` and `core/` only.
+- `packages/analytics/` — Component metrics (completion rate, focus quality, consistency, streaks, trends) and insight computation. No composite Focus Score — individual metrics with trend arrows instead (ADR-014). Depends on `types/` and `core/` only. Pure functions, no IO.
 - `packages/data-access/` — All server interaction via generated OpenAPI client (queries, auth token management, sync drivers). **All auth imports live here.** Sync outbox persistence and upload logic live here. Core never imports this. Clients never talk to Supabase directly — all requests go through the Hono API on Cloudflare Workers.
 - `packages/state/` — Zustand stores + TanStack Query hooks. Depends on `core/`, `data-access/`, `types/`. **All React apps import from here.**
 - `packages/ui/` — Shared React/RN components. Depends on `types/` only.
@@ -97,6 +97,14 @@ See [ADR-009](./research/decisions/009-ci-cd-pipeline-design.md) for full ration
 IMPORTANT: Rely on platform-provided security — no application-level encryption. Supabase handles AES-256 at rest and TLS in transit. RLS on every table (ADR-005) + API gateway (ADR-007) provides access control. GDPR compliance is built in: `DELETE /v1/me` (cascade delete all user data) and `GET /v1/me/export` (JSON download). Store minimum OAuth data: provider `sub`, email, display name. No tracking, no ads, no third-party analytics — no cookie banner needed. BLE uses LE Secure Connections with Passkey Entry + Bonding. Token storage is platform-secure per app (HttpOnly cookie for web, `expo-secure-store` for mobile, Keychain for macOS, `SecretStorage` for VS Code).
 
 See [ADR-012](./research/decisions/012-security-data-privacy.md) for full rationale.
+
+---
+
+## Analytics
+
+IMPORTANT: No composite Focus Score. Use individual component metrics (completion rate, focus quality distribution, consistency, streaks) with trend arrows instead. Analytics formulas are pure functions in `packages/analytics/`, executed server-side by the Hono API on CF Workers. Clients call API endpoints and render pre-computed results — never compute analytics client-side. Three tiers: Tier 1 (glanceable — goal progress, weekly dots, streak) for all platforms including BLE device; Tier 2 (weekly insights) and Tier 3 (monthly trends) for app only. Apple Watch shows cached analytics from last API sync + local simple counters. No pre-aggregation at v1 — compute on demand.
+
+See [ADR-014](./research/decisions/014-analytics-insights-architecture.md) for full rationale.
 
 ---
 
