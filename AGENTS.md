@@ -92,7 +92,7 @@ pomofocus/
 |-------|--------|---------|
 | Language | TypeScript | 5.x — no JS files |
 | Monorepo | Nx + pnpm | Nx 19+, pnpm 9+ |
-| Database | Supabase (Postgres + RLS + Realtime) | Latest |
+| Database | Supabase (Postgres + RLS) | Latest |
 | API | Hono on Cloudflare Workers (REST + OpenAPI 3.1) | Latest |
 | Web hosting | Vercel | Latest |
 | Auth | Supabase Auth | Latest |
