@@ -70,11 +70,11 @@ These are tool/framework choices that are understood and committed. No `/tech-de
 ## iOS Widget
 
 > **Status:** Accepted
-> **Research:** [research/04-stack-recommendations.md](./research/04-stack-recommendations.md)
+> **Research:** [research/04-stack-recommendations.md](./research/04-stack-recommendations.md), [ADR-017](./research/decisions/017-ios-widget-architecture.md)
 
 | Choice | Why |
 |--------|-----|
-| **SwiftUI + WidgetKit** (iOS 17+) | Home screen + Smart Stack. Shares timer state via App Group with the Expo app's native module. |
+| **SwiftUI + WidgetKit** (iOS 17+) via `@bacons/apple-targets` | Home screen + Lock Screen. App Group UserDefaults for data sharing. `AppIntentConfiguration` for user-customizable stats. See ADR-017. |
 
 ---
 
@@ -458,13 +458,20 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### iOS Widget Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 4 (widget as craving intervention), 12 (cumulative progress surfaces), 12 (rabbit hole: widget design constraints)
-> **What I need to learn:** How WidgetKit actually works — timeline providers, refresh policies, data sharing. How an Expo/React Native app shares data with a Swift widget via App Group. What data to show on the widget and what constraints exist (size classes, update frequency). Lock screen vs home screen widget differences.
-> **Key questions:**
-> - How does an Expo app share data with a WidgetKit widget? App Group + UserDefaults vs App Group + shared SQLite?
-> - What are the actual widget refresh constraints? Can we show "live" session time or only periodic snapshots?
-> - What widget sizes should we support, and what data fits in each?
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/017-ios-widget-architecture.md](./research/decisions/017-ios-widget-architecture.md)
+>
+> | Sub-Decision | Choice | Why |
+> |--------------|--------|-----|
+> | Config Plugin | **`@bacons/apple-targets`** | Expo-endorsed, pure Swift widget outside `/ios`, survives `prebuild --clean`. Full WidgetKit API access including `AppIntentConfiguration`. |
+> | Data sharing | **App Group + UserDefaults** | Apple's recommended mechanism for widget data. Tier 1 stats are ~200 bytes — UserDefaults is more than sufficient. |
+> | User customization | **`AppIntentConfiguration`** (iOS 17+) | Users pick which Tier 1 stat to display via Edit Widget sheet. Options: goal progress, weekly dots, streak, completion rate. |
+> | Widget sizes | **Small + Medium + Lock Screen** | Small: single stat. Medium: up to 4 stats or weekly dots. Lock Screen: single number/progress ring. Large skipped — dashboard belongs in app. |
+> | Live Activity | **Deferred** | No live timer countdown for v1. Avoids inconsistency with BLE device. Can be added later via ActivityKit (separate API). |
+> | Cross-language safety | **Shared `WidgetKeys` constants** (TS + Swift) | `/align-repo` checks drift. Upgrade to JSON schema codegen if contract grows beyond ~10 keys. |
+>
+> Data flow: Expo app receives Tier 1 stats from API (ADR-007/ADR-014) → RN native module writes to App Group UserDefaults → calls `WidgetCenter.shared.reloadAllTimelines()` → Swift widget reads from UserDefaults, renders per user's `AppIntentConfiguration` selection. ~40-70 system-managed refreshes per day.
 
 ---
 

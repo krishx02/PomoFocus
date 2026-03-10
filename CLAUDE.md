@@ -57,6 +57,12 @@ IMPORTANT: Use react-native-ble-plx for mobile BLE (Expo managed workflow). Web 
 
 See [ADR-016](./research/decisions/016-ble-client-libraries-integration.md) for full rationale.
 
+## iOS Widget
+
+IMPORTANT: The iOS widget is a native Swift WidgetKit extension, managed by the `@bacons/apple-targets` Expo Config Plugin. Widget Swift files live outside the `/ios` directory and survive `expo prebuild --clean`. Data flows from the Expo app to the widget via App Group shared `UserDefaults` — an Expo native module writes Tier 1 stats (ADR-014) to UserDefaults and calls `WidgetCenter.shared.reloadAllTimelines()`. The widget uses `AppIntentConfiguration` (iOS 17+) so users can choose which stat to display (goal progress, weekly dots, streak, completion rate). Supported sizes: Small, Medium, Lock Screen (Accessory). No Large widget — dashboard belongs in the app. No Live Activity for v1 — avoids inconsistency with BLE device. Cross-language type safety: define `WidgetKeys` constants in both `widget-keys.ts` and `WidgetKeys.swift` — `/align-repo` checks drift.
+
+See [ADR-017](./research/decisions/017-ios-widget-architecture.md) for full rationale.
+
 ## Database
 
 IMPORTANT: Follow these conventions when writing database code.

@@ -16,7 +16,7 @@ You are allowed to modify files in:
 - `packages/data-access/` — all server interaction via generated OpenAPI client: queries, auth token management, sync drivers
 - `packages/state/` — Zustand stores + TanStack Query hooks (wraps core + data-access)
 - `packages/ui/` — shared React/RN components
-- `packages/ble-protocol/` — BLE GATT profile (types from Protobuf)
+- `packages/ble-protocol/` — BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), and Protobuf types. Transport adapters (react-native-ble-plx, Web Bluetooth) live here.
 
 ## Test Command
 

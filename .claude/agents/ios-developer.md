@@ -65,11 +65,15 @@ xcodebuild test \
 - Timer sync with the iOS app requires App Group entitlements or shared server state (via CF Workers API per ADR-007) — never local-only
 - Timer accuracy: use `DispatchSourceTimer` instead of `Timer` for background accuracy
 
-**iOS home screen widget:**
-- Use `TimelineProvider` to drive widget updates (system controls refresh cadence)
-- Share timer state with the Expo app via `UserDefaults(suiteName: "group.com.pomofocus.shared")` (App Group entitlement required)
-- Use `AppIntents` + `Button`/`Toggle` for interactive widgets (iOS 17+)
-- Widgets cannot run timers — they read state snapshots; use `TimelineReloadPolicy.after(_:)` to schedule the next update
+**iOS home screen widget (ADR-017):**
+- Managed by `@bacons/apple-targets` Expo Config Plugin — Swift files live outside `/ios`, survive `expo prebuild --clean`
+- Use `TimelineProvider` to drive widget updates (system controls refresh cadence, ~40-70/day)
+- Data sharing: read Tier 1 stats from App Group shared `UserDefaults(suiteName: "group.com.pomofocus.shared")`
+- Use `AppIntentConfiguration` for user-customizable stat display (goal progress, weekly dots, streak, completion rate)
+- Supported sizes: Small (`.systemSmall`), Medium (`.systemMedium`), Lock Screen (`.accessoryInline`, `.accessoryCircular`, `.accessoryRectangular`). No Large.
+- No Live Activity for v1 — avoids inconsistency with BLE device
+- Widgets cannot run timers — they read cached stat snapshots only
+- Cross-language safety: `WidgetKeys.swift` must match `widget-keys.ts` — `/align-repo` checks drift
 - Widget extension lives in `native/apple/ios-widget/`
 
 **Apple Watch app:**
