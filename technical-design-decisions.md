@@ -70,11 +70,11 @@ These are tool/framework choices that are understood and committed. No `/tech-de
 ## iOS Widget
 
 > **Status:** Accepted
-> **Research:** [research/04-stack-recommendations.md](./research/04-stack-recommendations.md)
+> **Research:** [research/04-stack-recommendations.md](./research/04-stack-recommendations.md), [ADR-017](./research/decisions/017-ios-widget-architecture.md)
 
 | Choice | Why |
 |--------|-----|
-| **SwiftUI + WidgetKit** (iOS 17+) | Home screen + Smart Stack. Shares timer state via App Group with the Expo app's native module. |
+| **SwiftUI + WidgetKit** (iOS 17+) via `@bacons/apple-targets` | Home screen + Lock Screen. App Group UserDefaults for data sharing. `AppIntentConfiguration` for user-customizable stats. See ADR-017. |
 
 ---
 
@@ -177,7 +177,7 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 | Presentation | `@pomofocus/ui` | Shared React/RN components. Props typed from types. |
 | Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), and Protobuf types. Transport adapters (react-native-ble-plx, Web Bluetooth) live here. |
 
-Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). Native: `native/apple/ios-widget/`, `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (nRF52840, Arduino/C++).
+Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). iOS widget: `apps/mobile/targets/ios-widget/` (managed by `@bacons/apple-targets`). Native: `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (nRF52840, Arduino/C++).
 
 Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types`. Protobuf → TS + Swift + C++ via `protoc`. Zero manual sync.
 
@@ -194,7 +194,7 @@ Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types
 |--------|-----|
 | **Normalized relational schema (12 tables, 3NF)** | Maps 1:1 to product brief concepts. All analytics queries are straightforward SQL. RLS on every table via `get_user_id()` helper. Privacy enforced at database level (friends never see raw session data). |
 
-Tables: `profiles`, `user_preferences`, `long_term_goals`, `process_goals`, `sessions`, `breaks`, `devices`, `device_sync_log`, `friend_requests`, `friendships`, `encouragement_taps` + Supabase-managed `auth.users`. 9 Postgres enums. UUID v4 PKs, `timestamptz` always, hard deletes. Social visibility via scoped functions (`is_friend_focusing`, `did_friend_focus_today`) — not broad RLS. Dual-row friendship pattern for query/RLS simplicity. Types auto-generated via `supabase gen types`.
+Tables: `profiles`, `user_preferences`, `long_term_goals`, `process_goals`, `sessions`, `breaks`, `devices`, `device_sync_log`, `friend_requests`, `friendships`, `encouragement_taps` + Supabase-managed `auth.users`. 9 Postgres enums. UUID v4 PKs, `timestamptz` always, hard deletes. Social privacy enforced via friendship JOINs in API endpoints (ADR-018); DB functions (`is_friend_focusing`, `did_friend_focus_today`) kept as integration test helpers. Dual-row friendship pattern for query/RLS simplicity. Types auto-generated via `supabase gen types`.
 
 ---
 
@@ -269,7 +269,7 @@ Architecture: pure `transition(state, event) → newState` function in `packages
 | Auth model | **JWT forwarding** | API validates user's Supabase JWT, forwards to Supabase — RLS applies as defense-in-depth |
 | App location | **`apps/api/`** | Hono API lives alongside other apps; consumes `packages/core/` |
 
-Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Remaining open: auth flow for initial login/signup, OpenAPI versioning strategy, local dev setup.
+Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Auth flow decided in ADR-002 (Supabase Auth, deferred sign-up via `signInAnonymously()` → `linkIdentity()`). Remaining open: OpenAPI versioning strategy, local dev setup.
 
 ---
 
@@ -297,7 +297,7 @@ Architecture: outbox queue (client -> server) + polling pull (server -> client, 
 > **Date:** 2026-03-07
 > **Status:** Resolved — fully covered by ADR-006 + ADR-007
 > **Product brief ref:** Sections 5 (device sync), 9 (Library Mode presence), 12 (cloud sync)
-> **Resolution:** The Hono API on CF Workers (ADR-007) serves as the edge layer. Custom outbox sync (ADR-006) handles offline-first data flow. Polling-first (ADR-003) handles server-to-client updates. Durable Objects are NOT used for v1 — polling at 5-10s intervals is sufficient for Library Mode presence (a 25-minute session tolerates 10s staleness). If sub-second presence is needed, Durable Objects + WebSockets can be added within the CF Workers ecosystem — no architectural change required, just a new Worker class. No separate ADR needed.
+> **Resolution:** The Hono API on CF Workers (ADR-007) serves as the edge layer. Custom outbox sync (ADR-006) handles offline-first data flow. Polling-first (ADR-003) handles server-to-client updates. Durable Objects are NOT used for v1 — adaptive polling at 30-60s intervals is sufficient for Library Mode presence (ADR-018: 30s for first 2 min, then 60s; a 25-minute session tolerates 60s staleness). If sub-second presence is needed, Durable Objects + WebSockets can be added within the CF Workers ecosystem — no architectural change required, just a new Worker class. No separate ADR needed.
 
 ---
 
@@ -458,13 +458,20 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### iOS Widget Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 4 (widget as craving intervention), 12 (cumulative progress surfaces), 12 (rabbit hole: widget design constraints)
-> **What I need to learn:** How WidgetKit actually works — timeline providers, refresh policies, data sharing. How an Expo/React Native app shares data with a Swift widget via App Group. What data to show on the widget and what constraints exist (size classes, update frequency). Lock screen vs home screen widget differences.
-> **Key questions:**
-> - How does an Expo app share data with a WidgetKit widget? App Group + UserDefaults vs App Group + shared SQLite?
-> - What are the actual widget refresh constraints? Can we show "live" session time or only periodic snapshots?
-> - What widget sizes should we support, and what data fits in each?
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/017-ios-widget-architecture.md](./research/decisions/017-ios-widget-architecture.md)
+>
+> | Sub-Decision | Choice | Why |
+> |--------------|--------|-----|
+> | Config Plugin | **`@bacons/apple-targets`** | Expo-endorsed, pure Swift widget outside `/ios`, survives `prebuild --clean`. Full WidgetKit API access including `AppIntentConfiguration`. |
+> | Data sharing | **App Group + UserDefaults** | Apple's recommended mechanism for widget data. Widget stats (Tier 1 + selected Tier 2) are ~200 bytes — UserDefaults is more than sufficient. |
+> | User customization | **`AppIntentConfiguration`** (iOS 17+) | Users pick which stat to display via Edit Widget sheet — Tier 1 and selected Tier 2 metrics (e.g., completion rate). Options: goal progress, weekly dots, streak, completion rate. |
+> | Widget sizes | **Small + Medium + Lock Screen** | Small: single stat. Medium: up to 4 stats or weekly dots. Lock Screen: single number/progress ring. Large skipped — dashboard belongs in app. |
+> | Live Activity | **Deferred** | No live timer countdown for v1. Avoids inconsistency with BLE device. Can be added later via ActivityKit (separate API). |
+> | Cross-language safety | **Shared `WidgetKeys` constants** (TS + Swift) | `/align-repo` checks drift. Upgrade to JSON schema codegen if contract grows beyond ~10 keys. |
+>
+> Data flow: Expo app receives widget stats (Tier 1 + selected Tier 2) from API (ADR-007/ADR-014) → RN native module writes to App Group UserDefaults → calls `WidgetCenter.shared.reloadAllTimelines()` → Swift widget reads from UserDefaults, renders per user's `AppIntentConfiguration` selection. ~40-70 system-managed refreshes per day.
 
 ---
 
@@ -486,13 +493,24 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### Social Features Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Section 9 (friends, Library Mode, Quiet Feed, encouragement taps, invite links — all specified in detail)
-> **What I need to learn:** How to model friendships in Postgres (symmetric mutual friendships, not follower/following). Presence system design for Library Mode (who's focusing right now). Quiet Feed implementation (one entry per day per friend). Privacy model — what's visible to friends vs public. Invite link flow (web URL → friend request).
-> **Key questions:**
-> - How do we model mutual friendships in Postgres with RLS? Symmetric join table?
-> - Presence (Library Mode) — polling vs real-time? How do we know someone is "currently focusing" across devices?
-> - Invite links — how does the flow work from a shared URL to a friend connection?
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/018-social-features-architecture.md](./research/decisions/018-social-features-architecture.md)
+> **Design doc:** [research/designs/social-features-architecture.md](./research/designs/social-features-architecture.md)
+>
+> | Sub-Decision | Choice | Why |
+> |--------------|--------|-----|
+> | API pattern | **Resource-oriented REST endpoints** | Clean OpenAPI specs, each resource independently testable. Screen-scoped polling eliminates the DB load concern. |
+> | Polling model | **Screen-scoped** (not global) | Only Library Mode polls, only while user is on that screen. All other social data fetched on navigate + pull-to-refresh. |
+> | Library Mode polling | **Adaptive: 30s → 60s** | 30s for first 2 min on screen, then 60s. Halves request volume for sustained viewing. |
+> | Presence mechanism | **Sessions table** (`ended_at IS NULL`) | No separate presence system. An active session IS the presence indicator. Client computes time remaining from `started_at + work_duration`. |
+> | Privacy enforcement | **Direct JOINs in API** | Friendship JOINs in all social queries. DB functions (`is_friend_focusing`, `did_friend_focus_today`) repurposed as integration test helpers. |
+> | Encouragement taps | **Toggle-style, max 3/day/pair** | Click to send, click again to un-send. Prevents spam. |
+> | Invite links | **Stateless URL** (`pomofocus.app/invite/USERNAME`) | No tokens, no expiry, no DB storage. Username lookup on resolution. |
+> | Friend limit | **100 max** per user | Enforced at API level on friend request acceptance. |
+> | Platforms | **Mobile + Web only** for v1 | iOS widget, Watch, VS Code, MCP get no social surfaces. API is platform-agnostic for future extension. |
+>
+> 12 API endpoints total (6 reads, 6 mutations). Social data lives in TanStack Query (server state). Zustand only for UI state (e.g., "is Library Mode screen active"). Mutations invalidate relevant query keys.
 
 ---
 

@@ -33,7 +33,7 @@
 | Auth | **Supabase Auth** (sole provider, long-term) | Seamless RLS integration, zero cost at MVP scale. See [ADR-002](./decisions/002-auth-architecture.md). |
 | Mobile | **Expo / React Native** | Code sharing with web + VS Code, BLE via react-native-ble-plx |
 | Mac widget | **SwiftUI + WidgetKit + MenuBarExtra** | Only real option for a native menu bar widget |
-| iOS widget | **SwiftUI + WidgetKit** (iOS 17+) | Home screen + Smart Stack; shares timer state via App Group |
+| iOS widget | **SwiftUI + WidgetKit** (iOS 17+) via `@bacons/apple-targets` | Home screen + Lock Screen. App Group UserDefaults for data sharing. `AppIntentConfiguration` for user-customizable stats. See [ADR-017](./decisions/017-ios-widget-architecture.md). |
 | Apple Watch | **SwiftUI + WatchKit** (watchOS 10+) | Companion app + Complications; `WKExtendedRuntimeSession` for background timer |
 | VS Code extension | **VS Code Extension API** + shared `@pomofocus/core` | WebView renders same React UI as web |
 | BLE | **react-native-ble-plx** + Web Bluetooth | Platform-appropriate, mature libraries |

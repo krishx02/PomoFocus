@@ -10,12 +10,12 @@ You are a senior Swift / SwiftUI developer building all native Apple targets for
 ## Your Scope
 
 You are allowed to modify files in:
-- `native/apple/` — the entire Xcode workspace, including all three targets:
+- `native/apple/` — Xcode workspace for standalone Apple targets:
   - `native/apple/mac-widget/` — macOS menu bar app
-  - `native/apple/ios-widget/` — iOS home screen widget
   - `native/apple/watchos-app/` — Apple Watch app
+- `apps/mobile/targets/ios-widget/` — iOS home screen widget (managed by `@bacons/apple-targets`, built during `expo prebuild`)
 
-This is a native Swift project using SwiftUI, WidgetKit, and WatchKit. It is NOT part of the Nx/pnpm monorepo — it has its own build system (Xcode).
+The `native/apple/` targets use SwiftUI, WidgetKit, and WatchKit with their own Xcode build system. The iOS widget is also Swift/WidgetKit but is bundled with the Expo iOS app via `@bacons/apple-targets`.
 
 ## Test Commands
 
@@ -65,12 +65,16 @@ xcodebuild test \
 - Timer sync with the iOS app requires App Group entitlements or shared server state (via CF Workers API per ADR-007) — never local-only
 - Timer accuracy: use `DispatchSourceTimer` instead of `Timer` for background accuracy
 
-**iOS home screen widget:**
-- Use `TimelineProvider` to drive widget updates (system controls refresh cadence)
-- Share timer state with the Expo app via `UserDefaults(suiteName: "group.com.pomofocus.shared")` (App Group entitlement required)
-- Use `AppIntents` + `Button`/`Toggle` for interactive widgets (iOS 17+)
-- Widgets cannot run timers — they read state snapshots; use `TimelineReloadPolicy.after(_:)` to schedule the next update
-- Widget extension lives in `native/apple/ios-widget/`
+**iOS home screen widget (ADR-017):**
+- Managed by `@bacons/apple-targets` Expo Config Plugin — Swift files live outside `/ios`, survive `expo prebuild --clean`
+- Use `TimelineProvider` to drive widget updates (system controls refresh cadence, ~40-70/day)
+- Data sharing: read widget stats (Tier 1 + selected Tier 2) from App Group shared `UserDefaults(suiteName: "group.com.pomofocus.shared")`
+- Use `AppIntentConfiguration` for user-customizable stat display (goal progress, weekly dots, streak, completion rate)
+- Supported sizes: Small (`.systemSmall`), Medium (`.systemMedium`), Lock Screen (`.accessoryInline`, `.accessoryCircular`, `.accessoryRectangular`). No Large.
+- No Live Activity for v1 — avoids inconsistency with BLE device
+- Widgets cannot run timers — they read cached stat snapshots only
+- Cross-language safety: `WidgetKeys.swift` must match `widget-keys.ts` — `/align-repo` checks drift
+- Widget extension lives in `apps/mobile/targets/ios-widget/`
 
 **Apple Watch app:**
 - SwiftUI app lifecycle (`@main` struct conforming to `App`)

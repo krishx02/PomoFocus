@@ -143,3 +143,5 @@ Advanced BLE hardening (Secure Connections Only mode, GATT-level encryption, MAC
 - [ADR-007: API Architecture](./007-api-architecture.md) — Hono API gateway hides Supabase, JWT forwarding
 - [ADR-010: Physical Device Hardware](./010-physical-device-hardware-platform.md) — BLE 5.0, passkey pairing, phone-as-hub
 - [ADR-011: Monitoring & Observability](./011-monitoring-observability.md) — Sentry for client-side error tracking (no PII in error reports)
+- [ADR-017: iOS Widget Architecture](./017-ios-widget-architecture.md) — App Group UserDefaults for widget data sharing; no sensitive data in widget pipeline
+- [ADR-018: Social Features Architecture](./018-social-features-architecture.md) — social privacy enforced via friendship JOINs in API queries; DB functions repurposed as integration test helpers

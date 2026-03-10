@@ -75,7 +75,7 @@ Map each changed file to a platform bucket using these path prefixes:
 | `apps/vscode-extension/` | `vscode` |
 | `apps/mcp-server/` | `mcp-server` |
 | `native/apple/mac-widget/` | `apple-mac` |
-| `native/apple/ios-widget/` | `apple-ios-widget` |
+| `apps/mobile/targets/ios-widget/` | `apple-ios-widget` |
 | `native/apple/watchos-app/` | `apple-watchos` |
 
 Files not matching any prefix (docs, CI config, root config) do not trigger platform tests — ignore them.
@@ -189,13 +189,13 @@ fi
 
 ### apple-ios-widget
 ```bash
-if [ -d "native/apple/ios-widget" ] && ([ -d "native/apple/ios-widget/PomoFocusiOSWidget.xcodeproj" ] || [ -d "native/apple/ios-widget/PomoFocusiOSWidget.xcworkspace" ]); then
+if [ -d "apps/mobile/targets/ios-widget" ]; then
   xcodebuild test \
     -scheme PomoFocusiOSWidget \
     -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
     -resultBundlePath TestResults-iOSWidget.xcresult
 else
-  echo "SKIP: iOS widget Xcode project not configured"
+  echo "SKIP: iOS widget target not configured"
 fi
 ```
 

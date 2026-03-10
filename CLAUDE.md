@@ -57,6 +57,12 @@ IMPORTANT: Use react-native-ble-plx for mobile BLE (Expo managed workflow). Web 
 
 See [ADR-016](./research/decisions/016-ble-client-libraries-integration.md) for full rationale.
 
+## iOS Widget
+
+IMPORTANT: The iOS widget is a native Swift WidgetKit extension, managed by the `@bacons/apple-targets` Expo Config Plugin. Widget Swift files live in `apps/mobile/targets/ios-widget/` (outside the generated `/ios` directory, survives `expo prebuild --clean`). Data flows from the Expo app to the widget via App Group shared `UserDefaults` — an Expo native module writes widget stats (Tier 1 + selected Tier 2 per ADR-014) to UserDefaults and calls `WidgetCenter.shared.reloadAllTimelines()`. The widget uses `AppIntentConfiguration` (iOS 17+) so users can choose which stat to display (goal progress, weekly dots, streak, completion rate). Supported sizes: Small, Medium, Lock Screen (Accessory). No Large widget — dashboard belongs in the app. No Live Activity for v1 — avoids inconsistency with BLE device. Cross-language type safety: define `WidgetKeys` constants in both `widget-keys.ts` and `WidgetKeys.swift` — `/align-repo` checks drift.
+
+See [ADR-017](./research/decisions/017-ios-widget-architecture.md) for full rationale.
+
 ## Database
 
 IMPORTANT: Follow these conventions when writing database code.
@@ -66,7 +72,7 @@ IMPORTANT: Follow these conventions when writing database code.
 - Use Postgres `ENUM` types for fixed domain values — never store enum strings as plain `text`.
 - Hard deletes only (no `deleted_at` columns) unless explicitly approved.
 - RLS on every table. Use `get_user_id()` helper function for policy checks — never inline the `auth.uid()` → `profiles` lookup.
-- Friends never see raw session data. Use `is_friend_focusing()` and `did_friend_focus_today()` scoped functions for social visibility.
+- Friends never see raw session data. Social API endpoints enforce privacy via friendship JOINs (ADR-018). DB functions `is_friend_focusing()` and `did_friend_focus_today()` are kept as integration test helpers — not called in production.
 - Schema is the source of truth for `packages/types/` — run `supabase gen types` after any schema change.
 - Actual migrations via `supabase migration new` — never apply DDL directly.
 
