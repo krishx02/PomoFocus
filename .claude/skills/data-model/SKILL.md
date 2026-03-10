@@ -184,7 +184,7 @@ Wait for confirmation before proceeding.
 Goal: Verify the logical model supports all downstream needs.
 
 ### F1 — Analytics Query Feasibility
-For each metric in product brief Section 10, verify the schema can compute it:
+For each metric in ADR-014 (three tiers), verify the schema can compute it:
 - Daily completion rate
 - Goal-level completion rate
 - Focus quality distribution
@@ -192,7 +192,8 @@ For each metric in product brief Section 10, verify the schema can compute it:
 - Best time of day / day of week
 - Consistency rate
 - Break usefulness patterns
-- Focus Score
+- Current streak
+- Weekly continuity dots
 
 Write a brief pseudo-query for each to prove feasibility.
 

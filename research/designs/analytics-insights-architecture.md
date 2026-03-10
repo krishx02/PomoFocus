@@ -1,6 +1,6 @@
 # Design: Analytics & Insights Architecture
 
-**Date:** 2026-03-10
+**Date:** 2026-03-09
 **Status:** Accepted
 **Related ADR:** [ADR-014](../decisions/014-analytics-insights-architecture.md)
 **Platforms:** All (web, iOS/Android, VS Code extension, macOS widget, Apple Watch, Claude Code MCP, BLE device)
@@ -55,7 +55,7 @@ Shown on a weekly insights card. Updated each time the user opens the analytics 
 
 | Metric | Computation | Notes |
 |--------|-------------|-------|
-| Session completion rate | `completed / (total − had_to_stop)` | "Had to stop" is excluded per business rule (not a failure) |
+| Session completion rate | `completed / (total − had_to_stop)` (returns 0 when denominator is 0) | "Had to stop" is excluded per business rule (not a failure) |
 | Focus quality distribution | Count per enum value / total completed | Three-segment bar: locked_in / decent / struggled |
 | Total focus time | `SUM(ended_at − started_at)` for completed sessions | In hours and minutes |
 | Peak focus window | Hour-of-day bucket with highest avg focus_quality | "Your best focus is 9–10am" |
@@ -158,7 +158,7 @@ interface GlanceableResponse {
     completedToday: number;
     targetToday: number;
   }[];
-  weeklyDots: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+  weeklyDots: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun] — ISO 8601 Monday-start week
   currentStreak: number; // consecutive days
 }
 

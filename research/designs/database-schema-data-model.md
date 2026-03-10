@@ -7,7 +7,7 @@
 
 ## Context & Scope
 
-PomoFocus stores user goals, focus sessions, reflection data, social connections, and device registrations in a Supabase-hosted Postgres database. The schema must support: a three-layer goal hierarchy (long-term → process → session intention), 8 data points per session with post-session reflection, social features (friends, Library Mode, Quiet Feed, encouragement taps), BLE device sync, and computed analytics (Focus Score, weekly insights, monthly deep views). All data is scoped per user via Supabase RLS using `auth.uid()`. Anonymous users (deferred sign-up) create data before authenticating.
+PomoFocus stores user goals, focus sessions, reflection data, social connections, and device registrations in a Supabase-hosted Postgres database. The schema must support: a three-layer goal hierarchy (long-term → process → session intention), 8 data points per session with post-session reflection, social features (friends, Library Mode, Quiet Feed, encouragement taps), BLE device sync, and computed analytics (component metrics with trend arrows per ADR-014, weekly insights, monthly deep views). All data is scoped per user via Supabase RLS using `auth.uid()`. Anonymous users (deferred sign-up) create data before authenticating.
 
 ## Goals & Non-Goals
 

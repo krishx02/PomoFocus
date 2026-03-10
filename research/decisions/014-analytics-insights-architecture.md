@@ -1,7 +1,7 @@
 # ADR-014: Analytics & Insights Architecture
 
 **Status:** Accepted
-**Date:** 2026-03-10
+**Date:** 2026-03-09
 **Decision-makers:** Project lead
 **Zoom level:** Level 2 (Container)
 **Platforms:** All (web, iOS/Android, VS Code extension, macOS widget, Apple Watch, Claude Code MCP, BLE device)
@@ -39,7 +39,7 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 - Current streak — consecutive days with sessions (competence)
 
 **Tier 2 — Weekly insights (app only):**
-- Session completion rate — finished / (total − had_to_stop)
+- Session completion rate — finished / (total − had_to_stop); returns 0 when denominator is 0
 - Focus quality distribution — % locked_in vs decent vs struggled
 - Total focus time — sum of session durations
 - Peak focus window — time-of-day with best focus_quality
@@ -106,6 +106,8 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 ## Related Decisions
 
 - [ADR-001](./001-monorepo-package-structure.md) — Defines `packages/analytics/` in the dependency graph (depends on `types/` and `core/` only)
+- [ADR-002](./002-auth-architecture.md) — Auth model; analytics endpoints use `userId` from authenticated session
+- [ADR-003](./003-client-state-management.md) — TanStack Query for server state; clients poll analytics endpoints
 - [ADR-005](./005-database-schema-data-model.md) — Sessions table schema (the raw data analytics computes over)
 - [ADR-007](./007-api-architecture.md) — All client traffic through Hono API on CF Workers
 - [ADR-008](./008-long-lived-processes.md) — No always-on server; per-user queries run in milliseconds

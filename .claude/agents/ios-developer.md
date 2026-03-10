@@ -62,7 +62,7 @@ xcodebuild test \
 **macOS menu bar widget:**
 - Use `MenuBarExtra` (macOS 13+) for the menu bar item
 - `WidgetKit` for Desktop widget gallery (macOS Sonoma+, optional)
-- Timer sync with the iOS app requires App Group entitlements or shared Supabase state — never local-only
+- Timer sync with the iOS app requires App Group entitlements or shared server state (via CF Workers API per ADR-007) — never local-only
 - Timer accuracy: use `DispatchSourceTimer` instead of `Timer` for background accuracy
 
 **iOS home screen widget:**

@@ -8,7 +8,7 @@
 
 ## Context and Problem Statement
 
-PomoFocus needs a Postgres schema to store user goals (three-layer hierarchy), focus sessions with reflection data, social connections, BLE device registrations, and computed analytics inputs. The schema must support Supabase RLS via `auth.uid()`, deferred sign-up (anonymous → authenticated), BLE device incremental sync, and all analytics queries from the product brief (Focus Score, weekly insights, monthly deep views). The schema is a one-way door — every package (`types/`, `core/`, `data-access/`, `state/`) depends on it, and changes post-launch require migrations.
+PomoFocus needs a Postgres schema to store user goals (three-layer hierarchy), focus sessions with reflection data, social connections, BLE device registrations, and computed analytics inputs. The schema must support Supabase RLS via `auth.uid()`, deferred sign-up (anonymous → authenticated), BLE device incremental sync, and all analytics queries from the product brief (component metrics, weekly insights, monthly trends — see [ADR-014](./014-analytics-insights-architecture.md)). The schema is a one-way door — every package (`types/`, `core/`, `data-access/`, `state/`) depends on it, and changes post-launch require migrations.
 
 ## Decision Drivers
 
