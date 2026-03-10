@@ -49,7 +49,7 @@ See [ADR-004](./research/decisions/004-timer-state-machine.md) for full rational
 
 IMPORTANT: The physical device uses a Seeed XIAO ePaper EN04 board (nRF52840 Plus built in — NOT a separate pluggable XIAO, NOT ESP32). Firmware is Arduino/C++ in `firmware/device/`, built with PlatformIO or Arduino IDE. The timer state machine in firmware is a direct C++ port of `packages/core/timer/` — same states, same transitions. Display is 4.26" e-ink (800x480, 219 PPI, SSD1677, GDEQ0426T82) connected via EN04's 24-pin FPC connector, driven by the GxEPD2 library (`GxEPD2_426_GDEQ0426T82` class). Battery is AKZYTUE 903048 1200mAh LiPo (JST PH 2.0mm) — check polarity before connecting. BLE protocol types are defined in `packages/ble-protocol/proto/pomofocus.proto` and generated for TS, Swift, and C++ via `protoc`. The device syncs through the phone (BLE) — never directly to the cloud.
 
-See [ADR-010](./research/decisions/010-physical-device-hardware-platform.md) for full rationale.
+See [ADR-010](./research/decisions/010-physical-device-hardware-platform.md) for full rationale. See [ADR-013](./research/decisions/013-ble-gatt-protocol-design.md) for the complete GATT protocol (5 services: Timer, Goal, Session Sync, Device Info, DFU — hybrid architecture with chunked bulk transfer for session sync).
 
 ## Database
 

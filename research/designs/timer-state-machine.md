@@ -23,7 +23,7 @@ This design defines: (1) the state model — which states exist and which transi
 **Non-Goals:**
 - Timer interval management (owned by platform-specific timer drivers, not `core/`)
 - Sound/haptic feedback on transitions (side effects handled by consumers)
-- BLE device sync conflict resolution (BLE device syncs sessions through phone app via outbox queue — see [ADR-006](../decisions/006-offline-first-sync-architecture.md); BLE Protocol ADR still pending)
+- BLE device sync conflict resolution (BLE device syncs sessions through phone app via outbox queue — see [ADR-006](../decisions/006-offline-first-sync-architecture.md); GATT protocol detailed in [ADR-013](../decisions/013-ble-gatt-protocol-design.md))
 - Analytics recording of completed sessions (handled by consumers calling `data-access/`)
 - UI rendering of timer state (handled by `packages/state/` Zustand stores and `packages/ui/`)
 
