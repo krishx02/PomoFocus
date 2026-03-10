@@ -194,7 +194,7 @@ Cross-language type sync: Postgres schema → TS + Swift via `supabase gen types
 |--------|-----|
 | **Normalized relational schema (12 tables, 3NF)** | Maps 1:1 to product brief concepts. All analytics queries are straightforward SQL. RLS on every table via `get_user_id()` helper. Privacy enforced at database level (friends never see raw session data). |
 
-Tables: `profiles`, `user_preferences`, `long_term_goals`, `process_goals`, `sessions`, `breaks`, `devices`, `device_sync_log`, `friend_requests`, `friendships`, `encouragement_taps` + Supabase-managed `auth.users`. 9 Postgres enums. UUID v4 PKs, `timestamptz` always, hard deletes. Social visibility via scoped functions (`is_friend_focusing`, `did_friend_focus_today`) — not broad RLS. Dual-row friendship pattern for query/RLS simplicity. Types auto-generated via `supabase gen types`.
+Tables: `profiles`, `user_preferences`, `long_term_goals`, `process_goals`, `sessions`, `breaks`, `devices`, `device_sync_log`, `friend_requests`, `friendships`, `encouragement_taps` + Supabase-managed `auth.users`. 9 Postgres enums. UUID v4 PKs, `timestamptz` always, hard deletes. Social privacy enforced via friendship JOINs in API endpoints (ADR-018); DB functions (`is_friend_focusing`, `did_friend_focus_today`) kept as integration test helpers. Dual-row friendship pattern for query/RLS simplicity. Types auto-generated via `supabase gen types`.
 
 ---
 
@@ -297,7 +297,7 @@ Architecture: outbox queue (client -> server) + polling pull (server -> client, 
 > **Date:** 2026-03-07
 > **Status:** Resolved — fully covered by ADR-006 + ADR-007
 > **Product brief ref:** Sections 5 (device sync), 9 (Library Mode presence), 12 (cloud sync)
-> **Resolution:** The Hono API on CF Workers (ADR-007) serves as the edge layer. Custom outbox sync (ADR-006) handles offline-first data flow. Polling-first (ADR-003) handles server-to-client updates. Durable Objects are NOT used for v1 — polling at 5-10s intervals is sufficient for Library Mode presence (a 25-minute session tolerates 10s staleness). If sub-second presence is needed, Durable Objects + WebSockets can be added within the CF Workers ecosystem — no architectural change required, just a new Worker class. No separate ADR needed.
+> **Resolution:** The Hono API on CF Workers (ADR-007) serves as the edge layer. Custom outbox sync (ADR-006) handles offline-first data flow. Polling-first (ADR-003) handles server-to-client updates. Durable Objects are NOT used for v1 — adaptive polling at 30-60s intervals is sufficient for Library Mode presence (ADR-018: 30s for first 2 min, then 60s; a 25-minute session tolerates 60s staleness). If sub-second presence is needed, Durable Objects + WebSockets can be added within the CF Workers ecosystem — no architectural change required, just a new Worker class. No separate ADR needed.
 
 ---
 

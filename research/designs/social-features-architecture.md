@@ -66,7 +66,7 @@ FROM friendships f
 JOIN profiles p ON p.id = f.friend_id
 JOIN sessions s ON s.user_id = f.friend_id
   AND s.ended_at IS NULL
-  AND s.started_at > NOW() - INTERVAL '2 hours'
+  AND s.started_at > NOW() - INTERVAL '4 hours'
 JOIN user_preferences up ON up.user_id = f.friend_id
 WHERE f.user_id = get_user_id();
 ```
@@ -110,7 +110,7 @@ useQuery({
 
 **Privacy:** Response contains display name, avatar, session start time, and work duration ONLY. No goal names, no reflection data, no session quality. Friends see "Sarah is focusing, ~12 min left" and nothing more.
 
-**Edge case — stale sessions:** If a user's app crashes, `ended_at` stays NULL. The `started_at > NOW() - INTERVAL '2 hours'` filter ensures stale sessions don't appear in Library Mode indefinitely. Application code in `core/` should also expire sessions after 2x configured work duration.
+**Edge case — stale sessions:** If a user's app crashes, `ended_at` stays NULL. The `started_at > NOW() - INTERVAL '4 hours'` filter ensures stale sessions don't appear in Library Mode indefinitely (4 hours accommodates sessions up to 2 hours with 2x safety margin). Application code in `core/` should also expire sessions after 2x configured work duration.
 
 ---
 
