@@ -46,7 +46,7 @@ pnpm type-check
 ## Never Touch
 
 - `apps/` — any application directory
-- `native/apple/mac-widget/` — SwiftUI/Xcode project
+- `native/apple/` — Swift/Xcode project (macOS widget, iOS widget, watchOS app)
 - `.github/workflows/` — CI configuration
 - `CLAUDE.md` or `AGENTS.md` — context files
 
