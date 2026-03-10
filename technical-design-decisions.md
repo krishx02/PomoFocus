@@ -175,7 +175,7 @@ Each item below is a domain to explore and an architecture to design. Run `/tech
 | Data | `@pomofocus/data-access` | All server IO via generated OpenAPI client. Core never knows about the API. |
 | State | `@pomofocus/state` | Zustand stores + TanStack Query hooks. Wraps core + data-access for React apps. See [ADR-003](./research/decisions/003-client-state-management.md). |
 | Presentation | `@pomofocus/ui` | Shared React/RN components. Props typed from types. |
-| Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile from Protobuf. Only mobile + web. |
+| Infrastructure | `@pomofocus/ble-protocol` | BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), and Protobuf types. Transport adapters (react-native-ble-plx, Web Bluetooth) live here. |
 
 Apps: `api/` (Hono on CF Workers), `web/` (Next.js), `mobile/` (Expo), `vscode-extension/`, `mcp-server/` (placeholder). Native: `native/apple/ios-widget/`, `native/apple/mac-widget/`, `native/apple/watchos-app/`. Firmware: `firmware/device/` (nRF52840, Arduino/C++).
 
@@ -420,28 +420,35 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### BLE Client Libraries & Integration
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 5 (BLE sync between device and app), 12 (goals push to device, sessions push to app)
-> **Context:** After the GATT protocol is defined, each client platform needs a BLE implementation. ADR-010 established: phone is primary central, Mac is fallback central (CoreBluetooth), web is progressive enhancement (Web Bluetooth, Chrome/Edge only). Watch does NOT connect directly — gets data via phone relay (WatchConnectivity).
-> **Still needs /tech-design:**
-> - react-native-ble-plx (mobile) vs alternatives — API evaluation, background BLE on iOS
-> - Web Bluetooth (web) — browser support matrix, fallback UX for Safari/Firefox
-> - Shared BLE abstraction in `packages/ble-protocol/` — how much code can be shared between mobile and web?
-> - Reconnection behavior and automatic sync trigger on reconnect
-> - CoreBluetooth integration for macOS menu bar widget (fallback central)
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/016-ble-client-libraries-integration.md](./research/decisions/016-ble-client-libraries-integration.md)
+> **Design doc:** [research/designs/ble-client-libraries-integration.md](./research/designs/ble-client-libraries-integration.md)
+>
+> | Platform | Library | Key Principle |
+> |----------|---------|---------------|
+> | iOS / Android (Expo) | **react-native-ble-plx** v3.x | Most full-featured RN BLE library. Expo config plugin — no ejecting. MTU negotiation, multi-device, guaranteed transactions. |
+> | Web | **Web Bluetooth API** (browser native) | Progressive enhancement. Chrome/Edge/Opera only (~78% global). No Safari, no Firefox. |
+> | macOS menu bar | **CoreBluetooth** (Apple framework) | Fallback BLE central. Post-v1. |
+> | watchOS | None — WatchConnectivity relay | Data via phone. |
+>
+> Sync trigger: **app-open** (no background BLE for v1). User opens app → scan → connect → drain outbox. Background auto-sync deferred to v2. Shared TypeScript BLE abstraction (`BleTransport` interface + sync orchestration) in `packages/ble-protocol/` — extracted from working mobile code, not designed upfront. OS-managed pairing (no app-level auth). CoreBluetooth (Swift) needs parallel implementation — can't share TS abstraction.
 
 ---
 
-### Device Firmware Stack
+### Device Firmware Toolchain
 
-> **Status:** Partially addressed by ADR-010; firmware architecture detailed in design doc
-> **Product brief ref:** Sections 5 (device architecture), 12 (timer runs independently, local storage, BLE stack)
-> **Decided so far (ADR-010):** Arduino/C++ on EN04 board (nRF52840 Plus built in) via PlatformIO or Arduino IDE. Timer state machine is a C++ port of `packages/core/timer/` (ADR-004). GxEPD2 for 4.26" e-ink (`GxEPD2_426_GDEQ0426T82` class). Session storage in flash circular buffer. BLE DFU for OTA updates. 9-phase prototyping plan defined in design doc.
-> **Still needs /tech-design (or can decide during implementation):**
-> - PlatformIO vs Arduino IDE — decide at Phase 1 start
-> - Nanopb vs full protoc C++ generation — evaluate memory footprint
-> - Deep sleep / wake interrupt configuration specifics
-> - ~~E-ink display sourcing~~ — Decided: GDEQ0426T82 (4.26", 800x480, 219 PPI, SSD1677) per ADR-010
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/015-device-firmware-toolchain.md](./research/decisions/015-device-firmware-toolchain.md)
+>
+> | Sub-Decision | Choice | Why |
+> |--------------|--------|-----|
+> | Build system | **PlatformIO with Arduino framework** | Reproducible builds via `platformio.ini`, CLI builds for CI (`pio run`, `pio test`), runs in Cursor/VS Code. Code is standard Arduino — portable to Arduino IDE as fallback. |
+> | Protobuf encoding | **Nanopb** | ~2-5KB flash vs ~150-200KB for full protoc C++. No dynamic memory allocation — all static buffers. Same `.proto` file, wire-compatible output. |
+> | Sleep strategy | **System ON sleep with BLE SoftDevice active** | BLE advertising continues in sleep (~22μA) — phone auto-discovers device. GPIO interrupts wake on encoder click. No full reset on wake. Already modeled in ADR-010's power budget (8-10 weeks). |
+>
+> Hardware platform (EN04 board, 4.26" e-ink, GPIO allocation, prototyping phases) defined in [ADR-010](./research/decisions/010-physical-device-hardware-platform.md). BLE GATT protocol in [ADR-013](./research/decisions/013-ble-gatt-protocol-design.md).
 
 ---
 

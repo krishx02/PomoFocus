@@ -62,7 +62,7 @@ pomofocus/
 │   ├── data-access/          # All server interaction via generated OpenAPI client (queries, auth, sync)
 │   ├── state/                # Zustand stores + TanStack Query hooks
 │   ├── ui/                   # Shared React/RN components
-│   └── ble-protocol/         # BLE GATT profile (types from Protobuf)
+│   └── ble-protocol/         # BLE GATT profile, shared BLE abstraction (BleTransport + sync orchestration), Protobuf types
 ├── native/
 │   └── apple/                # SwiftUI Xcode workspace (outside Nx)
 │       ├── mac-widget/       # macOS menu bar target (MenuBarExtra + WidgetKit)

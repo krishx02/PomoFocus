@@ -94,7 +94,7 @@ pomofocus/
 │   │   ├── package.json         # @pomofocus/state — depends on @pomofocus/types, @pomofocus/core, @pomofocus/data-access
 │   │   └── project.json         # tags: ["type:state", "scope:shared"]
 │   │
-│   └── ble-protocol/            # Infrastructure — BLE GATT profile, data encoding
+│   └── ble-protocol/            # Infrastructure — BLE GATT profile, shared BLE abstraction, data encoding
 │       ├── proto/
 │       │   └── pomofocus.proto  # SOURCE OF TRUTH for BLE message types
 │       ├── src/
@@ -144,7 +144,7 @@ pomofocus/
 ├── firmware/                    # nRF52840 device firmware (Arduino/C++)
 │   └── device/
 │       ├── src/
-│       │   ├── generated/       # AUTO-GENERATED: protoc --cpp_out (BLE types)
+│       │   ├── generated/       # AUTO-GENERATED: nanopb_generator (BLE types, ADR-015)
 │       │   ├── main.cpp
 │       │   ├── timer.cpp
 │       │   ├── display.cpp
@@ -254,7 +254,7 @@ protoc --ts_out=packages/ble-protocol/src/generated \
 | `@pomofocus/data-access` | `types`, `core` | API client (OpenAPI), auth token mgmt, sync drivers | All IO lives here. Uses generated OpenAPI client to talk to CF Workers API (ADR-007). Core never knows about the API. |
 | `@pomofocus/state` | `types`, `core`, `data-access` | Zustand stores, TanStack Query hooks | React state wiring. Thin wrapper around core + data-access. See [ADR-003](../decisions/003-client-state-management.md). |
 | `@pomofocus/ui` | `types` | React/RN components | Presentational. Props typed from types. No business logic. |
-| `@pomofocus/ble-protocol` | `types` | BLE GATT profile, connection mgmt | Protocol definition from Protobuf. Only mobile + web consume. |
+| `@pomofocus/ble-protocol` | `types` | BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), Protobuf types | Protocol definition from Protobuf. Transport adapters (react-native-ble-plx, Web Bluetooth) implement `BleTransport`. Only mobile + web consume. See [ADR-016](../decisions/016-ble-client-libraries-integration.md). |
 
 ## Alternatives Considered
 

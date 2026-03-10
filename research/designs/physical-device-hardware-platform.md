@@ -276,7 +276,7 @@ firmware/device/
 │   │   └── led.h             # LED pulse patterns
 │   └── power/
 │       └── sleep.cpp         # Deep sleep entry/exit, BLE advertising in sleep
-├── generated/                # AUTO-GENERATED: protoc --cpp_out (BLE types)
+├── generated/                # AUTO-GENERATED: nanopb_generator (BLE types, ADR-015)
 │   └── pomofocus.pb.h
 │   └── pomofocus.pb.cc
 ├── platformio.ini            # Build config: board = xiao_nrf52840
@@ -342,6 +342,6 @@ Rejected because, while its deep sleep current (~9.5 μA) approaches the nRF5284
 
 1. **Enclosure design:** Material, color, texture. Should align with design philosophy (wabi-sabi suggests natural materials — wood? concrete?). Deferred to a separate design session.
 2. ~~**BLE GATT profile detail:**~~ Resolved — see [ADR-013: BLE GATT Protocol Design](../decisions/013-ble-gatt-protocol-design.md) and [Design: BLE GATT Protocol](./ble-gatt-protocol-design.md). Defines 5 GATT services, 9 characteristics, Protobuf message schemas, chunked bulk transfer protocol, and connection sync state machine.
-3. **Firmware build toolchain:** PlatformIO vs Arduino IDE. PlatformIO is more professional (library versioning, CI integration) but Arduino IDE is more beginner-friendly. Decide when starting Phase 1.
+3. ~~**Firmware build toolchain:**~~ Resolved — PlatformIO with Arduino framework. See [ADR-015: Device Firmware Toolchain](../decisions/015-device-firmware-toolchain.md). Reproducible builds via `platformio.ini`, CLI for CI, standard Arduino code portable to Arduino IDE as fallback.
 4. **E-ink display sourcing:** Decided — GDEQ0426T82 (Good Display) 4.26" 800x480 via Seeed Studio. GxEPD2 has dedicated class `GxEPD2_426_GDEQ0426T82`. Compatible with EN04 board via 24-pin FPC.
-5. **Protobuf on nRF52840:** Nanopb (lightweight Protobuf for embedded) vs full protoc C++ generation. Nanopb is smaller but has a different API. Need to evaluate memory footprint.
+5. ~~**Protobuf on nRF52840:**~~ Resolved — Nanopb. See [ADR-015: Device Firmware Toolchain](../decisions/015-device-firmware-toolchain.md). ~2-5KB flash, no dynamic allocation, wire-compatible with standard Protobuf. Full protoc C++ rejected (~150-200KB flash, uses `malloc`).
