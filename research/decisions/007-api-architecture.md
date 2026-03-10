@@ -114,3 +114,4 @@ Chosen option: **"Hono on Cloudflare Workers (REST + OpenAPI)"**, because it pro
 - [ADR-003: Client State Management](./003-client-state-management.md) — TanStack Query polls the CF Workers API instead of Supabase directly. Same 30s polling interval, same caching behavior.
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — RLS policies remain active and enforced. API uses user's JWT, so `get_user_id()` and all RLS policies work unchanged.
 - [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — outbox sync drivers target the CF Workers API instead of Supabase SDK. Pure sync protocol in `core/sync/` is unaffected. Topology changes: all paths now route through the API.
+- [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — API gateway hides Supabase from clients as security measure. JWT validation in API middleware. GDPR endpoints (`DELETE /v1/me`, `GET /v1/me/export`) are Hono routes.
