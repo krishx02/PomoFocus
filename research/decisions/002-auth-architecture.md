@@ -102,3 +102,4 @@ Supabase Auth is the sole long-term auth provider. Better Auth was evaluated as 
 - Database: Supabase (Postgres + RLS + Realtime) — accepted, see `research/04-stack-recommendations.md`
 - Testing frameworks — accepted, see `research/08-testing-frameworks.md`
 - [ADR-007: API Architecture](./007-api-architecture.md) — auth flow routes through the Hono API on CF Workers. API validates user's Supabase JWT and forwards to Supabase — RLS and `get_user_id()` work unchanged. Clients manage JWT refresh via shared auth interceptors.
+- [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — OAuth data minimization (store only provider `sub`, email, display name). GDPR endpoints for data export and account deletion. Token storage per platform.

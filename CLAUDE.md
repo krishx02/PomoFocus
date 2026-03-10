@@ -92,6 +92,14 @@ See [ADR-009](./research/decisions/009-ci-cd-pipeline-design.md) for full ration
 
 ---
 
+## Security & Privacy
+
+IMPORTANT: Rely on platform-provided security — no application-level encryption. Supabase handles AES-256 at rest and TLS in transit. RLS on every table (ADR-005) + API gateway (ADR-007) provides access control. GDPR compliance is built in: `DELETE /v1/me` (cascade delete all user data) and `GET /v1/me/export` (JSON download). Store minimum OAuth data: provider `sub`, email, display name. No tracking, no ads, no third-party analytics — no cookie banner needed. BLE uses LE Secure Connections with Passkey Entry + Bonding. Token storage is platform-secure per app (HttpOnly cookie for web, `expo-secure-store` for mobile, Keychain for macOS, `SecretStorage` for VS Code).
+
+See [ADR-012](./research/decisions/012-security-data-privacy.md) for full rationale.
+
+---
+
 ## Observability
 
 IMPORTANT: Use platform built-in dashboards (Supabase, Cloudflare Workers, Vercel) for infrastructure monitoring. Add Sentry free tier for client-side error tracking when each platform first deploys to staging — not before. Sentry SDK init belongs in app entry points (`apps/` and `native/`), never in shared packages (`packages/`). Defer Langfuse and all other observability tools until a concrete pain point arises.

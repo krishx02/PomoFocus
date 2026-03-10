@@ -132,3 +132,4 @@ Chosen option: **"nRF52840 (Seeed XIAO)"**, because it is the most power-efficie
 - [ADR-004: Timer State Machine](./004-timer-state-machine.md) — the pure `transition(state, event) → newState` model translates to C++ `enum class` on the device; device runs its own timer driver using `millis()`
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — `devices` and `device_sync_log` tables support BLE device registration and incremental sync; UUID-based idempotent inserts deduplicate retries
 - [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — device implements the outbox sync pattern: buffer sessions locally, upload when BLE reconnects, server deduplicates via `ON CONFLICT (id) DO NOTHING`
+- [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — BLE uses LE Secure Connections with Passkey Entry + Bonding; advanced BLE hardening (SCO mode, GATT-level encryption) explicitly deferred
