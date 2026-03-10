@@ -33,7 +33,7 @@ Chosen option: **"No always-on server — CF Workers + Cron Triggers only"**, be
 | Analytics aggregation | Per-user analytics (component metrics, trends — see ADR-014) are single SQL queries over ~365 rows — run in milliseconds within a Worker |
 | Scheduled tasks (daily cleanup, snapshots) | CF [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/) run Workers on a schedule without an HTTP trigger |
 | WebSocket presence (Library Mode) | Deferred to post-v1; when needed, CF Durable Objects handle this within the Workers ecosystem |
-| Push notification dispatch | Separate decision (Notification Strategy); Workers can call APNs/FCM APIs within request limits |
+| Push notification dispatch | Decided in [ADR-019](./019-notification-strategy.md): Expo Push Service called from Hono API within CF Workers request limits |
 
 ### Consequences
 

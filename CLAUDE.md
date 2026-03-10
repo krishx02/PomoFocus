@@ -120,6 +120,14 @@ See [ADR-014](./research/decisions/014-analytics-insights-architecture.md) for f
 
 ---
 
+## Notifications
+
+IMPORTANT: PomoFocus sends exactly four notification types — no more. Timer end (local scheduled), encouragement tap (Expo Push on mobile, in-app fallback on web), weekly summary (local scheduled), and goal nudge (local scheduled, self-cancelling if session started today). Never add marketing, re-engagement ("we miss you"), or streak-at-risk notifications — a focus app that spam-notifies contradicts its own value. Push notifications use Expo Push Service (free, wraps APNs + FCM) for mobile only — no web push. Push tokens are stored in the `devices` table (`expo_push_token` column). During an active focus session, encouragement taps arrive silently (no sound, no vibration) and surface after the session ends. Request notification permission at first timer creation, not at app launch. All push sending goes through the Hono API (`POST /v1/taps` calls Expo Push API).
+
+See [ADR-019](./research/decisions/019-notification-strategy.md) for full rationale.
+
+---
+
 ## Observability
 
 IMPORTANT: Use platform built-in dashboards (Supabase, Cloudflare Workers, Vercel) for infrastructure monitoring. Add Sentry free tier for client-side error tracking when each platform first deploys to staging — not before. Sentry SDK init belongs in app entry points (`apps/` and `native/`), never in shared packages (`packages/`). Defer Langfuse and all other observability tools until a concrete pain point arises.
