@@ -269,7 +269,7 @@ Architecture: pure `transition(state, event) → newState` function in `packages
 | Auth model | **JWT forwarding** | API validates user's Supabase JWT, forwards to Supabase — RLS applies as defense-in-depth |
 | App location | **`apps/api/`** | Hono API lives alongside other apps; consumes `packages/core/` |
 
-Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Remaining open: auth flow for initial login/signup, OpenAPI versioning strategy, local dev setup.
+Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Auth flow decided in ADR-002 (Supabase Auth, deferred sign-up via `signInAnonymously()` → `linkIdentity()`). Remaining open: OpenAPI versioning strategy, local dev setup.
 
 ---
 
@@ -493,13 +493,24 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### Social Features Architecture
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Section 9 (friends, Library Mode, Quiet Feed, encouragement taps, invite links — all specified in detail)
-> **What I need to learn:** How to model friendships in Postgres (symmetric mutual friendships, not follower/following). Presence system design for Library Mode (who's focusing right now). Quiet Feed implementation (one entry per day per friend). Privacy model — what's visible to friends vs public. Invite link flow (web URL → friend request).
-> **Key questions:**
-> - How do we model mutual friendships in Postgres with RLS? Symmetric join table?
-> - Presence (Library Mode) — polling vs real-time? How do we know someone is "currently focusing" across devices?
-> - Invite links — how does the flow work from a shared URL to a friend connection?
+> **Date:** 2026-03-09
+> **Status:** Accepted
+> **ADR:** [research/decisions/018-social-features-architecture.md](./research/decisions/018-social-features-architecture.md)
+> **Design doc:** [research/designs/social-features-architecture.md](./research/designs/social-features-architecture.md)
+>
+> | Sub-Decision | Choice | Why |
+> |--------------|--------|-----|
+> | API pattern | **Resource-oriented REST endpoints** | Clean OpenAPI specs, each resource independently testable. Screen-scoped polling eliminates the DB load concern. |
+> | Polling model | **Screen-scoped** (not global) | Only Library Mode polls, only while user is on that screen. All other social data fetched on navigate + pull-to-refresh. |
+> | Library Mode polling | **Adaptive: 30s → 60s** | 30s for first 2 min on screen, then 60s. Halves request volume for sustained viewing. |
+> | Presence mechanism | **Sessions table** (`ended_at IS NULL`) | No separate presence system. An active session IS the presence indicator. Client computes time remaining from `started_at + work_duration`. |
+> | Privacy enforcement | **Direct JOINs in API** | Friendship JOINs in all social queries. DB functions (`is_friend_focusing`, `did_friend_focus_today`) repurposed as integration test helpers. |
+> | Encouragement taps | **Toggle-style, max 3/day/pair** | Click to send, click again to un-send. Prevents spam. |
+> | Invite links | **Stateless URL** (`pomofocus.app/invite/USERNAME`) | No tokens, no expiry, no DB storage. Username lookup on resolution. |
+> | Friend limit | **100 max** per user | Enforced at API level on friend request acceptance. |
+> | Platforms | **Mobile + Web only** for v1 | iOS widget, Watch, VS Code, MCP get no social surfaces. API is platform-agnostic for future extension. |
+>
+> 12 API endpoints total (7 reads, 5 mutations). Social data lives in TanStack Query (server state). Zustand only for UI state (e.g., "is Library Mode screen active"). Mutations invalidate relevant query keys.
 
 ---
 

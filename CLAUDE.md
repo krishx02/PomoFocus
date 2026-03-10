@@ -72,7 +72,7 @@ IMPORTANT: Follow these conventions when writing database code.
 - Use Postgres `ENUM` types for fixed domain values — never store enum strings as plain `text`.
 - Hard deletes only (no `deleted_at` columns) unless explicitly approved.
 - RLS on every table. Use `get_user_id()` helper function for policy checks — never inline the `auth.uid()` → `profiles` lookup.
-- Friends never see raw session data. Use `is_friend_focusing()` and `did_friend_focus_today()` scoped functions for social visibility.
+- Friends never see raw session data. Social API endpoints enforce privacy via friendship JOINs (ADR-018). DB functions `is_friend_focusing()` and `did_friend_focus_today()` are kept as integration test helpers — not called in production.
 - Schema is the source of truth for `packages/types/` — run `supabase gen types` after any schema change.
 - Actual migrations via `supabase migration new` — never apply DDL directly.
 
