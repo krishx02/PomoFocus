@@ -621,7 +621,7 @@ message SyncControl {
 **Code generation targets:**
 - TypeScript: `npx protoc --ts_out` → `packages/ble-protocol/generated/ts/`
 - Swift: `protoc --swift_out` → `native/apple/shared/Generated/`
-- C++: `protoc --cpp_out` (or Nanopb `nanopb_generator`) → `firmware/device/generated/`
+- C++: Nanopb `nanopb_generator` → `firmware/device/generated/` (ADR-015; full `protoc --cpp_out` rejected — too large for nRF52840 flash)
 
 ---
 
@@ -649,7 +649,7 @@ Rejected because timer commands could be queued behind session data in a FIFO by
 
 ## Open Questions
 
-1. **Nanopb vs full protoc for firmware C++ generation:** Nanopb uses less RAM (~2-5KB vs ~10-20KB for full protoc) but has a different, more limited API. Should be decided when starting firmware Phase 5 (BLE). This does NOT affect the GATT protocol design — both produce wire-compatible Protobuf.
+1. ~~**Nanopb vs full protoc for firmware C++ generation:**~~ Resolved — Nanopb chosen. See [ADR-015: Device Firmware Toolchain](../decisions/015-device-firmware-toolchain.md). ~2-5KB flash, no dynamic allocation, wire-compatible output. Full protoc C++ rejected (~150-200KB flash, uses `malloc`). Does NOT affect the GATT protocol design.
 
 2. **Connection interval tuning:** The default BLE connection interval (~30ms) may be too frequent for idle state (wastes battery) or too slow for bulk transfer (limits throughput). iOS allows 15ms-2000ms. Fine-tune during prototyping Phase 8 (power optimization).
 

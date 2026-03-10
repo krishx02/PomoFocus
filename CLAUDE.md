@@ -20,7 +20,7 @@ IMPORTANT: Follow these import rules when writing app code.
 - `packages/data-access/` — All server interaction via generated OpenAPI client (queries, auth token management, sync drivers). **All auth imports live here.** Sync outbox persistence and upload logic live here. Core never imports this. Clients never talk to Supabase directly — all requests go through the Hono API on Cloudflare Workers.
 - `packages/state/` — Zustand stores + TanStack Query hooks. Depends on `core/`, `data-access/`, `types/`. **All React apps import from here.**
 - `packages/ui/` — Shared React/RN components. Depends on `types/` only.
-- `packages/ble-protocol/` — BLE GATT profile. Types auto-generated from Protobuf.
+- `packages/ble-protocol/` — BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), and Protobuf types. Transport adapters (react-native-ble-plx, Web Bluetooth) live here. Types auto-generated from Protobuf.
 - Import direction: `types ← core ← data-access/analytics ← state`, apps consume all. **Never import downward.**
 - Native Apple code lives in `native/`, firmware in `firmware/` — outside Nx's TS ecosystem.
 - Cross-language types: `supabase gen types` (TS + Swift), `protoc` (TS + Swift + C++). Zero manual sync.
@@ -47,9 +47,15 @@ See [ADR-004](./research/decisions/004-timer-state-machine.md) for full rational
 
 ## Device Hardware
 
-IMPORTANT: The physical device uses a Seeed XIAO ePaper EN04 board (nRF52840 Plus built in — NOT a separate pluggable XIAO, NOT ESP32). Firmware is Arduino/C++ in `firmware/device/`, built with PlatformIO or Arduino IDE. The timer state machine in firmware is a direct C++ port of `packages/core/timer/` — same states, same transitions. Display is 4.26" e-ink (800x480, 219 PPI, SSD1677, GDEQ0426T82) connected via EN04's 24-pin FPC connector, driven by the GxEPD2 library (`GxEPD2_426_GDEQ0426T82` class). Battery is AKZYTUE 903048 1200mAh LiPo (JST PH 2.0mm) — check polarity before connecting. BLE protocol types are defined in `packages/ble-protocol/proto/pomofocus.proto` and generated for TS, Swift, and C++ via `protoc`. The device syncs through the phone (BLE) — never directly to the cloud.
+IMPORTANT: The physical device uses a Seeed XIAO ePaper EN04 board (nRF52840 Plus built in — NOT a separate pluggable XIAO, NOT ESP32). Firmware is Arduino/C++ in `firmware/device/`, built with PlatformIO (`platformio.ini` at `firmware/device/platformio.ini`). Code uses the Arduino framework (`setup()`, `loop()`) — portable to Arduino IDE as fallback. The timer state machine in firmware is a direct C++ port of `packages/core/timer/` — same states, same transitions. Display is 4.26" e-ink (800x480, 219 PPI, SSD1677, GDEQ0426T82) connected via EN04's 24-pin FPC connector, driven by the GxEPD2 library (`GxEPD2_426_GDEQ0426T82` class). Battery is AKZYTUE 903048 1200mAh LiPo (JST PH 2.0mm) — check polarity before connecting. BLE protocol types are defined in `packages/ble-protocol/proto/pomofocus.proto` and generated via Nanopb (`nanopb_generator`) for C, `protoc` for TS and Swift. Nanopb uses static buffers only — no dynamic allocation on the MCU. The device uses System ON sleep with BLE SoftDevice active (~5μA + ~22μA BLE advertising) — never System OFF (which kills BLE discoverability). The device syncs through the phone (BLE) — never directly to the cloud.
 
-See [ADR-010](./research/decisions/010-physical-device-hardware-platform.md) for full rationale. See [ADR-013](./research/decisions/013-ble-gatt-protocol-design.md) for the complete GATT protocol (5 services: Timer, Goal, Session Sync, Device Info, DFU — hybrid architecture with chunked bulk transfer for session sync).
+See [ADR-010](./research/decisions/010-physical-device-hardware-platform.md) for hardware platform. See [ADR-013](./research/decisions/013-ble-gatt-protocol-design.md) for the GATT protocol. See [ADR-015](./research/decisions/015-device-firmware-toolchain.md) for firmware toolchain (PlatformIO, Nanopb, sleep strategy). See [ADR-016](./research/decisions/016-ble-client-libraries-integration.md) for BLE client libraries.
+
+## BLE
+
+IMPORTANT: Use react-native-ble-plx for mobile BLE (Expo managed workflow). Web Bluetooth for web (Chrome/Edge only — progressive enhancement). CoreBluetooth for macOS (post-v1). BLE sync is app-open only for v1 — no background BLE. When user opens the app, scan for the device, connect, drain the outbox. The shared `BleTransport` interface and sync orchestration live in `packages/ble-protocol/`. Platform-specific transport adapters implement `BleTransport`. Never add BLE connection logic to `packages/core/` — BLE is IO. Pairing is OS-managed (no app-level auth).
+
+See [ADR-016](./research/decisions/016-ble-client-libraries-integration.md) for full rationale.
 
 ## Database
 
