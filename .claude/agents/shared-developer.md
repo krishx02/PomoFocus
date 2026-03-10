@@ -12,7 +12,7 @@ You are a senior TypeScript developer maintaining the shared cross-platform pack
 You are allowed to modify files in:
 - `packages/types/` — auto-generated TypeScript types from Postgres schema (never edit manually)
 - `packages/core/` — pure domain logic: timer, goals, sessions, sync protocol (100% test coverage required)
-- `packages/analytics/` — Focus Score and insights (depends on types + core only)
+- `packages/analytics/` — component metrics (completion rate, focus quality, consistency, streaks), trends, and insights. No composite Focus Score (ADR-014). Depends on types + core only.
 - `packages/data-access/` — all server interaction via generated OpenAPI client: queries, auth token management, sync drivers
 - `packages/state/` — Zustand stores + TanStack Query hooks (wraps core + data-access)
 - `packages/ui/` — shared React/RN components
