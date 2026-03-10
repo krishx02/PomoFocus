@@ -136,7 +136,7 @@ Ghosting management:
 
 **Pairing:** Passkey display. Device shows 6-digit code on e-ink during pairing. User enters on phone. One-time setup. BLE bonding stores the key — subsequent connections are automatic.
 
-**GATT profile** (to be detailed in a separate BLE Protocol ADR):
+**GATT profile** (detailed in [ADR-013](../decisions/013-ble-gatt-protocol-design.md) and [Design: BLE GATT Protocol](./ble-gatt-protocol-design.md)):
 - Timer Service: read timer state, write timer commands (start/pause/skip/abandon)
 - Goal Service: write goal list (phone → device), read selected goal
 - Session Service: notify completed sessions (device → phone), read session log

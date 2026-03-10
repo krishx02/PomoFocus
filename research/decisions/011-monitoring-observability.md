@@ -103,3 +103,4 @@ Chosen option: "Built-ins + Sentry free tier, deferred to first staging deploy",
 
 - [ADR-001](./001-monorepo-package-structure.md) — Package structure determines where Sentry init code lives (per-app, not in shared packages)
 - [ADR-005](./005-database-schema-data-model.md) — Database monitoring handled by Supabase built-ins
+- [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — Sentry must not include PII in error reports; strip user data from breadcrumbs
