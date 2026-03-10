@@ -65,11 +65,13 @@ packages/ble-protocol/
     └── web-bluetooth-transport.ts  # Web Bluetooth adapter
 ```
 
-The `BleTransport` interface defines 4 operations:
-- `connect(deviceId): Promise<void>` — establish GATT connection
+The `BleTransport` interface defines 6 operations:
+- `connect(deviceId, options?): Promise<BleConnection>` — establish GATT connection
 - `disconnect(): Promise<void>` — clean disconnect
+- `read(serviceUuid, charUuid): Promise<Uint8Array>` — read from characteristic
 - `write(serviceUuid, charUuid, data): Promise<void>` — write to characteristic
 - `subscribe(serviceUuid, charUuid, callback): Subscription` — subscribe to notifications
+- `negotiateMtu(requestedSize): Promise<number>` — request MTU size
 
 Sync orchestration (chunk handling, ack logic, cursor management) lives above this interface — same code for mobile and web. CoreBluetooth (Swift) needs its own implementation of both transport and orchestration.
 

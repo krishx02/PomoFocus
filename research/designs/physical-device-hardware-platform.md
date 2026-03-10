@@ -278,7 +278,7 @@ firmware/device/
 │       └── sleep.cpp         # Deep sleep entry/exit, BLE advertising in sleep
 ├── generated/                # AUTO-GENERATED: nanopb_generator (BLE types, ADR-015)
 │   └── pomofocus.pb.h
-│   └── pomofocus.pb.cc
+│   └── pomofocus.pb.c
 ├── platformio.ini            # Build config: board = xiao_nrf52840
 └── README.md
 ```

@@ -134,3 +134,5 @@ Chosen option: **"nRF52840 (Seeed XIAO)"**, because it is the most power-efficie
 - [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — device implements the outbox sync pattern: buffer sessions locally, upload when BLE reconnects, server deduplicates via `ON CONFLICT (id) DO NOTHING`
 - [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — BLE uses LE Secure Connections with Passkey Entry + Bonding; advanced BLE hardening (SCO mode, GATT-level encryption) explicitly deferred
 - [ADR-013: BLE GATT Protocol Design](./013-ble-gatt-protocol-design.md) — detailed GATT service/characteristic definitions, Protobuf message schemas, chunked bulk transfer protocol, and connection sync state machine
+- [ADR-015: Device Firmware Toolchain](./015-device-firmware-toolchain.md) — PlatformIO build system, Nanopb for Protobuf encoding, System ON sleep strategy
+- [ADR-016: BLE Client Libraries & Integration](./016-ble-client-libraries-integration.md) — react-native-ble-plx (mobile), Web Bluetooth (web), CoreBluetooth (macOS); app-open sync for v1

@@ -109,3 +109,5 @@ Chosen option: **"Hybrid — Structured Services + Chunked Bulk Transfer"**, bec
 - [ADR-007: API Architecture](./007-api-architecture.md) — phone converts BLE Protobuf to JSON for the Hono REST API; device never talks to the API directly
 - [ADR-010: Physical Device Hardware Platform](./010-physical-device-hardware-platform.md) — hardware platform, GPIO allocation, BLE 5.0, Protobuf encoding decision
 - [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — BLE LE Secure Connections with Passkey Entry + Bonding; link-layer AES-128-CCM encryption
+- [ADR-015: Device Firmware Toolchain](./015-device-firmware-toolchain.md) — PlatformIO build system, Nanopb for Protobuf encoding on the device side
+- [ADR-016: BLE Client Libraries & Integration](./016-ble-client-libraries-integration.md) — client-side BLE libraries that implement this GATT protocol; app-open sync trigger for v1
