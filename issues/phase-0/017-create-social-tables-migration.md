@@ -30,6 +30,7 @@ Social tables use a dual-row pattern for friendships: when A befriends B, both (
 - [ ] `friend_requests` table: `id` (uuid PK), `sender_id` (uuid FK to profiles), `recipient_id` (uuid FK to profiles), `status` (request_status DEFAULT 'pending'), UNIQUE(sender_id, recipient_id), CHECK(sender_id != recipient_id), `created_at`, `updated_at`
 - [ ] `friendships` table: `id` (uuid PK), `user_id` (uuid FK to profiles), `friend_id` (uuid FK to profiles), CHECK(user_id != friend_id), `created_at`
 - [ ] `encouragement_taps` table: `id` (uuid PK), `sender_id` (uuid FK to profiles), `recipient_id` (uuid FK to profiles), `created_at`
+- [ ] Indexes created per design doc: UNIQUE on `friend_requests(sender_id, recipient_id)`, `friend_requests(recipient_id)`, UNIQUE on `friendships(user_id, friend_id)`, `friendships(friend_id)`, `encouragement_taps(recipient_id, created_at)`, `encouragement_taps(sender_id)`
 - [ ] `supabase db reset` applies without error
 
 ## Out of Scope

@@ -27,11 +27,21 @@ The dependency graph must be enforced from day one to prevent coupling violation
 
 ## Acceptance Criteria
 
-- [ ] Importing `@pomofocus/data-access` from `packages/core/` triggers a lint error
+Use exact tag names from `coding-standards-eslint-nx.md` Section 4-5:
+
+- [ ] `depConstraints` configured with these exact rules:
+  - `type:types` depends on nothing (leaf node)
+  - `type:domain` depends on `['type:domain', 'type:types']`
+  - `type:infra` depends on `['type:domain', 'type:types']`
+  - `type:ble` depends on `['type:types']`
+  - `type:state` depends on `['type:domain', 'type:infra', 'type:types']`
+  - `type:ui` depends on `['type:types']`
+  - `type:app` depends on `['type:state', 'type:domain', 'type:infra', 'type:ble', 'type:ui', 'type:types']`
+  - Scope constraints: `scope:web`/`scope:mobile`/`scope:vscode`/`scope:mcp`/`scope:api` depend on `['scope:shared']`
+- [ ] Importing `@pomofocus/data-access` from `packages/core/` triggers a lint error (`type:domain` cannot depend on `type:infra`)
 - [ ] Importing `@pomofocus/state` from `packages/core/` triggers a lint error
 - [ ] Importing `@pomofocus/core` from `packages/types/` triggers a lint error
 - [ ] `packages/state/` can import from `types`, `core`, and `data-access` without errors
-- [ ] Apps can import from any package without errors
 - [ ] `pnpm nx graph` renders the correct dependency diagram
 - [ ] `pnpm nx lint` passes on all packages (no existing violations)
 

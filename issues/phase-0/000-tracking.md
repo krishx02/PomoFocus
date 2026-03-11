@@ -113,4 +113,12 @@ These tracks only merge at #020 (type generation needs both the types package an
 
 Within each wave, all issues can be picked up by separate agents simultaneously.
 
+### Deferred to Phase 1
+
+The following items from the database design doc are intentionally deferred from Phase 0:
+
+- **`updated_at` triggers** — 6 tables (profiles, user_preferences, long_term_goals, process_goals, devices, friend_requests) need `BEFORE UPDATE` triggers calling `update_updated_at()`. Create early in Phase 1.
+- **`create_profile_on_signup` trigger** — `AFTER INSERT ON auth.users` auto-creates a profile row. Needed when Supabase Auth is configured in Phase 2.
+- **`create_friendship_pair` trigger** — `AFTER UPDATE ON friend_requests` creates bidirectional friendship rows. Needed in Phase 8 (Social Features).
+
 ### Total: 40 issues + this tracking issue

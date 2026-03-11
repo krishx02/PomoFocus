@@ -65,6 +65,12 @@ This is NOT optional. The ADRs and design docs contain:
 
 You need this information to write issues with specific enough file paths, type names, and test assertions.
 
+Additionally, ALWAYS read these files regardless of which phase:
+- `research/coding-standards-eslint-nx.md` — Exact Nx tag names (Section 4), depConstraints (Section 5), bannedExternalImports (Section 5), tsconfig settings (Section 1), Vitest config (Section 6). Use ONLY tag names defined here.
+- `research/coding-standards.md` — Universal rules (U-001 through U-013) and package-level rules (PKG-*).
+
+These files contain exact configuration details that ADRs and design docs reference but don't fully reproduce.
+
 ## Step 3 — Check for Existing Issues
 
 Before creating any issues, check what already exists:
@@ -103,6 +109,16 @@ For each sub-item (e.g., 0.1, 0.2, ...), plan how to split it into individual is
 
 6. **Group by natural boundaries, not by arbitrary line counts.** "Timer idle→focusing transition + test" is one issue. "Lines 1-50 of transition.ts" is NOT an issue.
 
+7. **Use exact Nx tag names from coding-standards-eslint-nx.md Section 4.** Do NOT invent tag names. The canonical tags are: `type:types`, `type:domain`, `type:infra`, `type:ble`, `type:state`, `type:ui`, `type:app` (plus scope tags). If you use `type:core` or `type:analytics`, you are wrong — both map to `type:domain`.
+
+8. **Count against design doc DDL, not ADR summaries.** ADR summary text may round or include managed tables. Count the actual `CREATE TABLE` statements in the design doc for the real number.
+
+9. **Include indexes with their tables.** If the design doc defines indexes for a table, add them to that table's migration issue acceptance criteria. Do not silently omit indexes.
+
+10. **Include exact SQL function signatures.** For SQL function issues, specify: return type, `LANGUAGE`, volatility (`STABLE`/`VOLATILE`/`IMMUTABLE`), and security context (`SECURITY DEFINER`/`INVOKER`).
+
+11. **Flag source doc conflicts.** If the roadmap, product brief, ADRs, or design docs contradict each other on a point relevant to an issue, add a visible note in the issue's Context section flagging the conflict. Do not silently pick one source.
+
 ### Issue Sizing Guidelines
 
 - **effort:small** — < 1 hour, < 10 files, single concern. This is the DEFAULT for decomposed issues.
@@ -128,6 +144,10 @@ Plus ONE platform label based on the affected files:
 Plus a type label:
 - `enhancement` — new feature or capability
 - `chore` — scaffolding, config, infrastructure (no user-facing change)
+
+When specifying Nx project tags in issue body (Affected Files or Acceptance Criteria), always include BOTH dimensions from `coding-standards-eslint-nx.md` Section 4:
+- Type tag: `type:domain`, `type:types`, `type:infra`, `type:ble`, `type:state`, `type:ui`, `type:app`
+- Scope tag: `scope:shared`, `scope:web`, `scope:mobile`, `scope:vscode`, `scope:mcp`, `scope:api`
 
 ## Step 6 — Create Labels (if needed)
 

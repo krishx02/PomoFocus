@@ -26,13 +26,16 @@ This is complementary to issue #010 (Nx dependency constraints) and #030 (per-pa
 
 ## Acceptance Criteria
 
+Use exact tag names from `coding-standards-eslint-nx.md` Section 4-5 (NOT `type:core` or `type:analytics` — those don't exist):
+
 - [ ] `@nx/enforce-module-boundaries` rule is configured in `eslint.config.ts`
 - [ ] `type:types` can only import from external (no internal PomoFocus packages)
-- [ ] `type:core` can import from `type:types` only
-- [ ] `type:analytics` can import from `type:types` and `type:core`
-- [ ] `type:data-access` can import from `type:types` and `type:core`
-- [ ] `type:state` can import from `type:types`, `type:core`, `type:data-access`
-- [ ] `type:app` can import from any package
+- [ ] `type:domain` (core, analytics) can import from `type:domain` and `type:types` only
+- [ ] `type:infra` (data-access) can import from `type:domain` and `type:types` only
+- [ ] `type:ble` can import from `type:types` only
+- [ ] `type:state` can import from `type:domain`, `type:infra`, and `type:types`
+- [ ] `type:ui` can import from `type:types` only
+- [ ] `type:app` can import from all tags
 - [ ] Violating imports produce lint errors
 
 ## Out of Scope

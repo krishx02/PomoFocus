@@ -24,13 +24,13 @@ Phase 0, sub-item 0.1 of the [MVP Roadmap](../../research/mvp-roadmap.md).
 - `packages/analytics/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/analytics/tsconfig.lib.json` — Library-specific TS config
 - `packages/analytics/src/index.ts` — Barrel export (placeholder)
-- `packages/analytics/project.json` — Nx project with `type:analytics` tag
+- `packages/analytics/project.json` — Nx project with tags `type:domain, scope:shared` (same type tag as core — both are pure domain logic)
 
 ## Acceptance Criteria
 
 - [ ] `packages/analytics/package.json` exists with `"name": "@pomofocus/analytics"`
 - [ ] `@pomofocus/analytics` is resolvable via TypeScript path aliases
-- [ ] Nx project has tag `type:analytics`
+- [ ] Nx project has tags `["type:domain", "scope:shared"]` (per `coding-standards-eslint-nx.md` Section 4)
 - [ ] `pnpm nx type-check @pomofocus/analytics` passes
 
 ## Out of Scope

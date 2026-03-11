@@ -30,6 +30,7 @@ These are the foundational user tables. Every other table references `profiles.i
 - [ ] `user_preferences` table created with columns: `id` (uuid PK), `user_id` (uuid UNIQUE FK to profiles ON DELETE CASCADE), `work_duration_minutes` (int4 DEFAULT 25), `short_break_minutes` (int4 DEFAULT 5), `long_break_minutes` (int4 DEFAULT 15), `sessions_before_long_break` (int4 DEFAULT 4), `reflection_enabled` (bool DEFAULT true), `timezone` (text DEFAULT 'UTC'), `created_at`, `updated_at`
 - [ ] All PKs use `gen_random_uuid()` default
 - [ ] All timestamps use `timestamptz`
+- [ ] Indexes created per design doc: UNIQUE on `profiles.auth_user_id`, UNIQUE on `profiles.username`
 - [ ] `supabase db reset` applies without error
 
 ## Out of Scope

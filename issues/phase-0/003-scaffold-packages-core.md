@@ -24,14 +24,14 @@ Phase 0, sub-item 0.1 of the [MVP Roadmap](../../research/mvp-roadmap.md).
 - `packages/core/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/core/tsconfig.lib.json` — Library-specific TS config
 - `packages/core/src/index.ts` — Barrel export (placeholder: `export {}`)
-- `packages/core/project.json` — Nx project configuration with `type:core` tag
+- `packages/core/project.json` — Nx project configuration with tags `type:domain, scope:shared`
 
 ## Acceptance Criteria
 
 - [ ] `packages/core/package.json` exists with `"name": "@pomofocus/core"`
 - [ ] `packages/core/src/index.ts` exists and compiles
 - [ ] `@pomofocus/core` is resolvable via TypeScript path aliases
-- [ ] Nx project has tag `type:core` for dependency constraint enforcement
+- [ ] Nx project has tags `["type:domain", "scope:shared"]` (per `coding-standards-eslint-nx.md` Section 4)
 - [ ] `pnpm nx type-check @pomofocus/core` passes
 
 ## Out of Scope

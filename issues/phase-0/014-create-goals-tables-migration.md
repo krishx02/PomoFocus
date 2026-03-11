@@ -28,6 +28,7 @@ Goals use a two-level hierarchy: long-term goals contain process goals. Process 
 
 - [ ] `long_term_goals` table: `id` (uuid PK), `user_id` (uuid FK to profiles), `title` (text NOT NULL), `description` (text nullable), `status` (goal_status DEFAULT 'active'), `sort_order` (int4 DEFAULT 0), `created_at`, `updated_at`
 - [ ] `process_goals` table: `id` (uuid PK), `long_term_goal_id` (uuid FK to long_term_goals), `user_id` (uuid FK to profiles, denormalized), `title` (text NOT NULL), `target_sessions_per_day` (int4 DEFAULT 1), `recurrence` (recurrence_type DEFAULT 'daily'), `status` (goal_status DEFAULT 'active'), `sort_order` (int4 DEFAULT 0), `created_at`, `updated_at`
+- [ ] Indexes created per design doc: `long_term_goals(user_id)`, `long_term_goals(user_id) WHERE status = 'active'`, `process_goals(user_id)`, `process_goals(long_term_goal_id)`, `process_goals(user_id) WHERE status = 'active'`
 - [ ] `supabase db reset` applies without error
 
 ## Out of Scope

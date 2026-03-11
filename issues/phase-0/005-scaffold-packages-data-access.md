@@ -24,13 +24,13 @@ Phase 0, sub-item 0.1 of the [MVP Roadmap](../../research/mvp-roadmap.md).
 - `packages/data-access/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/data-access/tsconfig.lib.json` — Library-specific TS config
 - `packages/data-access/src/index.ts` — Barrel export (placeholder)
-- `packages/data-access/project.json` — Nx project with `type:data-access` tag
+- `packages/data-access/project.json` — Nx project with tags `type:infra, scope:shared` (IO/infrastructure adapter)
 
 ## Acceptance Criteria
 
 - [ ] `packages/data-access/package.json` exists with `"name": "@pomofocus/data-access"`
 - [ ] `@pomofocus/data-access` is resolvable via TypeScript path aliases
-- [ ] Nx project has tag `type:data-access`
+- [ ] Nx project has tags `["type:infra", "scope:shared"]` (per `coding-standards-eslint-nx.md` Section 4)
 - [ ] `pnpm nx type-check @pomofocus/data-access` passes
 
 ## Out of Scope

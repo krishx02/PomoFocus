@@ -27,7 +27,7 @@ The schema is the source of truth for `packages/types/`. Types are auto-generate
 ## Acceptance Criteria
 
 - [ ] `pnpm nx run @pomofocus/types:gen` produces `packages/types/src/database.ts`
-- [ ] Generated file contains TypeScript types for all 12 tables and 9 enums
+- [ ] Generated file contains TypeScript types for all 11 application tables and 9 enums
 - [ ] Generated file compiles without errors
 - [ ] `import type { Database } from '@pomofocus/types'` works from downstream packages
 

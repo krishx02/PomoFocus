@@ -14,6 +14,8 @@ Phase 0, sub-item 0.1 of the [MVP Roadmap](../../research/mvp-roadmap.md).
 
 The web app is an Expo application configured for web output. It shares code with the mobile app via packages. At this stage, only the project skeleton is created.
 
+> **Source doc conflict:** `product-brief.md` says "Web (Next.js — zero-friction entry point)" but `mvp-roadmap.md` says "Minimal Expo Web App" for Phase 1. This issue follows the roadmap. **Resolve this conflict before implementation.**
+
 **Referenced ADRs:**
 - [ADR-001](../../research/decisions/001-monorepo-package-structure.md) — Apps consume all packages.
 - [ADR-003](../../research/decisions/003-client-state-management.md) — Web app imports from `@pomofocus/state`.
