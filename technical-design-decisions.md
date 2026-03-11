@@ -269,7 +269,7 @@ Architecture: pure `transition(state, event) → newState` function in `packages
 | Auth model | **JWT forwarding** | API validates user's Supabase JWT, forwards to Supabase — RLS applies as defense-in-depth |
 | App location | **`apps/api/`** | Hono API lives alongside other apps; consumes `packages/core/` |
 
-Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Auth flow decided in ADR-002 (Supabase Auth, deferred sign-up via `signInAnonymously()` → `linkIdentity()`). Remaining open: OpenAPI versioning strategy, local dev setup.
+Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Auth flow: clients call Supabase Auth SDK directly for login/signup/OAuth — API does not proxy auth flows, only validates and forwards the resulting JWT on data requests (ADR-002, ADR-007). Remaining open: OpenAPI versioning strategy, local dev setup.
 
 ---
 
@@ -516,13 +516,19 @@ Architecture: Hybrid — structured GATT services for real-time control (timer, 
 
 ### Notification Strategy
 
-> **Status:** Needs /tech-design
-> **Product brief ref:** Sections 6 (timer end notification), 9 (encouragement tap), 10 (weekly insight card "pushed proactively")
-> **What I need to learn:** Whether push notifications are needed for v1 or if in-app is sufficient. How APNs (iOS) and web push work. When to notify and when not to (the app is about focus — ironic to be a source of distraction). Notification permissions UX.
-> **Key questions:**
-> - What notifications are essential for v1? Timer end, encouragement taps, weekly insights — or just timer end?
-> - APNs + web push vs local notifications only — what's the simplest path for v1?
-> - How do we avoid becoming another notification source? What's the philosophy on interruption?
+> **Date:** 2026-03-10
+> **Status:** Accepted
+> **ADR:** [research/decisions/019-notification-strategy.md](./research/decisions/019-notification-strategy.md)
+> **Design doc:** [research/designs/notification-strategy.md](./research/designs/notification-strategy.md)
+>
+> | Notification | Mechanism | Platform | Frequency |
+> |-------------|-----------|----------|-----------|
+> | Timer end | Local scheduled | Mobile: `expo-notifications`. Web: Notification API. BLE: vibration + LED. | Per session |
+> | Encouragement tap | Push (Expo Push Service) + in-app fallback | Mobile: push (backgrounded) / in-app (foregrounded). Web: in-app on next visit. | Max 3/day/friend (ADR-018) |
+> | Weekly summary | Local scheduled | Mobile: `expo-notifications`. Web: banner on visit. | 1/week |
+> | Goal nudge | Local scheduled (self-cancelling) | Mobile: `expo-notifications`. Web: N/A. | Max 1/day |
+>
+> Philosophy: "3+1 rule" — only four notification types, ever. No marketing, no re-engagement, no streak-at-risk. Push is mobile-only via Expo Push Service (free, wraps APNs + FCM). Web push excluded (~6% opt-in). Push tokens stored in `devices` table. Permission requested at first timer creation. Silent delivery during active focus sessions. $0/month.
 
 ---
 

@@ -21,7 +21,7 @@ Social features are limited to mobile + web for v1. iOS widget, Apple Watch, VS 
 - Handle edge cases: session expiry, tap rate limiting, invite link resolution
 
 **Non-Goals:**
-- Push notifications for social events (deferred to Notification Strategy ADR)
+- Push notifications for social events (decided in [ADR-019](../decisions/019-notification-strategy.md): Expo Push on mobile, in-app fallback on web)
 - Background BLE sync of social data
 - Social features on iOS widget, watchOS, macOS, VS Code, or MCP
 - Real-time presence via WebSockets or Supabase Realtime
@@ -356,7 +356,7 @@ Rejected. The `sessions` table already tracks active sessions (`ended_at IS NULL
 
 ## Open Questions
 
-1. **Push notifications for encouragement taps** — deferred to Notification Strategy ADR. For v1, taps are visible only in-app on next open.
+1. **Push notifications for encouragement taps** — decided in [ADR-019](../decisions/019-notification-strategy.md). Encouragement taps use Expo Push Service on mobile (real-time delivery). Web shows in-app toast on next visit. Silent delivery during active focus sessions.
 2. **Tap association with sessions** — current design associates taps with sender + recipient + day. If we later want taps on specific sessions, add an optional `session_id` FK to `encouragement_taps`.
 3. **Library Mode pauses** — v1 ignores pauses (shows approximate time remaining). If users want precise countdowns, add `total_paused_seconds` column to sessions and adjust the client-side calculation.
 4. **Friend search** — current design uses exact username match for friend requests. If fuzzy search is needed, add a `profiles.username` trigram index and a search endpoint.

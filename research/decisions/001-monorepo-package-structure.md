@@ -77,7 +77,7 @@ Chosen option: **"Layered Hybrid (7 packages)"**, because it splits at natural a
 
 ## Related Decisions
 
-- Database: Supabase (Postgres + RLS + Realtime) — accepted, see `research/04-stack-recommendations.md`
+- Database: Supabase (Postgres + RLS) — accepted, see `research/04-stack-recommendations.md`
 - Monorepo tooling: Nx + pnpm — accepted, see `research/04-stack-recommendations.md`
 - Testing frameworks — accepted, see `research/08-testing-frameworks.md`
 - [ADR-003: Client State Management](./003-client-state-management.md) — adds `packages/state/` as the 7th shared package

@@ -60,7 +60,7 @@ pomofocus/
 ├── packages/
 │   ├── types/                # Auto-generated TS types from Postgres schema
 │   ├── core/                 # Pure domain logic (timer, goals, sessions, sync protocol) — 100% tested
-│   ├── analytics/            # Component metrics, trends, and insights (no composite Focus Score — ADR-014)
+│   ├── analytics/            # Component metrics, trends, and insights — pure functions, no IO (no composite Focus Score — ADR-014)
 │   ├── data-access/          # All server interaction via generated OpenAPI client (queries, auth, sync)
 │   ├── state/                # Zustand stores + TanStack Query hooks
 │   ├── ui/                   # Shared React/RN components
@@ -92,7 +92,7 @@ pomofocus/
 |-------|--------|---------|
 | Language | TypeScript | 5.x — no JS files |
 | Monorepo | Nx + pnpm | Nx 19+, pnpm 9+ |
-| Database | Supabase (Postgres + RLS + Realtime) | Latest |
+| Database | Supabase (Postgres + RLS) | Latest |
 | API | Hono on Cloudflare Workers (REST + OpenAPI 3.1) | Latest |
 | Web hosting | Vercel | Latest |
 | Auth | Supabase Auth | Latest |

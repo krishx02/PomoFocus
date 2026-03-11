@@ -98,9 +98,10 @@ Chosen option: **"Zustand + TanStack Query"**, because it provides the best comb
 - [ADR-001: Monorepo Package Structure](./001-monorepo-package-structure.md) — this decision adds `packages/state/` as the 7th shared package
 - [ADR-002: Auth Architecture](./002-auth-architecture.md) — auth state flows through `data-access/`, consumed by `state/` via TanStack Query hooks
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — TanStack Query polls session/goal data; social visibility via scoped functions in `data-access/`
-- Database: Supabase (Postgres + RLS + Realtime) — accepted, see `research/04-stack-recommendations.md`
+- Database: Supabase (Postgres + RLS) — accepted, see `research/04-stack-recommendations.md`
 - [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — custom outbox sync with pure protocol in `core/sync/`, drivers in `data-access/sync/`. Polling-first strategy (this ADR) feeds the pull side; outbox handles the push side.
 - [ADR-007: API Architecture](./007-api-architecture.md) — TanStack Query polls the Hono API on CF Workers, not Supabase directly. Same polling interval, same caching behavior — different transport target.
 - [ADR-004: Timer State Machine](./004-timer-state-machine.md) — hand-rolled TypeScript reducer in `core/`. Zustand stores wrap `transition()` and own the timer interval.
 - [ADR-017: iOS Widget Architecture](./017-ios-widget-architecture.md) — widget data flows through App Group UserDefaults, independent of React state layer
 - [ADR-018: Social Features Architecture](./018-social-features-architecture.md) — social data uses TanStack Query with screen-scoped polling (Library Mode: adaptive 30s→60s), not the global 30s polling used for user's own data
+- [ADR-019: Notification Strategy](./019-notification-strategy.md) — notifications are event-driven, orthogonal to polling architecture; encouragement taps use Expo Push Service for mobile delivery

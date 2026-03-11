@@ -29,7 +29,7 @@ See [ADR-001](./research/decisions/001-monorepo-package-structure.md) for full r
 
 ## Auth
 
-IMPORTANT: Use Supabase Auth for all authentication. Never import auth logic into `packages/core/` — auth belongs in `packages/data-access/`. Core functions receive `userId: string` as a parameter, never a session or token.
+IMPORTANT: Use Supabase Auth for all authentication. Clients call Supabase Auth SDK directly for login, signup, and OAuth — the Hono API does not proxy auth flows. After authentication, clients send the Supabase JWT to the API for all data operations. Never import auth logic into `packages/core/` — auth belongs in `packages/data-access/`. Core functions receive `userId: string` as a parameter, never a session or token.
 
 See [ADR-002](./research/decisions/002-auth-architecture.md) for full rationale.
 
@@ -117,6 +117,14 @@ See [ADR-012](./research/decisions/012-security-data-privacy.md) for full ration
 IMPORTANT: No composite Focus Score. Use individual component metrics (completion rate, focus quality distribution, consistency, streaks) with trend arrows instead. Analytics formulas are pure functions in `packages/analytics/`, executed server-side by the Hono API on CF Workers. Clients call API endpoints and render pre-computed results — never compute analytics client-side. Three tiers: Tier 1 (glanceable — goal progress, weekly dots, streak) for all platforms including BLE device; Tier 2 (weekly insights) and Tier 3 (monthly trends) for app only. Apple Watch shows cached analytics from last API sync + local simple counters. No pre-aggregation at v1 — compute on demand.
 
 See [ADR-014](./research/decisions/014-analytics-insights-architecture.md) for full rationale.
+
+---
+
+## Notifications
+
+IMPORTANT: PomoFocus sends exactly four notification types — no more. Timer end (local scheduled), encouragement tap (Expo Push on mobile, in-app fallback on web), weekly summary (local scheduled), and goal nudge (local scheduled, self-cancelling if session started today). Never add marketing, re-engagement ("we miss you"), or streak-at-risk notifications — a focus app that spam-notifies contradicts its own value. Push notifications use Expo Push Service (free, wraps APNs + FCM) for mobile only — no web push. Push tokens are stored in the `devices` table (`expo_push_token` column). During an active focus session, encouragement taps arrive silently (no sound, no vibration) and surface after the session ends. Request notification permission at first timer creation, not at app launch. All push sending goes through the Hono API (`POST /v1/taps` calls Expo Push API).
+
+See [ADR-019](./research/decisions/019-notification-strategy.md) for full rationale.
 
 ---
 

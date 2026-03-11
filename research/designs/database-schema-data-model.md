@@ -47,12 +47,12 @@ PomoFocus stores user goals, focus sessions, reflection data, social connections
 | Devices | `device_sync_log` | Incremental sync tracking per device | S5 |
 
 **Not modeled as tables (and why):**
-- **Session intentions** — text column on `sessions`, not a separate table (1:1, no independent lifecycle)
+- **Session intentions** — text column on `sessions`, not a separate table (1:1, no independent lifecycle). Collected pre-session after goal selection. Optional (nullable). Not editable after session starts (commitment device per implementation intentions research). Max 200 characters, enforced at API validation layer (Zod schema) — DB column is `text` with no DB-level length constraint. `intention_text` is a per-session refinement of `process_goal_id` (e.g., "Finish problem set 4" for goal "Study calculus"). Independent columns, not a sub-goal — no lifecycle of its own. BLE protocol supports intentions (ADR-013: `string intention = 10; // max 200 chars`).
 - **Quiet Feed** — derived query: `SELECT DISTINCT DATE(started_at), user_id FROM sessions WHERE completed = true`
 - **Library Mode** — derived query: `sessions WHERE ended_at IS NULL` for active sessions
 - **Goal templates** — hardcoded in application code (`core/`), not database (S12: "6 hardcoded templates")
 - **Invite links** — stateless URLs: `pomofocus.app/invite/USERNAME`
-- **Streaks** — computed from consecutive days with completed sessions per process goal
+- **Streaks** — computed from consecutive calendar days (in user timezone) with ≥1 completed session, account-wide for v1. 1-day grace period (see analytics design doc Streak Specification)
 - **Daily summaries** — derivable from sessions; add materialized view later if needed
 
 ### ER Diagram (relationships only)
@@ -742,10 +742,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- fallback for uuid generation
 CREATE TYPE goal_status AS ENUM ('active', 'completed', 'retired');
 CREATE TYPE recurrence_type AS ENUM ('daily', 'weekly');
 CREATE TYPE abandonment_reason AS ENUM ('had_to_stop', 'gave_up');
+  -- NULL abandonment_reason treated as 'gave_up' in analytics (prevents gaming by dismissing prompt)
 CREATE TYPE focus_quality AS ENUM ('locked_in', 'decent', 'struggled');
 CREATE TYPE distraction_type AS ENUM ('phone', 'people', 'thoughts_wandering', 'got_stuck', 'other');
+  -- Closed set for v1. No user-defined categories. Adding a type requires DB migration
+  -- (ALTER TYPE ... ADD VALUE). If "other" > 40% of struggled sessions, revisit taxonomy.
 CREATE TYPE break_type AS ENUM ('short', 'long');
 CREATE TYPE break_usefulness AS ENUM ('yes', 'somewhat', 'no');
+  -- Collected by app layer when transitioning out of break states, stored on breaks table.
+  -- NULL if break was skipped (SKIP_BREAK event) or user dismissed the prompt.
 CREATE TYPE request_status AS ENUM ('pending', 'accepted', 'declined');
 CREATE TYPE sync_direction AS ENUM ('up', 'down');
 
@@ -1149,3 +1154,4 @@ CREATE POLICY "taps_insert" ON encouragement_taps
 2. **Break-to-next-session correlation** — The "break usefulness patterns" analytics query uses a `LATERAL` join to find the next session chronologically. If a user takes a break and doesn't start another session for hours, the correlation may be noisy. May need a time threshold (e.g., next session within 30 minutes). Application-level filtering.
 3. **Daily summaries materialized view** — If analytics queries become slow at scale, add a `daily_user_summaries` materialized view computed nightly. Not needed for v1 (10-20 users).
 4. **Username format** — Auto-generated as `user_` + first 8 chars of UUID on signup. Users should be able to change this. Format constraints (allowed characters, min/max length) are application-level validation.
+5. **Push token on devices table** — ADR-019 (Notification Strategy) requires an `expo_push_token TEXT` column on the `devices` table. Add via migration when implementing push notifications. One token per device. Nullable (BLE devices don't have push tokens).

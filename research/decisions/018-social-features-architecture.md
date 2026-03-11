@@ -112,3 +112,4 @@ Chosen option: **"Resource-oriented REST endpoints with screen-scoped polling"**
 - [ADR-007: API Architecture](./007-api-architecture.md) — all social endpoints are Hono routes on CF Workers with Zod validation and OpenAPI spec generation
 - [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — friendship JOINs enforce social privacy at API level; DB functions serve as test verification layer
 - [ADR-014: Analytics & Insights Architecture](./014-analytics-insights-architecture.md) — Tier 1 stats (glanceable) are personal, not social. Social features are a separate surface.
+- [ADR-019: Notification Strategy](./019-notification-strategy.md) — encouragement taps (max 3/day/pair) trigger push notifications via Expo Push Service; `POST /v1/taps` extended with push sending

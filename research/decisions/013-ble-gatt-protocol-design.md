@@ -111,3 +111,4 @@ Chosen option: **"Hybrid — Structured Services + Chunked Bulk Transfer"**, bec
 - [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — BLE LE Secure Connections with Passkey Entry + Bonding; link-layer AES-128-CCM encryption
 - [ADR-015: Device Firmware Toolchain](./015-device-firmware-toolchain.md) — PlatformIO build system, Nanopb for Protobuf encoding on the device side
 - [ADR-016: BLE Client Libraries & Integration](./016-ble-client-libraries-integration.md) — client-side BLE libraries that implement this GATT protocol; app-open sync trigger for v1
+- [ADR-019: Notification Strategy](./019-notification-strategy.md) — BLE device timer end uses firmware-controlled vibration; encouragement tap vibration via BLE is post-v1
