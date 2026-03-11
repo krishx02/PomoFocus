@@ -28,7 +28,7 @@ These tables support BLE device sync (Phase 7). The `devices` table registers ph
 ## Acceptance Criteria
 
 - [ ] `devices` table: `id` (uuid PK), `user_id` (uuid FK to profiles), `device_name` (text NOT NULL), `hardware_id` (text UNIQUE NOT NULL), `last_synced_at` (timestamptz nullable), `created_at`, `updated_at`
-- [ ] `device_sync_log` table: `id` (uuid PK), `device_id` (uuid FK to devices), `direction` (sync_direction NOT NULL), `entity_type` (text NOT NULL), `entity_id` (uuid NOT NULL), `synced_at` (timestamptz DEFAULT now())
+- [ ] `device_sync_log` table: `id` (uuid PK), `device_id` (uuid FK to devices), `direction` (sync_direction NOT NULL), `entity_type` (text NOT NULL), `entity_id` (uuid NOT NULL), `synced_at` (timestamptz NOT NULL DEFAULT now())
 - [ ] Indexes created per design doc: UNIQUE on `devices(hardware_id)`, `devices(user_id)`, composite `device_sync_log(device_id, entity_type, entity_id)`
 - [ ] `supabase db reset` applies without error
 

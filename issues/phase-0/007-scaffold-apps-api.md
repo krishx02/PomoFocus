@@ -24,14 +24,14 @@ The API is a Hono REST application deployed to Cloudflare Workers. At this stage
 - `apps/api/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `apps/api/src/index.ts` — Minimal Hono app with `export default app`
 - `apps/api/wrangler.toml` — CF Workers configuration (name, compatibility_date)
-- `apps/api/project.json` — Nx project with `type:app` and `platform:api` tags
+- `apps/api/project.json` — Nx project with tags `["type:app", "scope:shared"]`
 
 ## Acceptance Criteria
 
 - [ ] `apps/api/package.json` exists with `"name": "@pomofocus/api"`
 - [ ] `apps/api/src/index.ts` exports a Hono app
 - [ ] `apps/api/wrangler.toml` exists with valid configuration
-- [ ] Nx project has tags `type:app`, `platform:api`
+- [ ] Nx project has tags `["type:app", "scope:shared"]`
 - [ ] `pnpm nx type-check @pomofocus/api` passes
 
 ## Out of Scope

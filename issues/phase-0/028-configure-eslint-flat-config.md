@@ -34,7 +34,7 @@ Agents produce better code with lint feedback. The ESLint configuration encodes 
 - [ ] Rules enforced: `no-explicit-any` (error), `no-unsafe-*` (error), `consistent-type-imports` (prefer type-imports), `consistent-type-definitions` (type), `explicit-function-return-type` (error), `switch-exhaustiveness-check` (error), `no-floating-promises` (error)
 - [ ] `import/no-default-export` enabled with framework file exceptions (`page.tsx`, `layout.tsx`, `*.config.*`)
 - [ ] `no-restricted-syntax` blocks `TSEnumDeclaration` (use `as const` instead)
-- [ ] Generated files are ignored (`**/generated/**`, `**/database.ts`, `**/dist/**`)
+- [ ] Generated and build output files are ignored (`**/generated/**`, `**/database.ts`, `**/dist/**`, `**/.next/**`, `**/coverage/**`, `**/node_modules/**`)
 - [ ] `pnpm eslint --version` runs without error
 
 ## Out of Scope

@@ -24,14 +24,14 @@ The mobile app is the primary Expo application targeting iOS and Android. It als
 - `apps/mobile/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `apps/mobile/app.json` — Expo app configuration with iOS/Android schemes
 - `apps/mobile/app/index.tsx` — Minimal entry point (placeholder screen)
-- `apps/mobile/project.json` — Nx project with `type:app`, `platform:mobile` tags
+- `apps/mobile/project.json` — Nx project with tags `["type:app", "scope:mobile"]`
 
 ## Acceptance Criteria
 
 - [ ] `apps/mobile/package.json` exists with `"name": "@pomofocus/mobile"`
 - [ ] `apps/mobile/app.json` exists with valid Expo configuration
 - [ ] `apps/mobile/app/index.tsx` exists and exports a React component
-- [ ] Nx project has tags `type:app`, `platform:mobile`
+- [ ] Nx project has tags `["type:app", "scope:mobile"]`
 - [ ] `pnpm nx type-check @pomofocus/mobile` passes
 
 ## Out of Scope

@@ -32,7 +32,7 @@ These rules enforce the architectural boundaries defined in ADR-001. If an agent
   - Banned imports: `react`, `react-dom`, `react-native`, `@supabase/*`, `@tanstack/*`, `zustand`, `node:*`, `fs`, `path`, `http`, `https`, `expo-*`
 - [ ] `packages/analytics/**/*.ts` files: Same IO/React bans as core
 - [ ] `packages/data-access/**/*.ts` files: Banned imports: `react`, `react-dom`, `react-native`
-- [ ] `packages/ui/**/*.ts` files: Banned imports: `zustand`, `zustand/*`, `@tanstack/*`
+- [ ] `packages/ui/**/*.ts` files: Banned imports: `@supabase/*`, `zustand`, `zustand/*`, `@tanstack/*`
 - [ ] Adding `import { fetch } from 'node-fetch'` in `packages/core/` triggers a lint error
 - [ ] `pnpm nx lint @pomofocus/core` passes (no existing violations in stubs)
 

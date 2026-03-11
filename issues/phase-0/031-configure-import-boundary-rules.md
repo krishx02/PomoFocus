@@ -36,6 +36,7 @@ Use exact tag names from `coding-standards-eslint-nx.md` Section 4-5 (NOT `type:
 - [ ] `type:state` can import from `type:domain`, `type:infra`, and `type:types`
 - [ ] `type:ui` can import from `type:types` only
 - [ ] `type:app` can import from all tags
+- [ ] `bannedExternalImports` configured per tag from `coding-standards-eslint-nx.md` Section 5 (e.g., `type:domain` bans react, @supabase/*, zustand, hono, expo-*, @sentry/*; `type:ui` bans @supabase/*, zustand, @tanstack/*, @sentry/*; etc.)
 - [ ] Violating imports produce lint errors
 
 ## Out of Scope

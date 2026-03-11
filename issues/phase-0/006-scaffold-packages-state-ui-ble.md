@@ -27,21 +27,21 @@ These three packages are grouped because they are all leaf-level consumers with 
 - `packages/state/package.json` — Create with `name: "@pomofocus/state"`, deps on types, core, data-access
 - `packages/state/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/state/src/index.ts` — Barrel export (placeholder)
-- `packages/state/project.json` — Nx project with `type:state` tag
+- `packages/state/project.json` — Nx project with tags `["type:state", "scope:shared"]`
 - `packages/ui/package.json` — Create with `name: "@pomofocus/ui"`, dep on types only
 - `packages/ui/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/ui/src/index.ts` — Barrel export (placeholder)
-- `packages/ui/project.json` — Nx project with `type:ui` tag
+- `packages/ui/project.json` — Nx project with tags `["type:ui", "scope:shared"]`
 - `packages/ble-protocol/package.json` — Create with `name: "@pomofocus/ble-protocol"`
 - `packages/ble-protocol/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/ble-protocol/src/index.ts` — Barrel export (placeholder)
-- `packages/ble-protocol/project.json` — Nx project with `type:ble` tag
+- `packages/ble-protocol/project.json` — Nx project with tags `["type:ble", "scope:shared"]`
 
 ## Acceptance Criteria
 
 - [ ] All three packages have `package.json`, `tsconfig.json`, `src/index.ts`
 - [ ] `@pomofocus/state`, `@pomofocus/ui`, `@pomofocus/ble-protocol` are resolvable via TypeScript path aliases
-- [ ] Each Nx project has the correct tag (`type:state`, `type:ui`, `type:ble`)
+- [ ] Each Nx project has both type and scope tags: `["type:state", "scope:shared"]`, `["type:ui", "scope:shared"]`, `["type:ble", "scope:shared"]`
 - [ ] `pnpm nx type-check @pomofocus/state` passes
 - [ ] `pnpm nx type-check @pomofocus/ui` passes
 - [ ] `pnpm nx type-check @pomofocus/ble-protocol` passes

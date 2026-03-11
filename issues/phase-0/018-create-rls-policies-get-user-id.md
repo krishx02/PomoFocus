@@ -29,7 +29,8 @@ RLS is defense-in-depth (ADR-012). Every table must have RLS enabled. The `get_u
 
 - [ ] `get_user_id()` function created with exact signature: `CREATE OR REPLACE FUNCTION get_user_id() RETURNS uuid AS $$ SELECT id FROM profiles WHERE auth_user_id = auth.uid() $$ LANGUAGE sql SECURITY DEFINER STABLE;`
 - [ ] RLS enabled (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`) on all 11 application tables (auth.users is Supabase-managed): profiles, user_preferences, long_term_goals, process_goals, sessions, breaks, devices, device_sync_log, friend_requests, friendships, encouragement_taps
-- [ ] User-owned tables (profiles, user_preferences, long_term_goals, process_goals, sessions, breaks, devices, device_sync_log) have policies using `user_id = get_user_id()`
+- [ ] `profiles` table uses `auth_user_id = auth.uid()` directly (not `get_user_id()`) for SELECT, INSERT, and DELETE policies
+- [ ] All other user-owned tables (user_preferences, long_term_goals, process_goals, sessions, breaks, devices, device_sync_log) have policies using `user_id = get_user_id()`
 - [ ] Social tables (friend_requests, friendships, encouragement_taps) have bidirectional policies allowing access where user is sender OR recipient
 - [ ] `supabase db reset` applies without error
 

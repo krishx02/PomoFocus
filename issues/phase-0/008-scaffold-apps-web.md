@@ -26,14 +26,14 @@ The web app is an Expo application configured for web output. It shares code wit
 - `apps/web/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `apps/web/app.json` — Expo app configuration
 - `apps/web/app/index.tsx` — Minimal entry point (placeholder screen)
-- `apps/web/project.json` — Nx project with `type:app`, `platform:web` tags
+- `apps/web/project.json` — Nx project with tags `["type:app", "scope:web"]`
 
 ## Acceptance Criteria
 
 - [ ] `apps/web/package.json` exists with `"name": "@pomofocus/web"`
 - [ ] `apps/web/app.json` exists with valid Expo configuration
 - [ ] `apps/web/app/index.tsx` exists and exports a React component
-- [ ] Nx project has tags `type:app`, `platform:web`
+- [ ] Nx project has tags `["type:app", "scope:web"]`
 - [ ] `pnpm nx type-check @pomofocus/web` passes
 
 ## Out of Scope
