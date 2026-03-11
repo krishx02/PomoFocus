@@ -371,33 +371,7 @@ These overrides enforce the package-level boundary rules (PKG-C01 through PKG-U0
 },
 ```
 
-### 3f. All packages — No Sentry
-
-```typescript
-{
-  files: [
-    'packages/core/**/*.ts',
-    'packages/analytics/**/*.ts',
-    'packages/types/**/*.ts',
-    'packages/data-access/**/*.ts',
-    'packages/state/**/*.{ts,tsx}',
-    'packages/ui/**/*.{ts,tsx}',
-    'packages/ble-protocol/**/*.ts',
-  ],
-  rules: {
-    // APP-003: Sentry only in app entry points
-    'no-restricted-imports': [
-      'error',
-      {
-        patterns: [
-          { group: ['@sentry/*'],
-            message: 'Sentry init belongs in app entry points, not shared packages. See APP-003.' },
-        ],
-      },
-    ],
-  },
-},
-```
+> **Note:** The Sentry ban for all shared packages (APP-003) is enforced via Nx `bannedExternalImports` in Section 5 — not via a separate ESLint flat config override. A flat config override targeting all `packages/**` would **replace** (not merge with) the per-package `no-restricted-imports` rules from Sections 3a–3e, silently destroying architectural guardrails.
 
 ---
 
@@ -415,7 +389,7 @@ Every project in `nx.json` or `project.json` must have both a `type:` and `scope
     "@pomofocus/data-access": { "tags": ["type:infra", "scope:shared"] },
     "@pomofocus/state": { "tags": ["type:state", "scope:shared"] },
     "@pomofocus/ui": { "tags": ["type:ui", "scope:shared"] },
-    "@pomofocus/ble-protocol": { "tags": ["type:infra", "scope:shared"] },
+    "@pomofocus/ble-protocol": { "tags": ["type:ble", "scope:shared"] },
     "@pomofocus/web": { "tags": ["type:app", "scope:web"] },
     "@pomofocus/mobile": { "tags": ["type:app", "scope:mobile"] },
     "@pomofocus/api": { "tags": ["type:app", "scope:shared"] },

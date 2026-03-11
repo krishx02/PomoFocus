@@ -1373,12 +1373,12 @@ struct GoalWidgetView: View {
 
 #### NAT-S04: WidgetKeys constants match TS and Swift
 
-**Scope:** `packages/state/src/widget-keys.ts`, `apps/mobile/targets/ios-widget/WidgetKeys.swift`
+**Scope:** `packages/types/src/widget-keys.ts`, `apps/mobile/targets/ios-widget/WidgetKeys.swift`
 **Rule:** The `WidgetKeys` constants (UserDefaults key names) must be defined identically in both TypeScript and Swift files. Any key added, renamed, or removed in one file must be mirrored in the other.
 **Why:** TypeScript writes to UserDefaults and Swift reads from it. A key mismatch means the widget silently shows stale or zero data. ([ADR-017](./decisions/017-ios-widget-architecture.md))
 
 ```typescript
-// packages/state/src/widget-keys.ts
+// packages/types/src/widget-keys.ts
 export const WidgetKeys = {
   goalProgress: 'pomofocus.widget.goalProgress',
   weeklyDots: 'pomofocus.widget.weeklyDots',
@@ -1743,7 +1743,7 @@ CREATE TABLE sessions (
 );
 
 -- Good
-CREATE TYPE timer_status AS ENUM ('idle', 'focusing', 'break', 'paused', 'completed', 'abandoned');
+CREATE TYPE timer_status AS ENUM ('idle', 'focusing', 'paused', 'short_break', 'long_break', 'break_paused', 'reflection', 'completed', 'abandoned');
 CREATE TABLE sessions (
   status timer_status NOT NULL
 );

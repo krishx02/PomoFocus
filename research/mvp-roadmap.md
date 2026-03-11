@@ -865,7 +865,7 @@ Items explicitly deferred from v1, with ADR references. These become the backlog
 | 9 | Polish + Ship | 2 weeks | 22-30 | After all above | **Yes** — gate to launch |
 | **Total** | | | **~300-404** | | |
 
-> **Note on timeline:** The critical path for the TypeScript pipeline is Phases 0→1→2→3→4→9 (~16 weeks serial). But Phase 7A (firmware) runs **entirely in parallel from day 1** — by the time the mobile app exists (end of Phase 4), the firmware should have a working standalone device with BLE GATT server ready for integration.
+> **Note on timeline:** The critical path for the TypeScript pipeline is Phases 0→1→2→3→4→9 (~15 weeks serial). But Phase 7A (firmware) runs **entirely in parallel from day 1** — by the time the mobile app exists (end of Phase 4), the firmware should have a working standalone device with BLE GATT server ready for integration.
 >
 > **Effective timeline with parallelism:**
 > - Weeks 1-2: Phase 0 (TS foundation) + Phase 7A.1-7A.4 (firmware scaffold, display, timer, encoder)
