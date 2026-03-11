@@ -318,7 +318,7 @@ These overrides enforce the package-level boundary rules (PKG-C01 through PKG-U0
 {
   files: ['packages/ui/**/*.{ts,tsx}'],
   rules: {
-    // PKG-U01, PKG-U02: No business logic or state management
+    // PKG-U01, PKG-U02, PKG-U03: No business logic, no state management, FlashList over FlatList
     'no-restricted-imports': [
       'error',
       {
@@ -336,13 +336,6 @@ These overrides enforce the package-level boundary rules (PKG-C01 through PKG-U0
           { group: ['@pomofocus/state', '@pomofocus/state/*'],
             message: 'UI depends on types only, not state. See PKG-U01.' },
         ],
-      },
-    ],
-
-    // PKG-U03: FlashList over FlatList
-    'no-restricted-imports': [
-      'error',
-      {
         paths: [
           {
             name: 'react-native',
@@ -438,7 +431,8 @@ Every project in `nx.json` or `project.json` must have both a `type:` and `scope
 |-----|---------|----------|
 | `type:types` | Auto-generated types, leaf node | `types` |
 | `type:domain` | Pure domain logic, no IO | `core`, `analytics` |
-| `type:infra` | IO/infrastructure adapters | `data-access`, `ble-protocol` |
+| `type:infra` | IO/infrastructure adapters | `data-access` |
+| `type:ble` | BLE protocol (types only) | `ble-protocol` |
 | `type:state` | React state management | `state` |
 | `type:ui` | React UI components | `ui` |
 | `type:app` | Application shells | `web`, `mobile`, `api`, `vscode-extension`, `mcp-server` |
@@ -472,8 +466,12 @@ This is the core enforcement for the import direction rules (PKG-C07, PKG-A03, P
           // domain (core, analytics) depends on domain + types
           { sourceTag: 'type:domain', onlyDependOnLibsWithTags: ['type:domain', 'type:types'] },
 
-          // infra (data-access, ble-protocol) depends on domain + types
+          // infra (data-access) depends on domain + types
           { sourceTag: 'type:infra', onlyDependOnLibsWithTags: ['type:domain', 'type:types'] },
+
+          // ble-protocol depends on types only (PKG-B01) — separate from infra because
+          // data-access legitimately imports core, but ble-protocol must not
+          { sourceTag: 'type:ble', onlyDependOnLibsWithTags: ['type:types'] },
 
           // state depends on domain + infra + types
           { sourceTag: 'type:state', onlyDependOnLibsWithTags: ['type:domain', 'type:infra', 'type:types'] },
@@ -482,7 +480,7 @@ This is the core enforcement for the import direction rules (PKG-C07, PKG-A03, P
           { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:types'] },
 
           // apps depend on everything
-          { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:state', 'type:domain', 'type:infra', 'type:ui', 'type:types'] },
+          { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:state', 'type:domain', 'type:infra', 'type:ble', 'type:ui', 'type:types'] },
 
           // === Scope tag constraints ===
 

@@ -180,23 +180,25 @@ await Promise.all(sessions.map((s) => saveToOutbox(s)));
 **Why:** Missing a variant in a switch is the #1 source of bugs when new states are added to the timer, sync, or any FSM. The compiler should catch this at build time. ([ADR-004](./decisions/004-timer-state-machine.md))
 
 ```typescript
-// Bad
+// Bad — missing 7 of 9 canonical states (ADR-004)
 function getLabel(state: TimerState): string {
   switch (state.status) {
     case 'idle': return 'Start';
     case 'focusing': return 'Focus';
-    // 'break', 'reflection', 'paused', 'completed', 'abandoned' missing!
+    // short_break, long_break, break_paused, reflection, paused, completed, abandoned missing!
   }
 }
 
-// Good
+// Good — all 9 states handled exhaustively
 function getLabel(state: TimerState): string {
   switch (state.status) {
     case 'idle': return 'Start';
     case 'focusing': return 'Focus';
-    case 'break': return 'Break';
-    case 'reflection': return 'Reflect';
     case 'paused': return 'Paused';
+    case 'short_break': return 'Short Break';
+    case 'long_break': return 'Long Break';
+    case 'break_paused': return 'Break Paused';
+    case 'reflection': return 'Reflect';
     case 'completed': return 'Done';
     case 'abandoned': return 'Stopped';
     default: {
@@ -362,12 +364,18 @@ Rules specific to each package in the monorepo. These enforce the import directi
 
 **Import direction (one-way, never reversed):**
 ```
-types ← core ← analytics
-                data-access ← state
-                                ↑
-ui ────────────────────────────/
-ble-protocol ─────────────────/
-Apps consume all packages.
+types          (leaf — no dependencies)
+  ↑
+  ├── core          (domain: timer, goals, sync FSM)
+  ├── analytics     (domain: pure metric functions)
+  ├── ui            (presentation: types only)
+  ├── ble-protocol  (BLE infra: types only)
+  │
+  ├── data-access   (IO: depends on core, analytics, types)
+  │     ↑
+  └── state         (React: depends on core, data-access, analytics, types)
+        ↑
+      apps          (consume all packages)
 ```
 
 ---
@@ -632,9 +640,9 @@ import type { Session } from '@pomofocus/types';
 **Why:** Core contains the timer FSM, sync protocol, and goal logic — bugs here propagate to all 9 platforms. The pure function pattern makes 100% coverage achievable and fast. ([ADR-004](./decisions/004-timer-state-machine.md))
 
 ```typescript
-// packages/core/src/timer/__tests__/machine.test.ts
+// packages/core/src/timer/machine.test.ts (co-located per TST-006)
 import { describe, it, expect } from 'vitest';
-import { transition, createInitialState } from '../machine';
+import { transition, createInitialState } from './machine';
 
 describe('timer transition', () => {
   it('idle + START → focusing', () => {
@@ -1119,7 +1127,7 @@ import { FlashList } from '@shopify/flash-list';
 **Rule:** The BLE protocol package may only import from `@pomofocus/types`. The `BleTransport` interface, chunked sync state machine, and Protobuf codecs are self-contained.
 **Why:** BLE protocol is consumed by mobile (react-native-ble-plx adapter), web (Web Bluetooth adapter), and macOS (CoreBluetooth adapter). It cannot depend on any platform-specific package. ([ADR-001](./decisions/001-monorepo-package-structure.md), [ADR-016](./decisions/016-ble-client-libraries-integration.md))
 
-**Enforced by:** Nx depConstraints (`type:infra` → `type:types` only)
+**Enforced by:** Nx depConstraints (`type:ble` → `type:types` only)
 
 ---
 

@@ -234,7 +234,7 @@ This phase is pure structural investment (Beck's S-changes). It produces no user
 ### 0.4 Test Framework Configuration
 - **What:** Configure Vitest as the test runner for all TypeScript packages. Set up shared Vitest config at root, per-package overrides. Create example test in `packages/core` to validate the pipeline. Configure test coverage reporting.
 - **Why here:** Tests are THE feedback loop for agents (Willison, Cherny). Without Vitest configured, no Red/Green TDD is possible. Every subsequent issue depends on `pnpm test` working.
-- **Packages/files:** Root `vitest.config.ts`, each package's `vitest.config.ts`, `packages/core/src/__tests__/example.test.ts`
+- **Packages/files:** Root `vitest.config.ts`, each package's `vitest.config.ts`, `packages/core/src/example.test.ts`
 - **ADR(s):** [ADR-009](./decisions/009-ci-cd-pipeline-design.md), [research/08-testing-frameworks.md](./08-testing-frameworks.md)
 - **Acceptance signal:** `pnpm nx test @pomofocus/core` runs and passes. `pnpm nx affected --target=test` detects and runs affected tests. Coverage report generates.
 - **Est. issues:** 4-5 (root Vitest config, per-package configs for 7 packages, example test, coverage config, Nx test target configuration)
@@ -274,9 +274,9 @@ This phase is pure structural investment (Beck's S-changes). It produces no user
 This is the tracer bullet. Real architecture, just thin. Every component is production-grade but minimal.
 
 ### 1.1 Timer State Machine — Core Logic
-- **What:** Implement the pure `transition(state, event) → newState` function in `packages/core/timer/`. TypeScript discriminated unions for 8 states (`idle`, `focusing`, `paused`, `short_break`, `long_break`, `break_paused`, `reflection`, `completed`, `abandoned`). All events, guards, and transitions per the design doc. Exhaustive `switch` — no default cases. Comprehensive test suite covering every valid transition and invalid transition rejection.
+- **What:** Implement the pure `transition(state, event) → newState` function in `packages/core/timer/`. TypeScript discriminated unions for 9 states (`idle`, `focusing`, `paused`, `short_break`, `long_break`, `break_paused`, `reflection`, `completed`, `abandoned`). All events, guards, and transitions per the design doc. Exhaustive `switch` — no default cases. Comprehensive test suite covering every valid transition and invalid transition rejection.
 - **Why here:** The timer is the core of the entire product. Every platform, every UI, every sync operation depends on timer state. It's pure logic with zero dependencies beyond `@pomofocus/types` — the perfect first implementation.
-- **Packages/files:** `packages/core/src/timer/types.ts`, `packages/core/src/timer/transition.ts`, `packages/core/src/timer/guards.ts`, `packages/core/src/timer/__tests__/`
+- **Packages/files:** `packages/core/src/timer/types.ts`, `packages/core/src/timer/transition.ts`, `packages/core/src/timer/guards.ts` (tests co-located as `*.test.ts` per TST-006)
 - **ADR(s):** [ADR-004](./decisions/004-timer-state-machine.md), [design doc](./designs/timer-state-machine.md)
 - **Acceptance signal:** 100% of state machine transitions pass tests. Every valid transition produces correct new state. Every invalid transition is rejected. `pnpm nx test @pomofocus/core` green.
 - **Est. issues:** 8-12 (timer state types, idle→focusing transition + test, focusing→paused + test, focusing→completed + test, focusing→abandoned + test, break transitions + tests, reflection transitions + tests, configurable durations, session counting logic, break cycle logic [short/long], guard functions, integration test for full session lifecycle)
@@ -364,7 +364,7 @@ This is the tracer bullet. Real architecture, just thin. Every component is prod
 ### 2.5 Sync FSM — Core Logic
 - **What:** Implement the pure sync state machine in `packages/core/sync/`: outbox queue states (pending, uploading, uploaded, failed), conflict resolution rules (server wins on conflict, client-generated UUIDs for idempotency), retry policy (exponential backoff). No IO — pure `transition(queueState, event) → newQueueState`.
 - **Why here:** Offline-first sync is fundamental to the product (users need the app to work without connectivity). The sync FSM follows the same pattern as the timer (ADR-004) — pure logic, no side effects. Must exist before sync drivers (2.6).
-- **Packages/files:** `packages/core/src/sync/types.ts`, `packages/core/src/sync/transition.ts`, `packages/core/src/sync/queue.ts`, `packages/core/src/sync/__tests__/`
+- **Packages/files:** `packages/core/src/sync/types.ts`, `packages/core/src/sync/transition.ts`, `packages/core/src/sync/queue.ts` (tests co-located as `*.test.ts` per TST-006)
 - **ADR(s):** [ADR-006](./decisions/006-offline-first-sync-architecture.md), [design doc](./designs/offline-first-sync-architecture.md)
 - **Acceptance signal:** Sync FSM transitions pass 100% of tests. Queue correctly handles: enqueue → upload → success, enqueue → upload → fail → retry with backoff, duplicate detection via UUID. `pnpm nx test @pomofocus/core` green.
 - **Est. issues:** 6-8 (sync queue types, queue state transitions + tests, conflict resolution rules + tests, retry policy with backoff + tests, UUID idempotency logic, dequeue ordering, integration test for full sync lifecycle, queue size management)
@@ -582,7 +582,7 @@ This is the tracer bullet. Real architecture, just thin. Every component is prod
 - **Est. issues:** 5-7 (GxEPD2 initialization, timer screen layout, idle screen layout, partial refresh implementation, full refresh cycle, ghosting prevention, display sleep/wake)
 
 ### 7A.3 Timer FSM — C++ Port
-- **What:** Port the timer state machine to C++ (`firmware/device/src/timer.h`). Same 8 states (`idle`, `focusing`, `paused`, `short_break`, `long_break`, `break_paused`, `reflection`, `completed`, `abandoned`), same transitions, same guards as defined in ADR-004's design doc. This is a direct translation from the spec — not a port of the TypeScript code (which may not exist yet).
+- **What:** Port the timer state machine to C++ (`firmware/device/src/timer.h`). Same 9 states (`idle`, `focusing`, `paused`, `short_break`, `long_break`, `break_paused`, `reflection`, `completed`, `abandoned`), same transitions, same guards as defined in ADR-004's design doc. This is a direct translation from the spec — not a port of the TypeScript code (which may not exist yet).
 - **Why here:** The timer FSM is the core firmware logic. The spec is fully defined in [ADR-004 design doc](./designs/timer-state-machine.md) with state tables, event tables, and guards. **Does NOT need the TypeScript implementation to exist** — both are parallel implementations of the same spec. Can start as soon as the firmware scaffold compiles (7A.1).
 - **Packages/files:** `firmware/device/src/timer.h`, `firmware/device/src/timer.cpp`, `firmware/device/src/timer_test.cpp`
 - **ADR(s):** [ADR-004](./decisions/004-timer-state-machine.md), [design doc](./designs/timer-state-machine.md)
