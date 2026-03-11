@@ -483,6 +483,17 @@ This is the core enforcement for the import direction rules (PKG-C07, PKG-A03, P
             '@sentry/*',
           ],
 
+          // type:ble — types-only package, no runtime deps (PKG-B01)
+          'type:ble': [
+            'react', 'react-dom', 'react-native', 'react-native-*',
+            '@supabase/*',
+            '@tanstack/*',
+            'zustand', 'zustand/*',
+            'hono', 'hono/*',
+            'expo-*',
+            '@sentry/*',
+          ],
+
           // type:infra — no React, no state management
           'type:infra': [
             'react', 'react-dom', 'react-native',
@@ -712,7 +723,7 @@ pnpm add -D -w eslint-plugin-playwright
 | PKG-B03 | TypeScript type system |
 | APP-001 | `no-restricted-imports` (client apps override) |
 | APP-002 | Code review + env audit |
-| APP-003 | `no-restricted-imports` (packages override) + Nx `bannedExternalImports` |
+| APP-003 | Nx `bannedExternalImports` |
 | APP-004 | Code review |
 | APP-005 | `no-restricted-imports` (ban `@supabase/realtime-js`) |
 | APP-006 | Code review |
