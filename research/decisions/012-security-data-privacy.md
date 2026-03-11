@@ -145,3 +145,4 @@ Advanced BLE hardening (Secure Connections Only mode, GATT-level encryption, MAC
 - [ADR-011: Monitoring & Observability](./011-monitoring-observability.md) — Sentry for client-side error tracking (no PII in error reports)
 - [ADR-017: iOS Widget Architecture](./017-ios-widget-architecture.md) — App Group UserDefaults for widget data sharing; no sensitive data in widget pipeline
 - [ADR-018: Social Features Architecture](./018-social-features-architecture.md) — social privacy enforced via friendship JOINs in API queries; DB functions repurposed as integration test helpers
+- [ADR-019: Notification Strategy](./019-notification-strategy.md) — push notification content minimization (no session details, goal content, or reflection text); push token storage in `devices` table
