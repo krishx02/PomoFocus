@@ -114,3 +114,4 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 - [ADR-013](./013-ble-gatt-protocol-design.md) — BLE GATT Goal Service provides device Tier 1 counters
 - [ADR-017](./017-ios-widget-architecture.md) — iOS widget displays Tier 1 stats via App Group UserDefaults
 - [ADR-018](./018-social-features-architecture.md) — social features are a separate surface from analytics; Tier 1 stats are personal, not social
+- [ADR-019: Notification Strategy](./019-notification-strategy.md) — weekly summary notification links to Tier 2 analytics insights

@@ -26,7 +26,7 @@
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Database | **Supabase** (Postgres + RLS + Realtime) | TypeScript SDK, self-hostable, row-level security |
+| Database | **Supabase** (Postgres + RLS) | TypeScript SDK, self-hostable, row-level security |
 | API | **Hono on Cloudflare Workers** (REST + OpenAPI 3.1) | Hides Supabase from clients, validates input, rate limits, generates TS + Swift clients. See [ADR-007](./decisions/007-api-architecture.md). |
 | Long-lived processes | **CF Workers + Cron Triggers** (v1); Railway deferred to post-v1 | BLE syncs through phone (ADR-006); Railway only if batch cross-user analytics at scale requires it (ADR-008) |
 | Web hosting | **Vercel** | Next.js deployment |

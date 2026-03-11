@@ -116,4 +116,5 @@ Chosen option: **"Hono on Cloudflare Workers (REST + OpenAPI)"**, because it pro
 - [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — outbox sync drivers target the CF Workers API instead of Supabase SDK. Pure sync protocol in `core/sync/` is unaffected. Topology changes: all paths now route through the API.
 - [ADR-012: Security & Data Privacy](./012-security-data-privacy.md) — API gateway hides Supabase from clients as security measure. JWT validation in API middleware. GDPR endpoints (`DELETE /v1/me`, `GET /v1/me/export`) are Hono routes.
 - [ADR-017: iOS Widget Architecture](./017-ios-widget-architecture.md) — widget receives Tier 1 stats via Expo native module, which calls the API to fetch data
-- [ADR-018: Social Features Architecture](./018-social-features-architecture.md) — 12 social API endpoints (7 reads, 5 mutations) as Hono routes on CF Workers with Zod validation
+- [ADR-018: Social Features Architecture](./018-social-features-architecture.md) — 12 social API endpoints (6 reads, 6 mutations) as Hono routes on CF Workers with Zod validation
+- [ADR-019: Notification Strategy](./019-notification-strategy.md) — `POST /v1/taps` extended with Expo Push API calls; all push sending flows through Hono API on CF Workers
