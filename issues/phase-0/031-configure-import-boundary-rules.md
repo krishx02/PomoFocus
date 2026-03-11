@@ -10,7 +10,7 @@ The `@nx/enforce-module-boundaries` ESLint rule is configured with `depConstrain
 ## Context & Background
 
 Phase 0, sub-item 0.5 of the [MVP Roadmap](../../research/mvp-roadmap.md).
-**Depends on:** #010 (Nx tags on all projects) and #028 (ESLint config exists).
+**Depends on:** #010 (Nx tags on all projects), #028 (ESLint config exists), and #030 (per-package overrides — both modify `eslint.config.ts`, must run sequentially).
 
 This is complementary to issue #010 (Nx dependency constraints) and #030 (per-package no-restricted-imports). While #030 blocks specific import patterns (React, fetch), this rule blocks structural violations (core importing from data-access, types importing from core).
 

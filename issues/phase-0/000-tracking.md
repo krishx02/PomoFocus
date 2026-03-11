@@ -82,11 +82,11 @@ Wave 2 (parallel):  #002-#009 (stubs)       #012 (enums)
                     #028 (ESLint root)
                     #032 (TS strict)
                        |                       |
-Wave 3 (parallel):  #010 (Nx boundaries)    #013 (profiles)
+Wave 3a (parallel): #010 (Nx boundaries)    #013 (profiles)
                     #024 (Vitest per-pkg)
                     #030 (ESLint per-pkg)
-                    #031 (import boundaries)
                     #033 (lint targets)
+Wave 3b:            #031 (import boundaries — depends on #030, same file)
                        |                       |
 Wave 4a:            #025 (example test)     #014 (goals), #016 (devices),
                     #026 (coverage)         #017 (social) — parallel
