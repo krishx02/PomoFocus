@@ -101,6 +101,8 @@ Design docs (research/designs/*.md)      <- Detailed architecture
   |
   v  propagates to
 CLAUDE.md                                <- Agent rules (highest-impact downstream file)
+Coding standards (research/coding-standards*.md) <- ESLint/Nx rules, DB/API/test conventions
+MVP roadmap (research/mvp-roadmap.md)    <- Phase breakdown, issue estimates, timelines
   |
   v  propagates to
 AGENTS.md                                <- Cross-tool brief
@@ -122,6 +124,8 @@ Glob: GitHub-Agents.md
 Glob: technical-design-decisions.md
 Glob: research/README.md
 Glob: research/designs/*.md
+Glob: research/coding-standards*.md
+Glob: research/mvp-roadmap.md
 Glob: .claude/agents/*.md
 Glob: .claude/skills/*/SKILL.md
 ```
@@ -167,6 +171,25 @@ For each target file, check every extracted fact against the file's content. Use
 - No file describes a package's responsibility differently than the ADR defines it
 - No file puts auth in the wrong package (must be in `data-access`, not `core`)
 - No file adds WebSocket/Realtime as default (must be polling-first per ADR-003)
+
+**Coding standards consistency** (`research/coding-standards*.md`):
+- ESLint `no-restricted-imports` rules match the import direction in ADR-001
+- Nx project tags in code snippets match the Tag Definitions table in the same file
+- Nx `depConstraints` match ADR-001's dependency graph
+- Nx `bannedExternalImports` covers every tag defined in the Tag Definitions table
+- Database enum values (e.g., `timer_status`) match the canonical states in ADR-004/ADR-005
+- File paths in coding standard rules (e.g., `widget-keys.ts` location) match the roadmap and ADRs
+- ESLint flat config overrides do NOT silently replace earlier per-package rules (flat config replaces, not merges, `no-restricted-imports` — a catch-all override destroys per-package bans)
+- Section cross-references (e.g., "Section 5 handles this") point to the correct section
+
+**MVP roadmap consistency** (`research/mvp-roadmap.md`):
+- Phase names and numbers match the decompose-phase skill's phase list
+- Issue estimate totals are arithmetically correct (sub-items sum to phase total, phase totals sum to grand total)
+- Critical path arithmetic is correct (sum of weeks on critical path = stated total)
+- File paths referenced in phase descriptions match coding standards and ADR conventions
+- Enum/table counts match ADR-005
+- Package names match ADR-001
+- Appetite values match between per-phase headers and summary table
 
 ### Severity classification
 
