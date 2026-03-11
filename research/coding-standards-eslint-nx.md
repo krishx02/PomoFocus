@@ -470,7 +470,7 @@ This is the core enforcement for the import direction rules (PKG-C07, PKG-A03, P
         // === Banned external imports per tag ===
         bannedExternalImports: {
           // type:types — no runtime dependencies
-          'type:types': ['react', 'react-native', '@supabase/*', 'zustand', '@tanstack/*', 'hono', 'expo-*'],
+          'type:types': ['react', 'react-native', '@supabase/*', 'zustand', '@tanstack/*', 'hono', 'expo-*', '@sentry/*'],
 
           // type:domain — no frameworks, no IO
           'type:domain': [

@@ -1218,7 +1218,7 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({ dsn: process.env.SENTRY_DSN });
 ```
 
-**Enforced by:** Nx `bannedExternalImports` — ban `@sentry/*` in all `type:domain`, `type:types`, `type:ui`, `type:infra` packages
+**Enforced by:** Nx `bannedExternalImports` — ban `@sentry/*` in `type:domain`, `type:ble`, `type:infra`, `type:ui`, `type:state` tags
 
 ---
 
