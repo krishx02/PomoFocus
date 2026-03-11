@@ -88,9 +88,10 @@ Wave 3 (parallel):  #010 (Nx boundaries)    #013 (profiles)
                     #031 (import boundaries)
                     #033 (lint targets)
                        |                       |
-Wave 4:             #025 (example test)     #014-#017 (remaining tables)
-                    #026 (coverage)
-                    #027 (test targets)
+Wave 4a:            #025 (example test)     #014 (goals), #016 (devices),
+                    #026 (coverage)         #017 (social) — parallel
+                    #027 (test targets)        |
+Wave 4b:                                   #015 (sessions — depends on #014 + #016)
                        |                       |
 Wave 5:             #034 (CI workflow)      #018 (RLS policies)
                        |                       |

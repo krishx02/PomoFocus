@@ -10,7 +10,7 @@ A Supabase migration creates the `sessions` and `breaks` tables with all columns
 ## Context & Background
 
 Phase 0, sub-item 0.2 of the [MVP Roadmap](../../research/mvp-roadmap.md).
-**Depends on:** #014 — Goals tables must exist first (sessions FK to process_goals).
+**Depends on:** #014 — Goals tables must exist first (sessions FK to process_goals). Also depends on #016 — Devices table must exist first (sessions FK `device_id` to devices).
 
 Sessions are the core data entity. Each session stores 8 data points including post-session reflection (focus_quality, distraction_type, abandonment_reason). Breaks have a 1:1 relationship with sessions (UNIQUE constraint on session_id). Duration is computed, not stored.
 

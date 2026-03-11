@@ -23,14 +23,14 @@ Phase 0, sub-item 0.1 of the [MVP Roadmap](../../research/mvp-roadmap.md).
 - `packages/types/tsconfig.json` — Extends `../../tsconfig.base.json`
 - `packages/types/tsconfig.lib.json` — Library-specific TS config
 - `packages/types/src/index.ts` — Barrel export (placeholder: `export {}`)
-- `packages/types/project.json` — Nx project configuration with `type:types` tag
+- `packages/types/project.json` — Nx project configuration with tags `["type:types", "scope:shared"]`
 
 ## Acceptance Criteria
 
 - [ ] `packages/types/package.json` exists with `"name": "@pomofocus/types"`
 - [ ] `packages/types/src/index.ts` exists and compiles
 - [ ] `@pomofocus/types` is resolvable via TypeScript path aliases in `tsconfig.base.json`
-- [ ] Nx project has tag `type:types` for dependency constraint enforcement
+- [ ] Nx project has tags `["type:types", "scope:shared"]` for dependency constraint enforcement
 - [ ] `pnpm nx build @pomofocus/types` passes (or `type-check` if no build target yet)
 
 ## Out of Scope

@@ -5,7 +5,7 @@ labels: ["agent-ready", "effort:small", "phase:0", "platform:infra", "chore"]
 
 ## Goal
 
-Nx module boundary rules are configured in `nx.json` (or `eslint.config.ts` via `@nx/eslint-plugin`) to enforce the package dependency direction: `types <- core <- data-access/analytics <- state`, with apps consuming all. Violations produce lint errors.
+Nx module boundary rules are configured in `eslint.config.ts` via `@nx/eslint-plugin` to enforce the package dependency direction: `types <- core <- data-access/analytics <- state`, with apps consuming all. Violations produce lint errors.
 
 ## Context & Background
 
@@ -22,8 +22,7 @@ The dependency graph must be enforced from day one to prevent coupling violation
 
 ## Affected Files
 
-- `nx.json` — Update with module boundary rules (or configure via ESLint plugin)
-- `eslint.config.ts` (or `eslint.config.js`) — Add `@nx/enforce-module-boundaries` rule with `depConstraints`
+- `eslint.config.ts` — Add `@nx/enforce-module-boundaries` rule with `depConstraints` and `bannedExternalImports` (per coding-standards-eslint-nx.md Section 5)
 
 ## Acceptance Criteria
 
