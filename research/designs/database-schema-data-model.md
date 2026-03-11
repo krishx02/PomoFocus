@@ -47,12 +47,12 @@ PomoFocus stores user goals, focus sessions, reflection data, social connections
 | Devices | `device_sync_log` | Incremental sync tracking per device | S5 |
 
 **Not modeled as tables (and why):**
-- **Session intentions** — text column on `sessions`, not a separate table (1:1, no independent lifecycle)
+- **Session intentions** — text column on `sessions`, not a separate table (1:1, no independent lifecycle). Collected pre-session after goal selection. Optional (nullable). Not editable after session starts (commitment device per implementation intentions research). Max 200 characters, enforced at API validation layer (Zod schema) — DB column is `text` with no DB-level length constraint. `intention_text` is a per-session refinement of `process_goal_id` (e.g., "Finish problem set 4" for goal "Study calculus"). Independent columns, not a sub-goal — no lifecycle of its own. BLE protocol supports intentions (ADR-013: `string intention = 10; // max 200 chars`).
 - **Quiet Feed** — derived query: `SELECT DISTINCT DATE(started_at), user_id FROM sessions WHERE completed = true`
 - **Library Mode** — derived query: `sessions WHERE ended_at IS NULL` for active sessions
 - **Goal templates** — hardcoded in application code (`core/`), not database (S12: "6 hardcoded templates")
 - **Invite links** — stateless URLs: `pomofocus.app/invite/USERNAME`
-- **Streaks** — computed from consecutive days with completed sessions per process goal
+- **Streaks** — computed from consecutive calendar days (in user timezone) with ≥1 completed session, account-wide for v1. 1-day grace period (see analytics design doc Streak Specification)
 - **Daily summaries** — derivable from sessions; add materialized view later if needed
 
 ### ER Diagram (relationships only)
@@ -742,10 +742,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- fallback for uuid generation
 CREATE TYPE goal_status AS ENUM ('active', 'completed', 'retired');
 CREATE TYPE recurrence_type AS ENUM ('daily', 'weekly');
 CREATE TYPE abandonment_reason AS ENUM ('had_to_stop', 'gave_up');
+  -- NULL abandonment_reason treated as 'gave_up' in analytics (prevents gaming by dismissing prompt)
 CREATE TYPE focus_quality AS ENUM ('locked_in', 'decent', 'struggled');
 CREATE TYPE distraction_type AS ENUM ('phone', 'people', 'thoughts_wandering', 'got_stuck', 'other');
+  -- Closed set for v1. No user-defined categories. Adding a type requires DB migration
+  -- (ALTER TYPE ... ADD VALUE). If "other" > 40% of struggled sessions, revisit taxonomy.
 CREATE TYPE break_type AS ENUM ('short', 'long');
 CREATE TYPE break_usefulness AS ENUM ('yes', 'somewhat', 'no');
+  -- Collected by app layer when transitioning out of break states, stored on breaks table.
+  -- NULL if break was skipped (SKIP_BREAK event) or user dismissed the prompt.
 CREATE TYPE request_status AS ENUM ('pending', 'accepted', 'declined');
 CREATE TYPE sync_direction AS ENUM ('up', 'down');
 

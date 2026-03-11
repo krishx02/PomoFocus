@@ -269,7 +269,7 @@ Architecture: pure `transition(state, event) → newState` function in `packages
 | Auth model | **JWT forwarding** | API validates user's Supabase JWT, forwards to Supabase — RLS applies as defense-in-depth |
 | App location | **`apps/api/`** | Hono API lives alongside other apps; consumes `packages/core/` |
 
-Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Auth flow decided in ADR-002 (Supabase Auth, deferred sign-up via `signInAnonymously()` → `linkIdentity()`). Remaining open: OpenAPI versioning strategy, local dev setup.
+Clients never see Supabase URL, anon key, or raw table structures. `packages/data-access/` wraps the generated OpenAPI client (not the Supabase SDK). tRPC eliminated (Swift consumers can't use it). GraphQL eliminated (flat CRUD doesn't justify it). Auth flow: clients call Supabase Auth SDK directly for login/signup/OAuth — API does not proxy auth flows, only validates and forwards the resulting JWT on data requests (ADR-002, ADR-007). Remaining open: OpenAPI versioning strategy, local dev setup.
 
 ---
 

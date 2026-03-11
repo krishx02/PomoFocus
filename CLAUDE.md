@@ -29,7 +29,7 @@ See [ADR-001](./research/decisions/001-monorepo-package-structure.md) for full r
 
 ## Auth
 
-IMPORTANT: Use Supabase Auth for all authentication. Never import auth logic into `packages/core/` — auth belongs in `packages/data-access/`. Core functions receive `userId: string` as a parameter, never a session or token.
+IMPORTANT: Use Supabase Auth for all authentication. Clients call Supabase Auth SDK directly for login, signup, and OAuth — the Hono API does not proxy auth flows. After authentication, clients send the Supabase JWT to the API for all data operations. Never import auth logic into `packages/core/` — auth belongs in `packages/data-access/`. Core functions receive `userId: string` as a parameter, never a session or token.
 
 See [ADR-002](./research/decisions/002-auth-architecture.md) for full rationale.
 

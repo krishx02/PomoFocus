@@ -45,6 +45,12 @@ Designed for the BLE device idle display, Apple Watch complications, and app hom
 | Weekly continuity | Boolean per day: any completed session that day | Competence | 7 dots (Mon–Sun), filled for active days |
 | Current streak | Count consecutive calendar days (in user timezone) with ≥1 completed session | Competence | "5 days" |
 
+**Streak Specification:**
+- **Grace period:** A streak tolerates exactly 1 missed day. Two consecutive missed days resets the streak. Implementation: `currentStreak()` counts backward from today, allowing at most 1 gap day between any two active days. Gap days do not count toward streak length. (Product brief: "one missed day shouldn't reset a 30-day streak.")
+- **Scope:** Account-wide for v1. A streak means "≥1 completed session on this calendar day, for any goal." Per-goal streaks are a post-v1 enhancement. The `currentStreak()` function in `packages/analytics/` takes all sessions, not sessions for a specific goal.
+- **Day boundary:** Midnight-to-midnight in the user's configured timezone (from `user_preferences.timezone`).
+- **Timezone changes:** Use the user's configured timezone at query time. If they change timezone (e.g., travel), the streak may retroactively recalculate — acceptable tradeoff for simplicity. No per-session timezone tracking.
+
 **BLE device receives Tier 1 via BLE sync** (ADR-013 Goal Service: `target_sessions`, `completed_sessions` fields). The phone computes and pushes these values during sync.
 
 **Apple Watch shows Tier 1 from local counters** (sessions today, streak) + cached values from last API sync.
@@ -55,7 +61,7 @@ Shown on a weekly insights card. Updated each time the user opens the analytics 
 
 | Metric | Computation | Notes |
 |--------|-------------|-------|
-| Session completion rate | `completed / (total − had_to_stop)` (returns 0 when denominator is 0) | "Had to stop" is excluded per business rule (not a failure) |
+| Session completion rate | `completed / (total − had_to_stop)` (returns 0 when denominator is 0) | "Had to stop" is excluded per business rule (not a failure). Sessions with `abandonment_reason = NULL` are treated as `gave_up` for this calculation (prevents gaming by dismissing the prompt). |
 | Focus quality distribution | Count per enum value / total completed | Three-segment bar: locked_in / decent / struggled |
 | Total focus time | `SUM(ended_at − started_at)` for completed sessions | In hours and minutes |
 | Peak focus window | Hour-of-day bucket with highest avg focus_quality | "Your best focus is 9–10am" |
@@ -71,7 +77,7 @@ Shown on a monthly deep view. Compares current month vs previous month.
 | Completion trend | Completion rate change month over month | Percentage + arrow |
 | Focus quality trend | % locked_in change month over month | Percentage + arrow |
 | Total time trend | Hours change month over month | Hours + arrow |
-| Distraction patterns | Most common distraction_type this month | Category name + count |
+| Distraction patterns | Most common distraction_type this month | Category name + count. Taxonomy is a closed 5-value enum for v1 (phone, people, thoughts_wandering, got_stuck, other). "Other" is counted in frequency but not surfaced as an actionable insight — if >40% of struggled sessions select "other", that signals the taxonomy needs a new category via DB migration. |
 | Per-goal breakdown | Same as Tier 2 but for the month | Per-goal bars |
 
 ### Computation Architecture
@@ -141,9 +147,13 @@ Shown on a monthly deep view. Compares current month vs previous month.
 
 New users have no session history. The analytics tiers handle this gracefully:
 
-- **Tier 1:** "Study calculus — 0/3" + empty weekly dots + "0 days" streak. All valid, no special case needed.
-- **Tier 2:** Empty state card: "Complete your first session to see weekly insights." Show after ≥1 completed session.
-- **Tier 3:** Empty state: "Monthly trends appear after your first full month." Show after ≥2 months with data (need current vs previous comparison).
+- **Tier 1:** "Study calculus — 0/3" + empty weekly dots + "0 days" streak. All valid from day one, no special case needed.
+- **Tier 2:** Unlocked after ≥1 completed session all-time (not per-week). Individual metrics within Tier 2 handle sparse data independently:
+  - Completion rate: valid with ≥1 session
+  - Focus quality distribution: valid with ≥1 completed session that has reflection data
+  - Peak focus window: requires ≥5 sessions with `focus_quality` data to be statistically meaningful. Below this threshold, show "Not enough data yet" for this specific metric.
+  - Total focus time and per-goal breakdown: valid with ≥1 session
+- **Tier 3:** Requires ≥2 calendar months each containing ≥1 completed session. Not 60+ days. Not required to be consecutive. If sessions exist in January and March but not February, Tier 3 can compare January vs March. The purpose is month-over-month comparison, which requires data in at least 2 distinct months.
 
 No fake data, no placeholder scores, no gamification hooks. Emptiness communicates "you haven't started yet" without shame.
 
@@ -223,12 +233,14 @@ Explicitly excluded. Leaderboards and peer comparisons undermine the autonomy ne
 
 - **Migration path:** No migration needed — this is greenfield. If pre-aggregation is needed later, add a `daily_analytics` table populated by a CF Cron Trigger, and have the API read from that table instead of computing on demand. The `packages/analytics/` functions remain unchanged — only the data source changes.
 
+## Resolved Questions
+
+1. ~~**Streak timezone edge case**~~ — **Resolved.** Use the user's configured timezone at query time. A timezone change retroactively recalculates the streak — acceptable tradeoff. See "Streak Specification" under Tier 1 above for full details (grace period, scope, day boundary).
+
+2. ~~**Weekly dot definition**~~ — **Resolved.** ≥1 completed session on that calendar day. Consistency means finishing, not just starting.
+
 ## Open Questions
 
-1. **Streak timezone edge case:** If a user changes timezone mid-streak (travel), does the streak break? Recommendation: use the user's configured timezone at query time, not the timezone when the session was created. This means a timezone change could retroactively affect streak calculation.
+1. **Peak focus window granularity:** 1-hour buckets or 2-hour buckets? Narrower is more precise but requires more data to be meaningful. Recommendation: 2-hour buckets for v1, narrowing to 1-hour when more data exists.
 
-2. **Weekly dot definition:** Does "a session that day" mean ≥1 completed session, or ≥1 started session? Recommendation: ≥1 completed session (consistency means finishing, not just starting).
-
-3. **Peak focus window granularity:** 1-hour buckets or 2-hour buckets? Narrower is more precise but requires more data to be meaningful. Recommendation: 2-hour buckets for v1, narrowing to 1-hour when more data exists.
-
-4. **Analytics for archived goals:** When a process goal is "retired", should its sessions still appear in analytics? Recommendation: yes for historical views (monthly trends), no for current "today's goal progress."
+2. **Analytics for archived goals:** When a process goal is "retired", should its sessions still appear in analytics? Recommendation: yes for historical views (monthly trends), no for current "today's goal progress."

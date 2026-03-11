@@ -65,7 +65,7 @@ The project lead requires a proper API middle layer that hides Supabase entirely
 
 ### Request Flow (User-Scoped Operations)
 
-1. Client authenticates with Supabase Auth (via login/signup endpoint on the API, or directly via Supabase Auth SDK for initial auth)
+1. Client authenticates directly with Supabase Auth SDK (login/signup/OAuth). The API is not involved in the initial auth flow.
 2. Client receives Supabase JWT (access token + refresh token)
 3. Client sends API request with `Authorization: Bearer <supabase_jwt>`
 4. CF Workers API:
@@ -199,9 +199,12 @@ PomoFocus has 12 tables with relatively flat CRUD operations. GraphQL's value (f
 - **Observability:** CF Workers provides built-in request logging and analytics. For deeper observability, add Langfuse or structured logging to API routes. Errors should be logged server-side with request context; clients receive generic error codes.
 - **Migration path:** Since Hono is runtime-portable, the API can be moved from CF Workers to Vercel Edge, Fly.io, or any Node.js host by changing the deployment config — no application code changes needed.
 
+## Resolved Questions
+
+1. **Auth flow for initial login/signup:** **Resolved — direct Supabase Auth.** Clients call the Supabase Auth SDK directly for login, signup, and OAuth. The API does not proxy auth endpoints. Rationale: (1) all per-platform auth flows already assume direct Supabase Auth SDK usage (ADR-002 design doc, Tiers 1-4); (2) OAuth redirect flows (Apple Sign-In, Google) are handled natively by the Supabase SDK — proxying would add complexity for no security benefit; (3) the API's purpose is to hide Supabase's data layer, not its auth layer — Supabase Auth has its own security model (PKCE, secure token storage). The client receives the JWT from Supabase Auth, then sends it to the API for all subsequent data requests.
+
 ## Open Questions
 
-1. **Auth flow for initial login/signup:** Should clients call Supabase Auth directly for login/signup (and receive the JWT), or should the API proxy auth endpoints too? Proxying adds consistency but may complicate OAuth redirects.
-2. **OpenAPI spec versioning:** How to handle breaking changes to the API contract? Versioned URL prefixes (`/v1/`, `/v2/`) or header-based versioning?
-3. **Local development:** How to run the API locally? Wrangler provides a local dev server, but it needs to connect to a Supabase instance (local via `supabase start` or remote).
-4. **CI/CD pipeline:** How to deploy the API alongside the web app? Separate workflows, or a single workflow with conditional deployments?
+1. **OpenAPI spec versioning:** How to handle breaking changes to the API contract? Versioned URL prefixes (`/v1/`, `/v2/`) or header-based versioning?
+2. **Local development:** How to run the API locally? Wrangler provides a local dev server, but it needs to connect to a Supabase instance (local via `supabase start` or remote).
+3. **CI/CD pipeline:** How to deploy the API alongside the web app? Separate workflows, or a single workflow with conditional deployments?

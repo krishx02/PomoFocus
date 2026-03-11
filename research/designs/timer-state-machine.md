@@ -89,6 +89,7 @@ This design defines: (1) the state model — which states exist and which transi
 | `TIMER_DONE` | `short_break`, `long_break` | `reflection` (if enabled) or `focusing` (next session) or `completed` (all sessions done) |
 | `SKIP` | `reflection` | `completed` or `focusing` (next session) |
 | `SUBMIT` | `reflection` | `completed` or `focusing` (next session) |
+| `SKIP_BREAK` | `short_break`, `long_break`, `break_paused` | `reflection` (if enabled) or `focusing` (next session) or `completed` (user chose "Done for now") |
 | `ABANDON` | `focusing`, `paused`, `short_break`, `long_break`, `break_paused` | `abandoned` |
 | `RESET` | any terminal state (`completed`, `abandoned`) | `idle` |
 
@@ -124,6 +125,7 @@ type TimerEvent =
   | { type: 'TIMER_DONE' }
   | { type: 'SKIP' }
   | { type: 'SUBMIT'; data: ReflectionData }
+  | { type: 'SKIP_BREAK' }
   | { type: 'ABANDON' }
   | { type: 'RESET' }
 
@@ -203,8 +205,56 @@ The `startedAt` timestamp (milliseconds since epoch) is the key field that makes
 - **Observability:** Timer state transitions should be loggable for debugging. In development, the Zustand devtools (already chosen in ADR-003) will show state changes. In production, completed/abandoned session events flow to analytics via `data-access/`.
 - **Migration path:** If XState is needed later, the migration affects only `packages/core/timer/` internals. The `transition()` function signature stays the same — consumers in `packages/state/` and native platforms don't change.
 
+## Post-Session Flow Specification
+
+This section defines the full conditional branching for what happens after a focus session ends or is abandoned. The timer state machine handles state transitions; the **app layer** handles data collection prompts. These prompts are UI-layer responsibilities, not additional state machine states.
+
+### Completed Session Flow
+
+When `TIMER_DONE` fires from `focusing`:
+
+1. **Enter break** — Timer transitions to `short_break` or `long_break` (per `isLongBreak` guard)
+2. **Break runs** — Break timer counts down. User can pause (`PAUSE` → `break_paused`) or skip (`SKIP_BREAK` → step 3)
+3. **Break ends** — `TIMER_DONE` from break state, or `SKIP_BREAK` event
+4. **Break usefulness prompt** (app layer) — If break was not skipped, app prompts: "Was that break helpful?" (yes / somewhat / no). Stored on the `breaks` table record (`usefulness` column). Dismissable — `NULL` if skipped or dismissed.
+5. **Reflection** (if `reflection_enabled`) — Timer enters `reflection` state:
+   - App prompts **focus quality**: locked_in / decent / struggled
+   - If `struggled`, app conditionally prompts **distraction type**: phone / people / thoughts_wandering / got_stuck / other
+   - User submits (`SUBMIT` with `ReflectionData`) or skips (`SKIP`)
+6. **Next session or done** — Timer transitions to `focusing` (next session) or `completed` (user chose "Done for now")
+
+### Abandoned Session Flow
+
+When `ABANDON` fires from any active state:
+
+1. **Immediate transition** — Timer enters `abandoned` terminal state. No intermediate states.
+2. **Abandonment reason prompt** (app layer) — App shows a bottom sheet with two options:
+   - "Had to stop" — external interruption, excluded from success rate
+   - "Gave up / lost focus" — voluntary, counts as failure in analytics
+3. **Dismissable** — If user dismisses without choosing, `abandonment_reason` is `NULL` in the database. For analytics, `NULL` is treated identically to `gave_up` (prevents gaming by dismissing).
+4. **No reflection** — Abandoned sessions skip the reflection flow entirely.
+
+### Break Enforcement
+
+Breaks are **recommended but skippable**. The timer always transitions to break states after a completed focus session (structural encouragement per product brief research: "the break structure must not be removed"). The user retains autonomy to skip.
+
+**New event: `SKIP_BREAK`**
+
+| Event | Valid From | Transitions To |
+|-------|-----------|---------------|
+| `SKIP_BREAK` | `short_break`, `long_break`, `break_paused` | `reflection` (if enabled) or `focusing` (next session) or `completed` (user chose "Done for now") |
+
+When a break is skipped:
+- No `breaks` table record is created (or if already created on break entry, `ended_at` is set immediately and `usefulness` is `NULL`)
+- Break skipped vs. taken is derivable from break record existence + duration
+- No new schema column needed
+
+**Rationale:** The structure exists — breaks are always offered and defaulted to. But forcing breaks would violate Self-Determination Theory's autonomy principle. The app should encourage breaks (e.g., "Taking breaks improves your next session") without enforcing them.
+
+---
+
 ## Open Questions
 
-1. **~~Reflection flow details~~** — **Resolved by ADR-005.** Reflection collects `focus_quality` (locked_in / decent / struggled) and conditionally `distraction_type` (if struggled). Skippable — controlled by `user_preferences.reflection_enabled`. Abandonment reason ("Had to stop" / "Gave up") collected optionally by app layer after timer reaches `abandoned` state. `ReflectionData = { focusQuality?: FocusQuality; distractionType?: DistractionType }`.
+1. ~~**Reflection flow details**~~ — **Resolved.** See "Post-Session Flow Specification" above.
 2. **Background timer accuracy:** On iOS, `setInterval` accuracy degrades when the app is backgrounded. Should the React Native timer driver use a native module for accurate background timing, or is timestamp-based rehydration sufficient? (Deferred to implementation — test actual behavior first.)
 3. **BLE device timer sync:** When the device and phone both have timer state, which is authoritative? What happens on reconnection? (Sync architecture decided in [ADR-006](../decisions/006-offline-first-sync-architecture.md) — device syncs sessions through phone via outbox queue. Timer conflict resolution deferred to BLE Protocol ADR.)

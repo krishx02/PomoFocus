@@ -41,6 +41,7 @@ Chosen option: **"Hono on Cloudflare Workers (REST + OpenAPI)"**, because it pro
 | Schema validation | Zod via `@hono/zod-openapi` | Single source of truth: Zod schemas validate requests AND generate OpenAPI spec |
 | TypeScript client generation | `openapi-typescript` + `openapi-fetch` | Type-safe fetch client generated from OpenAPI spec; used by web, mobile, VS Code, MCP |
 | Swift client generation | Apple `swift-openapi-generator` | Async/await Swift client generated from same OpenAPI spec; used by macOS menu bar, possibly watchOS |
+| Auth flow (login/signup) | Direct Supabase Auth SDK | Clients call Supabase Auth directly for login/signup/OAuth. API is not involved in the auth flow — it only validates and forwards the resulting JWT on data requests. |
 | Auth forwarding | Forward user's Supabase JWT | API validates JWT signature, then creates Supabase client with user's token — RLS applies as if client talked directly to Supabase |
 | Auth for admin ops | `service_role` key (server-side only) | Used only for admin/system operations (analytics aggregation, cleanup); never for user-scoped queries |
 | Rate limiting | Cloudflare built-in or custom middleware | Protects Supabase from abuse; configurable per-endpoint |
@@ -110,7 +111,7 @@ Chosen option: **"Hono on Cloudflare Workers (REST + OpenAPI)"**, because it pro
 ## Related Decisions
 
 - [ADR-001: Monorepo Package Structure](./001-monorepo-package-structure.md) — adds `apps/api/` for the Hono Workers API. `packages/data-access/` changes from "wraps Supabase SDK" to "wraps generated OpenAPI client."
-- [ADR-002: Auth Architecture](./002-auth-architecture.md) — Supabase Auth remains the sole provider. API forwards user's Supabase JWT to Supabase, preserving RLS. Clients authenticate via Supabase Auth, then send JWT to the API.
+- [ADR-002: Auth Architecture](./002-auth-architecture.md) — Supabase Auth remains the sole provider. Clients call Supabase Auth SDK directly for login/signup/OAuth (API does not proxy auth flows). API forwards the user's Supabase JWT to Supabase on data requests, preserving RLS.
 - [ADR-003: Client State Management](./003-client-state-management.md) — TanStack Query polls the CF Workers API instead of Supabase directly. Same 30s polling interval, same caching behavior.
 - [ADR-005: Database Schema & Data Model](./005-database-schema-data-model.md) — RLS policies remain active and enforced. API uses user's JWT, so `get_user_id()` and all RLS policies work unchanged.
 - [ADR-006: Offline-First Sync Architecture](./006-offline-first-sync-architecture.md) — outbox sync drivers target the CF Workers API instead of Supabase SDK. Pure sync protocol in `core/sync/` is unaffected. Topology changes: all paths now route through the API.
