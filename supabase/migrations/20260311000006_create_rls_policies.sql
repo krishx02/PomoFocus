@@ -23,6 +23,16 @@ CREATE POLICY "profiles_update_own" ON profiles
 CREATE POLICY "profiles_delete_own" ON profiles
   FOR DELETE TO authenticated USING (auth_user_id = auth.uid());
 
+-- Friends can see each other's profiles (needed for social features)
+CREATE POLICY "profiles_select_friends" ON profiles
+  FOR SELECT TO authenticated USING (
+    id IN (SELECT friend_id FROM friendships WHERE user_id = (SELECT get_user_id()))
+  );
+
+-- Anyone can search profiles by username (for friend search)
+CREATE POLICY "profiles_select_by_username" ON profiles
+  FOR SELECT TO authenticated USING (username IS NOT NULL);
+
 -- ---- user-owned tables (use (SELECT get_user_id()) per DB-006) ----
 
 CREATE POLICY "prefs_all_own" ON user_preferences
@@ -48,19 +58,60 @@ CREATE POLICY "sync_log_all_own" ON device_sync_log
     device_id IN (SELECT id FROM devices WHERE user_id = (SELECT get_user_id()))
   );
 
--- ---- social tables (bidirectional: sender OR recipient) ----
+-- ---- friend_requests (per-operation to prevent sender_id spoofing) ----
 
-CREATE POLICY "fr_all_own" ON friend_requests
-  FOR ALL TO authenticated USING (
+CREATE POLICY "fr_select" ON friend_requests
+  FOR SELECT TO authenticated USING (
     sender_id = (SELECT get_user_id()) OR recipient_id = (SELECT get_user_id())
   );
 
-CREATE POLICY "friendships_all_own" ON friendships
-  FOR ALL TO authenticated USING (
-    user_id = (SELECT get_user_id()) OR friend_id = (SELECT get_user_id())
+CREATE POLICY "fr_insert" ON friend_requests
+  FOR INSERT TO authenticated WITH CHECK (
+    sender_id = (SELECT get_user_id())
   );
 
-CREATE POLICY "taps_all_own" ON encouragement_taps
-  FOR ALL TO authenticated USING (
+-- Only recipient can accept/decline
+CREATE POLICY "fr_update" ON friend_requests
+  FOR UPDATE TO authenticated USING (
+    recipient_id = (SELECT get_user_id())
+  );
+
+-- Either party can withdraw/dismiss
+CREATE POLICY "fr_delete" ON friend_requests
+  FOR DELETE TO authenticated USING (
     sender_id = (SELECT get_user_id()) OR recipient_id = (SELECT get_user_id())
+  );
+
+-- ---- friendships (per-operation; dual-row pattern means user_id is always you) ----
+
+CREATE POLICY "friendships_select_own" ON friendships
+  FOR SELECT TO authenticated USING (
+    user_id = (SELECT get_user_id())
+  );
+
+CREATE POLICY "friendships_insert" ON friendships
+  FOR INSERT TO authenticated WITH CHECK (
+    user_id = (SELECT get_user_id())
+  );
+
+CREATE POLICY "friendships_delete_own" ON friendships
+  FOR DELETE TO authenticated USING (
+    user_id = (SELECT get_user_id())
+  );
+
+-- ---- encouragement_taps (per-operation with friendship check on insert) ----
+
+-- Recipients see taps they received (senders don't see sent taps — fire and forget)
+CREATE POLICY "taps_select_received" ON encouragement_taps
+  FOR SELECT TO authenticated USING (
+    recipient_id = (SELECT get_user_id())
+  );
+
+-- Can only send taps as yourself, and only to friends
+CREATE POLICY "taps_insert" ON encouragement_taps
+  FOR INSERT TO authenticated WITH CHECK (
+    sender_id = (SELECT get_user_id())
+    AND recipient_id IN (
+      SELECT friend_id FROM friendships WHERE user_id = (SELECT get_user_id())
+    )
   );
