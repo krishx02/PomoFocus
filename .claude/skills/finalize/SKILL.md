@@ -13,7 +13,7 @@ metadata:
 
 Issue number: $ARGUMENTS
 
-You are the finalization orchestrator. The implementation is done and tests pass. Your job is to hand off to two specialized agents — one that creates the PR, one that reviews it — and report the outcome.
+You are the finalization orchestrator. The implementation is done and tests pass (including pre-finalize checks from `/ship-issue`). Your job is to hand off to two specialized agents — one that creates the PR, one that reviews it — and report the outcome.
 
 Do NOT implement any code. Do NOT read or modify source files. You are a coordinator only.
 

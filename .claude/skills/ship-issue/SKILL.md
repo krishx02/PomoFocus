@@ -52,7 +52,17 @@ EOF
 
 **If neither label is present:** proceed to Step 3.
 
-## Step 3 — Create a Branch
+## Step 3 — Ensure Correct Branch
+
+First, check if you're already on a branch for this issue:
+```bash
+current=$(git branch --show-current)
+echo "Current branch: $current"
+```
+
+**If the current branch contains `issue-$ARGUMENTS`** (e.g., `feature/issue-34-some-slug`): you're already on the right branch. Skip branch creation and proceed directly to Step 4.
+
+**Otherwise**, create or switch to the issue branch:
 
 Derive the branch slug from the issue title (lowercase, hyphens, max 40 chars).
 
@@ -173,9 +183,90 @@ git commit -m "[type]: [short description] (#$ARGUMENTS)"
 ```
 Use the conventional commit prefix matching the issue type: `feat`, `fix`, `refactor`, `test`, or `docs`.
 
-## Step 8 — Push and Stop
+## Step 8 — Pre-Finalize Verification
 
-Tests pass, type-check is clean, and changes are committed. Push the branch and stop.
+Unit tests pass and code is committed. Now run broader verification before pushing.
+
+### 8a — Detect Affected Platforms
+
+```bash
+git fetch origin main
+git diff --name-only origin/main...HEAD
+```
+
+Map changed files to platform buckets:
+
+| Prefix | Bucket |
+|--------|--------|
+| `packages/core/`, `packages/types/` | `core` |
+| `packages/analytics/` | `analytics` |
+| `packages/data-access/` | `data-access` |
+| `packages/state/` | `state` |
+| `packages/ui/` | `ui` |
+| `packages/ble-protocol/` | `ble-protocol` |
+| `apps/web/` | `web` |
+| `apps/mobile/` | `mobile` |
+| `apps/vscode-extension/` | `vscode` |
+| `apps/mcp-server/` | `mcp-server` |
+
+Files not matching any prefix (docs, CI config, root config) do not trigger platform tests — skip them.
+
+### 8b — Build Verification
+
+Run Nx affected build if configured:
+```bash
+pnpm nx affected --target=build --base=origin/main --head=HEAD 2>/dev/null || echo "SKIP: Nx build not configured yet"
+```
+
+### 8c — Integration & E2E Tests
+
+For each affected platform, check if test infrastructure exists and run it. Skip gracefully if not configured:
+
+```bash
+# Nx affected tests (catches downstream failures)
+pnpm nx affected --target=test --base=origin/main --head=HEAD 2>/dev/null || echo "SKIP: Nx test not configured"
+
+# Web E2E (Playwright)
+if [ -d "apps/web-e2e" ]; then
+  pnpm nx e2e @pomofocus/web-e2e
+else
+  echo "SKIP: apps/web-e2e/ not configured"
+fi
+
+# Mobile E2E (Maestro)
+if [ -d "apps/mobile/maestro" ] && command -v maestro &>/dev/null; then
+  maestro test apps/mobile/maestro/
+else
+  echo "SKIP: Maestro not configured"
+fi
+```
+
+### 8d — Fix Loop (if failures)
+
+If any check in 8b-8c fails:
+1. Read the failure output carefully
+2. Fix the root cause
+3. Stage and commit: `git commit -m "fix: address pre-finalize failure (attempt N) (#$ARGUMENTS)"`
+4. Re-run only the failing check
+5. **Iteration limit: 3 attempts.** If still failing after 3 tries:
+
+```bash
+gh issue edit $ARGUMENTS --add-label "needs-human"
+gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+## Pre-Finalize Test Loop Exhausted — Needs Human
+
+Integration or build checks are still failing after 3 fix attempts.
+Unit tests pass. The failure is in broader verification (build, E2E, cross-package).
+
+Please review the test failure and resolve the root cause manually.
+EOF
+)"
+```
+Stop — do not push or open a PR.
+
+## Step 9 — Push and Stop
+
+All checks pass (unit tests, type-check, build, integration/E2E). Push the branch and stop.
 
 ```bash
 git push -u origin $(git branch --show-current)
@@ -187,8 +278,10 @@ Then output exactly this message (substituting real values):
 Implementation complete for issue #$ARGUMENTS.
 Branch pushed: [BRANCH_NAME]
 
+All pre-finalize checks passed (or appropriately skipped).
+
 Start a new Claude Code session and run:
-  /pre-finalize $ARGUMENTS
+  /finalize $ARGUMENTS
 ```
 
-Do NOT call `/pre-finalize` here. Do NOT create the PR or update labels. Stop completely — each workflow phase runs in a separate context window to avoid carrying implementation history forward.
+Do NOT call `/finalize` here. Do NOT create the PR or update labels. Stop completely — `/finalize` runs in a separate context window to keep it clean.
