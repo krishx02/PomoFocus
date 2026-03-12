@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@pomofocus/web",
+  "sourceRoot": "apps/web",
+  "projectType": "application",
+  "tags": ["type:app", "scope:web"],
+  "targets": {
+    "type-check": {
+      "command": "tsc -p tsconfig.json --noEmit",
+      "options": {
+        "cwd": "apps/web"
+      }
+    }
+  }
+}
