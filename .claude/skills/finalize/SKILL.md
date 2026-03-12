@@ -1,25 +1,25 @@
 ---
 name: finalize
-description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches the code-reviewer subagent to post inline review comments. Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Use when user says "create the PR", "finalize this branch", "I'm done implementing", or "ship it".
+description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches code-reviewer subagent(s) to post inline review comments. Supports multiple issues on one branch — spawns parallel scoped reviewers (one per issue). Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Use when user says "create the PR", "finalize this branch", "I'm done implementing", or "ship it".
 user-invocable: true
 context: fork
 allowed-tools: Bash(gh *), Bash(git *), Bash(timeout *), Bash(echo *), Agent
 compatibility: "Requires gh CLI, git. Claude Code only."
-argument-hint: "[issue number]"
+argument-hint: "[issue number(s)] — e.g. '28' or '28 29 36 37' or '28,29,36,37'"
 metadata:
   author: PomoFocus
   version: 1.0.0
 ---
 
-Issue number: $ARGUMENTS
+Arguments: $ARGUMENTS
 
-You are the finalization orchestrator. The implementation is done and tests pass (including pre-finalize checks from `/ship-issue`). Your job is to hand off to two specialized agents — one that creates the PR, one that reviews it — and report the outcome.
+You are the finalization orchestrator. The implementation is done and tests pass (including pre-finalize checks from `/ship-issue`). Your job is to hand off to specialized agents — one that creates the PR, one per issue that reviews it — and report the outcome.
 
 Do NOT implement any code. Do NOT read or modify source files. You are a coordinator only.
 
 ---
 
-## Step 1 — Detect Issue Number and Branch
+## Step 1 — Detect Issue Numbers and Branch
 
 Get the current branch:
 ```bash
@@ -28,21 +28,26 @@ git branch --show-current
 
 Store as `BRANCH_NAME`.
 
-**Determine `ISSUE_NUMBER` using this priority order:**
+**Determine `ISSUE_NUMBERS` (a list) using this priority order:**
 
-1. If `$ARGUMENTS` is provided and is a number, use it.
-2. Parse from branch name — format is `feature/issue-N-<slug>` or `fix/issue-N-<slug>`. Extract `N`.
-3. Scan recent commit messages for an issue reference (requires GNU grep):
+1. If `$ARGUMENTS` is provided, parse ALL numbers from it (e.g. `"28 29 36 37"`, `"28,29,36,37"`, `"28, 29, 36, 37"`). This supports both single and multi-issue invocations.
+2. If no arguments, parse from branch name — format is `feature/issue-N-<slug>` or `fix/issue-N-<slug>`. Extract `N` (single issue).
+3. If no arguments and branch name doesn't match, scan ALL recent commit messages for issue references:
    ```bash
-   git log --oneline origin/main..HEAD | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1
+   git log --oneline origin/main..HEAD | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | sort -un
    ```
+   This captures all unique issue numbers referenced across all commits on the branch.
 4. If still unresolved, ask the user:
    ```
-   "I'm on branch '[BRANCH_NAME]' and cannot find an issue number in the branch name or recent commits.
-   Which GitHub issue number does this branch implement? (type 'none' if there is no associated issue)"
+   "I'm on branch '[BRANCH_NAME]' and cannot find issue numbers in the branch name or recent commits.
+   Which GitHub issue number(s) does this branch implement? (space or comma separated, or 'none' if no associated issues)"
    ```
 
-Store `ISSUE_NUMBER` (a number, or the string `"none"`).
+Store `ISSUE_NUMBERS` as a list (e.g. `[28, 29, 36, 37]`), or the string `"none"` if no issues.
+
+For convenience, also store:
+- `PRIMARY_ISSUE` — the first number in the list (used when a single reference is needed)
+- `IS_MULTI_ISSUE` — true if `ISSUE_NUMBERS` has more than one entry
 
 ---
 
@@ -58,9 +63,10 @@ gh pr list --head $BRANCH_NAME --json number,url,state
   ```bash
   git push -u origin $BRANCH_NAME
   ```
-- If `ISSUE_NUMBER` is not "none", run the label update inline (since github-issue-manager will be skipped). `gh issue edit` exits 0 when removing a label that isn't present, so no guard is needed:
+- If `ISSUE_NUMBERS` is not "none", run the label update for ALL issues. `gh issue edit` exits 0 when removing a label that isn't present, so no guard is needed:
   ```bash
-  gh issue edit $ISSUE_NUMBER --remove-label "in-progress" --add-label "in-review"
+  # Run for EACH issue number in ISSUE_NUMBERS:
+  gh issue edit $N --remove-label "in-progress" --add-label "in-review"
   ```
 - Skip to Step 3.5.
 
@@ -74,11 +80,19 @@ Launch the `github-issue-manager` subagent with this context:
 
 ```
 You are the github-issue-manager subagent.
-ISSUE_NUMBER: [issue number or "none"]
+ISSUE_NUMBERS: [list of issue numbers, or "none"]
 BRANCH_NAME: [branch name]
 
+This branch implements [single issue / multiple issues].
+
 Follow your agent instructions completely.
+- The PR title should summarize ALL issues, not just one.
+- The PR body must include "Closes #N" for EACH issue number.
+- Update labels (in-progress → in-review) on ALL issues.
+
 Your final output line must match exactly:
+  PR: [URL] (#[PR_NUMBER]) | Issues #N, #M, ...: in-progress → in-review
+  or for single issue:
   PR: [URL] (#[PR_NUMBER]) | Issue #N: in-progress → in-review
   or for no-issue branches:
   PR: [URL] (#[PR_NUMBER]) | No issue — infrastructure branch
@@ -132,10 +146,10 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
 4. Increment `CI_ATTEMPT`. Return to top of CI loop.
 
 **If any check fails AND CI_ATTEMPT >= MAX_CI_ATTEMPTS:**
-1. If ISSUE_NUMBER is not "none":
+1. If ISSUE_NUMBERS is not "none", run for EACH issue number:
    ```bash
-   gh issue edit $ISSUE_NUMBER --add-label "needs-human"
-   gh issue comment $ISSUE_NUMBER --body "CI checks failed after 2 auto-fix attempts. Please resolve the failures manually before merging. PR: [PR_URL]"
+   gh issue edit $N --add-label "needs-human"
+   gh issue comment $N --body "CI checks failed after 2 auto-fix attempts. Please resolve the failures manually before merging. PR: [PR_URL]"
    ```
 2. Stop. Report to user: `"CI still failing after 2 fix attempts. Needs human. PR: [PR_URL]"`
 
@@ -177,7 +191,56 @@ Determine the test command from the agent type:
 
 Store as `TEST_COMMAND`. If the test infrastructure doesn't exist yet, the fixer will skip gracefully.
 
-### 4b — Review Loop
+### 4b — Multi-Issue Scoped Review (when IS_MULTI_ISSUE is true)
+
+When the branch solves multiple issues, launch **one code-reviewer per issue IN PARALLEL** instead of a single reviewer for the whole PR. Each reviewer is scoped to the files relevant to its issue.
+
+**Build per-issue file scopes:**
+
+For each issue number in `ISSUE_NUMBERS`:
+1. Read the issue body from GitHub: `gh issue view $N --json body,title`
+2. Extract the file paths mentioned in the issue (acceptance criteria, file paths section, etc.)
+3. Cross-reference with the actual changed files on the branch (`git diff --name-only origin/main..HEAD`)
+4. Assign each changed file to the issue that most closely owns it. Files not clearly owned by any single issue get assigned to the issue whose scope is broadest.
+
+Store as `ISSUE_FILE_SCOPES` — a map of issue number → list of file paths.
+
+**Launch parallel reviewers:**
+
+For EACH issue in `ISSUE_NUMBERS`, launch a `code-reviewer` subagent **in parallel** (all in a single message with multiple Agent tool calls, using `run_in_background: true`):
+
+```
+You are the code-reviewer subagent.
+PR_NUMBER: [PR number]
+ISSUE_NUMBER: [this specific issue number]
+BRANCH_NAME: [branch name]
+
+This PR covers multiple issues. You are reviewing ONLY the scope of issue #[N]: "[issue title]".
+
+Focus your review on these files:
+[list of files from ISSUE_FILE_SCOPES for this issue]
+
+Follow your agent instructions completely.
+Your final output must include:
+  Review complete on PR #[PR] (scope: issue #[N])
+  🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
+  Verdict: [LGTM / Needs Changes / Critical Fixes Required]
+```
+
+Wait for ALL reviewers to complete. Collect results from each.
+
+**Aggregate results:**
+- `TOTAL_CRITICAL` = sum of Critical counts across all reviewers
+- `TOTAL_WARNINGS` = sum of Warning counts
+- `TOTAL_INFO` = sum of Info counts
+- `AGGREGATE_VERDICT`:
+  - If any reviewer returned "Critical Fixes Required" → "Critical Fixes Required"
+  - Else if any returned "Needs Changes" → "Needs Changes"
+  - Else → "LGTM"
+
+**Then proceed to the fix loop below using the aggregated results.** When fetching critical comments for the fixer, fetch from ALL reviewers (they all posted to the same PR).
+
+### 4b-alt — Single-Issue Review (when IS_MULTI_ISSUE is false)
 
 Set `REVIEW_PASS = 1`, `MAX_REVIEW_PASSES = 3`, and `PREVIOUS_FALSE_POSITIVES = []` (empty list).
 
@@ -321,10 +384,10 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      Increment `REVIEW_PASS`. Return to the top of the review loop (re-launch code-reviewer).
 
 - **If Critical > 0 AND REVIEW_PASS >= MAX_REVIEW_PASSES:**
-  1. If ISSUE_NUMBER is not "none":
+  1. If ISSUE_NUMBERS is not "none", run for EACH issue number:
      ```bash
-     gh issue edit $ISSUE_NUMBER --add-label "needs-human"
-     gh issue comment $ISSUE_NUMBER --body "$(cat <<'EOF'
+     gh issue edit $N --add-label "needs-human"
+     gh issue comment $N --body "$(cat <<'EOF'
 ## Review Loop Exhausted — Needs Human
 
 Critical issues found by the code-reviewer persist after 2 auto-fix attempts
@@ -342,18 +405,28 @@ EOF
 Output a clean summary to the user:
 
 ```
-[If ISSUE_NUMBER is not "none":]
-✅ Finalize complete for issue #[ISSUE_NUMBER]
-[If ISSUE_NUMBER is "none":]
+[If ISSUE_NUMBERS is not "none" and IS_MULTI_ISSUE:]
+✅ Finalize complete for issues #N, #M, #P, #Q
+[If ISSUE_NUMBERS is not "none" and not IS_MULTI_ISSUE:]
+✅ Finalize complete for issue #[PRIMARY_ISSUE]
+[If ISSUE_NUMBERS is "none":]
 ✅ Finalize complete — infrastructure branch
 
 📝 PR: [PR_URL]
-[If ISSUE_NUMBER is not "none":]
-🏷️  Labels: in-progress → in-review
-[If ISSUE_NUMBER is "none":]
+[If ISSUE_NUMBERS is not "none":]
+🏷️  Labels: in-progress → in-review (all issues)
+[If ISSUE_NUMBERS is "none":]
 🏷️  Labels: N/A — no associated issue
 
 🔍 Code Review Results:
+[If IS_MULTI_ISSUE, show per-issue breakdown:]
+   Issue #N: 🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N  — [verdict]
+   Issue #M: 🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N  — [verdict]
+   ...
+   ─────────
+   Overall:  🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
+   Verdict: [aggregate verdict]
+[If not IS_MULTI_ISSUE:]
    🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
    Verdict: [verdict]
 
