@@ -168,6 +168,7 @@ Do NOT use `--no-verify` to skip hooks unless the user explicitly requests it.
 
 ## Code Quality
 
+- Coding standards enforced via `.claude/rules/` (auto-loaded per context). Full reference: `research/coding-standards.md`.
 - No app code yet. When writing app code: tests first, always.
 - Follow existing patterns — read the file before editing.
 - Do not add docstrings, comments, or type annotations to code you didn't change.
