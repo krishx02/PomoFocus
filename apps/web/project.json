@@ -5,6 +5,12 @@
   "projectType": "application",
   "tags": ["type:app", "scope:web"],
   "targets": {
+    "lint": {
+      "command": "npx eslint .",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.json --noEmit",
       "options": {

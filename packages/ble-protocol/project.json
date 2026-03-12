@@ -5,6 +5,12 @@
   "projectType": "library",
   "tags": ["type:ble", "scope:shared"],
   "targets": {
+    "lint": {
+      "command": "npx eslint .",
+      "options": {
+        "cwd": "packages/ble-protocol"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.lib.json --noEmit",
       "options": {

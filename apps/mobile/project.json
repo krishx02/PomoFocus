@@ -5,6 +5,12 @@
   "projectType": "application",
   "tags": ["type:app", "scope:mobile"],
   "targets": {
+    "lint": {
+      "command": "npx eslint .",
+      "options": {
+        "cwd": "apps/mobile"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.json --noEmit",
       "options": {
