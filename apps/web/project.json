@@ -1,20 +1,20 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@pomofocus/api",
-  "sourceRoot": "apps/api/src",
+  "name": "@pomofocus/web",
+  "sourceRoot": "apps/web",
   "projectType": "application",
-  "tags": ["type:app", "scope:shared"],
+  "tags": ["type:app", "scope:web"],
   "targets": {
     "lint": {
       "command": "npx eslint .",
       "options": {
-        "cwd": "apps/api"
+        "cwd": "apps/web"
       }
     },
     "type-check": {
-      "command": "tsc -p tsconfig.lib.json --noEmit",
+      "command": "tsc -p tsconfig.json --noEmit",
       "options": {
-        "cwd": "apps/api"
+        "cwd": "apps/web"
       }
     }
   }

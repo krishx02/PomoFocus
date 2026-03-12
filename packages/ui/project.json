@@ -5,6 +5,12 @@
   "projectType": "library",
   "tags": ["type:ui", "scope:shared"],
   "targets": {
+    "lint": {
+      "command": "npx eslint .",
+      "options": {
+        "cwd": "packages/ui"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.lib.json --noEmit",
       "options": {
