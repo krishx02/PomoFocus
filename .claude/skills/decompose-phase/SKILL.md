@@ -147,7 +147,7 @@ Plus a type label:
 
 When specifying Nx project tags in issue body (Affected Files or Acceptance Criteria), always include BOTH dimensions from `coding-standards-eslint-nx.md` Section 4:
 - Type tag: `type:domain`, `type:types`, `type:infra`, `type:ble`, `type:state`, `type:ui`, `type:app`
-- Scope tag: `scope:shared`, `scope:web`, `scope:mobile`, `scope:vscode`, `scope:mcp`, `scope:api`
+- Scope tag: `scope:shared`, `scope:web`, `scope:mobile`, `scope:vscode`, `scope:mcp`
 
 ## Step 6 — Create Labels (if needed)
 

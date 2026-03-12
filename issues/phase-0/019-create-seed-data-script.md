@@ -31,10 +31,13 @@ Seed data enables local development and manual testing without manually creating
 - [ ] At least 1 friendship between the test users
 - [ ] `supabase db reset` applies migrations and seed without error
 
+## Notes
+
+The seed script must insert test users into `auth.users` first (required for `profiles.auth_user_id` NOT NULL FK). This is standard practice for Supabase local development — `auth.users` is only "managed by Supabase Auth" in production. `supabase db reset` runs against a local Postgres instance where direct `auth.users` inserts are necessary and expected.
+
 ## Out of Scope
 
 - Do NOT create test fixtures for automated tests (those belong in test files)
-- Do NOT seed auth.users (Supabase Auth manages that table)
 
 ## Test Plan
 

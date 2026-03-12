@@ -216,11 +216,11 @@ This phase is pure structural investment (Beck's S-changes). It produces no user
 - **Est. issues:** 8-12 (scaffold root, scaffold each of 7 packages, scaffold each of 3 apps, configure dependency constraints)
 
 ### 0.2 Supabase Project + Core Schema Migration
-- **What:** Create Supabase project, write SQL migration for all 12 tables (profiles, user_preferences, long_term_goals, process_goals, sessions, breaks, devices, device_sync_log, friend_requests, friendships, encouragement_taps) with 9 enums, UUID PKs, timestamptz columns, foreign keys, check constraints, and the `get_user_id()` helper function.
+- **What:** Create Supabase project, write SQL migration for all 11 application tables (profiles, user_preferences, long_term_goals, process_goals, sessions, breaks, devices, device_sync_log, friend_requests, friendships, encouragement_taps) with 9 enums, UUID PKs, timestamptz columns, foreign keys, check constraints, and the `get_user_id()` helper function.
 - **Why here:** `packages/types` is generated from the schema. The schema is the source of truth for the entire type system. Without it, no typed code can be written.
 - **Packages/files:** `supabase/migrations/`, `supabase/config.toml`, root `.env` (Supabase URL + anon key, gitignored)
 - **ADR(s):** [ADR-005](./decisions/005-database-schema-data-model.md), [design doc](./designs/database-schema-data-model.md)
-- **Acceptance signal:** `supabase db push` applies all migrations without error. All 12 tables visible in Supabase dashboard. `get_user_id()` function exists.
+- **Acceptance signal:** `supabase db push` applies all migrations without error. All 11 application tables visible in Supabase dashboard. `get_user_id()` function exists.
 - **Est. issues:** 8-10 (enum types migration, profiles + user_preferences, goals tables, sessions + breaks, devices + sync_log, social tables, get_user_id function, RLS policies skeleton, seed data script)
 
 ### 0.3 Type Generation Pipeline
@@ -242,7 +242,7 @@ This phase is pure structural investment (Beck's S-changes). It produces no user
 ### 0.5 Linting + Formatting Configuration
 - **What:** Configure ESLint (flat config) + Prettier for the entire monorepo. Set up shared rules. Enforce import direction constraints (`core` cannot import `data-access`, etc.). Configure TypeScript strict mode.
 - **Why here:** Agents produce better code with lint feedback. Import direction enforcement prevents coupling violations that are expensive to fix later.
-- **Packages/files:** Root `eslint.config.js`, `.prettierrc`, each `tsconfig.json` strict settings, `.vscode/settings.json`
+- **Packages/files:** Root `eslint.config.ts`, `.prettierrc`, each `tsconfig.json` strict settings, `.vscode/settings.json`
 - **ADR(s):** [ADR-001](./decisions/001-monorepo-package-structure.md), [ADR-009](./decisions/009-ci-cd-pipeline-design.md)
 - **Acceptance signal:** `pnpm nx lint @pomofocus/core` passes. Importing `@pomofocus/data-access` from `@pomofocus/core` triggers a lint error. `pnpm nx affected --target=lint` runs on all affected packages.
 - **Est. issues:** 5-7 (ESLint flat config, Prettier config, per-package overrides, import boundary rules, TypeScript strict mode, VS Code settings, pre-commit check)
@@ -346,11 +346,11 @@ This is the tracer bullet. Real architecture, just thin. Every component is prod
 - **Est. issues:** 5-7 (JWT extraction middleware, Supabase token forwarding, get_user_id migration, 401 response handling, auth integration tests, rate limiting skeleton)
 
 ### 2.3 RLS Policies — All Tables
-- **What:** Write Row Level Security policies for all 12 tables using `get_user_id()` helper. Users can only read/write their own data. Social tables (friend_requests, friendships, encouragement_taps) have bidirectional policies. Test each policy.
+- **What:** Write Row Level Security policies for all 11 application tables using `get_user_id()` helper. Users can only read/write their own data. Social tables (friend_requests, friendships, encouragement_taps) have bidirectional policies. Test each policy.
 - **Why here:** RLS is defense-in-depth (ADR-012). It must be active before any real user data flows through the system. Testing RLS policies now prevents security issues later.
 - **Packages/files:** `supabase/migrations/` (RLS policies)
 - **ADR(s):** [ADR-005](./decisions/005-database-schema-data-model.md), [ADR-012](./decisions/012-security-data-privacy.md)
-- **Acceptance signal:** User A cannot read User B's sessions. User A can read their own friend_requests (sent and received). All 12 tables have active RLS policies. Integration tests verify isolation.
+- **Acceptance signal:** User A cannot read User B's sessions. User A can read their own friend_requests (sent and received). All 11 application tables have active RLS policies. Integration tests verify isolation.
 - **Est. issues:** 6-8 (RLS for profiles + user_preferences, RLS for goals tables, RLS for sessions + breaks, RLS for devices + sync_log, RLS for social tables, integration tests, policy documentation)
 
 ### 2.4 Goals Model
@@ -778,7 +778,7 @@ Phase 0.1 (monorepo) + 7A.5 (.proto file)
 - **Why here:** GDPR compliance is required before any EU user data is collected. These endpoints should be available at launch, not added retroactively.
 - **Packages/files:** `apps/api/src/routes/me.ts`, `supabase/migrations/` (cascade rules if not already in place)
 - **ADR(s):** [ADR-012](./decisions/012-security-data-privacy.md)
-- **Acceptance signal:** `DELETE /v1/me` removes all user data (verified by querying all 12 tables). `GET /v1/me/export` returns complete JSON with all user data. No orphaned records after deletion.
+- **Acceptance signal:** `DELETE /v1/me` removes all user data (verified by querying all 11 application tables). `GET /v1/me/export` returns complete JSON with all user data. No orphaned records after deletion.
 - **Est. issues:** 4-5 (DELETE endpoint with cascade, export endpoint, cascade verification tests, cron trigger for backup purge, export format validation)
 
 ### 9.3 User Preferences

@@ -1733,19 +1733,19 @@ CREATE TABLE sessions (
 ### DB-003: Postgres ENUM types for fixed values
 
 **Scope:** All SQL migrations
-**Rule:** Use Postgres `CREATE TYPE ... AS ENUM` for fixed domain values (timer_status, goal_category, distraction_type). Never store enum values as plain `text`.
+**Rule:** Use Postgres `CREATE TYPE ... AS ENUM` for fixed domain values (focus_quality, break_type, distraction_type). Never store enum values as plain `text`.
 **Why:** `text` columns accept any string — a typo like `'focussing'` instead of `'focusing'` silently corrupts data. ENUM types enforce valid values at the database level. ([ADR-005](./decisions/005-database-schema-data-model.md))
 
 ```sql
 -- Bad
 CREATE TABLE sessions (
-  status text NOT NULL  -- accepts 'anything'!
+  quality text  -- accepts 'anything'!
 );
 
 -- Good
-CREATE TYPE timer_status AS ENUM ('idle', 'focusing', 'paused', 'short_break', 'long_break', 'break_paused', 'reflection', 'completed', 'abandoned');
+CREATE TYPE focus_quality AS ENUM ('locked_in', 'decent', 'struggled');
 CREATE TABLE sessions (
-  status timer_status NOT NULL
+  focus_quality focus_quality  -- only valid values accepted
 );
 ```
 

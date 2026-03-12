@@ -36,7 +36,7 @@ Use exact tag names from `coding-standards-eslint-nx.md` Section 4-5:
   - `type:state` depends on `['type:domain', 'type:infra', 'type:types']`
   - `type:ui` depends on `['type:types']`
   - `type:app` depends on `['type:state', 'type:domain', 'type:infra', 'type:ble', 'type:ui', 'type:types']`
-  - Scope constraints: `scope:web`/`scope:mobile`/`scope:vscode`/`scope:mcp`/`scope:api` depend on `['scope:shared']`
+  - Scope constraints: `scope:web`/`scope:mobile`/`scope:vscode`/`scope:mcp` depend on `['scope:shared']`; `scope:shared` depends on `['scope:shared']`
 - [ ] Importing `@pomofocus/data-access` from `packages/core/` triggers a lint error (`type:domain` cannot depend on `type:infra`)
 - [ ] Importing `@pomofocus/state` from `packages/core/` triggers a lint error
 - [ ] Importing `@pomofocus/core` from `packages/types/` triggers a lint error
