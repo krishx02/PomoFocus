@@ -18,6 +18,23 @@ importers:
         specifier: ^5.8.3
         version: 5.9.3
 
+  packages/analytics:
+    dependencies:
+      '@pomofocus/core':
+        specifier: workspace:*
+        version: link:../core
+      '@pomofocus/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/core:
+    dependencies:
+      '@pomofocus/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/types: {}
+
 packages:
 
   '@emnapi/core@1.8.1':
