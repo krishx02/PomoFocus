@@ -5,6 +5,12 @@
   "projectType": "library",
   "tags": ["type:types", "scope:shared"],
   "targets": {
+    "gen": {
+      "command": "pnpm run gen:types",
+      "options": {
+        "cwd": "packages/types"
+      }
+    },
     "lint": {
       "command": "npx eslint .",
       "options": {
