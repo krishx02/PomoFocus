@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@pomofocus/mobile",
+  "sourceRoot": "apps/mobile",
+  "projectType": "application",
+  "tags": ["type:app", "scope:mobile"],
+  "targets": {
+    "type-check": {
+      "command": "tsc -p tsconfig.json --noEmit",
+      "options": {
+        "cwd": "apps/mobile"
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "PomoFocus",
+    "slug": "pomofocus",
+    "version": "0.0.1",
+    "platforms": ["ios", "android"],
+    "scheme": "pomofocus",
+    "ios": {
+      "bundleIdentifier": "com.pomofocus.app"
+    },
+    "android": {
+      "package": "com.pomofocus.app"
+    }
+  }
+}
