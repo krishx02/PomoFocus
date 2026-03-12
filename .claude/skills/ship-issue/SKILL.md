@@ -4,7 +4,7 @@ description: Pick up a GitHub issue by number. If effort:large, decomposes it in
 user-invocable: true
 context: fork
 isolation: worktree
-allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Read, Edit, Write, Grep, Glob
+allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(npx *), Bash(node *), Bash(xcodebuild *), Bash(maestro *), Bash(ls *), Bash(cat *), Bash(echo *), Bash(test *), Bash(mkdir *), Bash(command *), Read, Edit, Write, Grep, Glob
 compatibility: "Requires gh CLI, git, pnpm. Claude Code only."
 argument-hint: "[issue number]"
 metadata:
