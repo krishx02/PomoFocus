@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@pomofocus/ui",
+  "sourceRoot": "packages/ui/src",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:shared"],
+  "targets": {
+    "type-check": {
+      "command": "tsc -p tsconfig.lib.json --noEmit",
+      "options": {
+        "cwd": "packages/ui"
+      }
+    }
+  }
+}

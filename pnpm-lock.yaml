@@ -27,13 +27,42 @@ importers:
         specifier: workspace:*
         version: link:../types
 
+  packages/ble-protocol: {}
+
   packages/core:
     dependencies:
       '@pomofocus/types':
         specifier: workspace:*
         version: link:../types
 
+  packages/data-access:
+    dependencies:
+      '@pomofocus/core':
+        specifier: workspace:*
+        version: link:../core
+      '@pomofocus/types':
+        specifier: workspace:*
+        version: link:../types
+
+  packages/state:
+    dependencies:
+      '@pomofocus/core':
+        specifier: workspace:*
+        version: link:../core
+      '@pomofocus/data-access':
+        specifier: workspace:*
+        version: link:../data-access
+      '@pomofocus/types':
+        specifier: workspace:*
+        version: link:../types
+
   packages/types: {}
+
+  packages/ui:
+    dependencies:
+      '@pomofocus/types':
+        specifier: workspace:*
+        version: link:../types
 
 packages:
 
