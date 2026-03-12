@@ -3,7 +3,7 @@ name: finalize
 description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches the code-reviewer subagent to post inline review comments. Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Use when user says "create the PR", "finalize this branch", "I'm done implementing", or "ship it".
 user-invocable: true
 context: fork
-allowed-tools: Bash(gh *), Bash(git *), Agent
+allowed-tools: Bash(gh *), Bash(git *), Bash(timeout *), Bash(echo *), Agent
 compatibility: "Requires gh CLI, git. Claude Code only."
 argument-hint: "[issue number]"
 metadata:
@@ -13,7 +13,7 @@ metadata:
 
 Issue number: $ARGUMENTS
 
-You are the finalization orchestrator. The implementation is done and tests pass. Your job is to hand off to two specialized agents — one that creates the PR, one that reviews it — and report the outcome.
+You are the finalization orchestrator. The implementation is done and tests pass (including pre-finalize checks from `/ship-issue`). Your job is to hand off to two specialized agents — one that creates the PR, one that reviews it — and report the outcome.
 
 Do NOT implement any code. Do NOT read or modify source files. You are a coordinator only.
 
@@ -141,11 +141,52 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
 
 ---
 
-## Step 4 — Launch code-reviewer (with auto-fix loop)
+## Step 4 — Code Review with Verify-Then-Fix Loop
 
-Set `REVIEW_PASS = 1` and `MAX_REVIEW_PASSES = 3`.
+### 4a — Determine Fixer Agent Type
+
+Before starting the review loop, detect which platform-specific agent should handle fixes:
+
+```bash
+git diff --name-only origin/main..HEAD
+```
+
+Map the changed files to a fixer agent type:
+
+- If ALL changed source files are under `packages/` → `shared-developer`
+- If ALL under `apps/web/` → `web-developer`
+- If ALL under `apps/mobile/` (excluding `targets/ios-widget/`) → `mobile-developer`
+- If ALL under `native/apple/` or `apps/mobile/targets/ios-widget/` → `ios-developer`
+- If ALL under `apps/vscode-extension/` → `vscode-developer`
+- If ALL under `apps/mcp-server/` → `mcp-developer`
+- If files span multiple buckets, or only non-source files changed → `general-purpose`
+
+Ignore non-source files (`.md`, `.yml`, `.json` at root) when determining the bucket. Store as `FIXER_AGENT_TYPE`.
+
+Determine the test command from the agent type:
+
+| Agent Type | Test Command |
+|-----------|-------------|
+| `shared-developer` | `pnpm nx affected --target=test --base=origin/main --head=HEAD && pnpm nx affected --target=type-check --base=origin/main --head=HEAD` |
+| `web-developer` | `pnpm nx test @pomofocus/web && pnpm nx type-check @pomofocus/web` |
+| `mobile-developer` | `pnpm nx test @pomofocus/mobile && pnpm nx type-check @pomofocus/mobile` |
+| `ios-developer` | `xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"` |
+| `vscode-developer` | `pnpm nx test @pomofocus/vscode-extension && pnpm nx type-check @pomofocus/vscode-extension` |
+| `mcp-developer` | `pnpm nx test @pomofocus/mcp-server && pnpm nx type-check @pomofocus/mcp-server` |
+| `general-purpose` | `pnpm nx affected --target=test --base=origin/main --head=HEAD && pnpm nx affected --target=type-check --base=origin/main --head=HEAD` |
+
+Store as `TEST_COMMAND`. If the test infrastructure doesn't exist yet, the fixer will skip gracefully.
+
+### 4b — Review Loop
+
+Set `REVIEW_PASS = 1`, `MAX_REVIEW_PASSES = 3`, and `PREVIOUS_FALSE_POSITIVES = []` (empty list).
 
 **Review loop** — repeat until verdict is LGTM or max passes exceeded:
+
+Record the current UTC timestamp before launching the reviewer:
+```bash
+REVIEW_START=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+```
 
 Launch the `code-reviewer` subagent with this context:
 
@@ -168,29 +209,116 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
 
 - **If Verdict = "LGTM"** → proceed to Step 5.
 
+- **If Critical == 0 (only Warnings/Info)** → proceed to Step 5.
+  Warnings are informational — the human reviewer decides whether to fix them before merging.
+
 - **If Critical > 0 AND REVIEW_PASS < MAX_REVIEW_PASSES:**
-  1. Report to the user: `"Review pass [REVIEW_PASS]: Found [Critical] critical issue(s). Attempting auto-fix..."`
-  2. Fetch the critical inline comments via the GitHub API:
+
+  1. Report to the user: `"Review pass [REVIEW_PASS]: Found [Critical] critical issue(s). Launching independent fixer..."`
+
+  2. Fetch critical inline comments from THIS review pass only (filter by timestamp):
      ```bash
      REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
      gh api repos/$REPO/pulls/$PR_NUMBER/comments \
-       --jq '.[] | select(.body | startswith("🔴")) | {body, path, line, original_line, diff_hunk}'
+       --jq '[.[] | select(.body | startswith("🔴")) | select(.created_at > "'"$REVIEW_START"'") | {id, body, path, line, original_line, diff_hunk}]'
      ```
-  3. Use the Agent tool with `subagent_type: general-purpose` to fix the critical findings.
-     Provide this prompt (substituting real values for bracketed placeholders):
+
+  3. Filter out previously confirmed false positives. For each comment, check if `[path]:[line]` appears in `PREVIOUS_FALSE_POSITIVES`. Remove matches from the list.
+
+  4. **If ALL remaining criticals were filtered out** (all are repeat false positives):
+     ```bash
+     gh pr comment $PR_NUMBER --body "$(cat <<'FPEOF'
+     ## False Positive Assessment
+
+     The independent fixer agent previously verified these critical findings
+     and determined they are false positives. No code changes needed.
+
+     [list each false positive: path:line — reason]
+     FPEOF
+     )"
      ```
-     You are a code fixer. You have been given the following 🔴 CRITICAL review comments
-     from a code review of branch [BRANCH_NAME]. Fix each one. Do not change anything else.
+     Proceed to Step 5 (skip re-review — no code changed).
 
-     [paste the JSON output from the gh api command above]
+  5. **Otherwise**, launch the fixer agent using the Agent tool with `subagent_type: [FIXER_AGENT_TYPE]`:
 
-     After fixing all issues:
+     ```
+     You are an independent code fixer. You have received review findings from a
+     code review of branch [BRANCH_NAME]. Your job is to VERIFY each finding
+     independently before making any changes.
+
+     ## Protocol
+
+     For EACH finding below, follow these three steps in order:
+
+     ### 1. VERIFY
+     - Read the file at the specified path
+     - Read at least 20 lines above and below the flagged line to understand
+       the code's full intent and context
+     - If the finding references interactions with other code, read that code too
+     - Determine independently whether the reviewer's finding is a real issue
+
+     ### 2. DECIDE
+     - If the finding IS a real issue: fix it. Use the reviewer's suggested fix
+       if correct, or implement a better fix if you see one.
+     - If the finding is NOT a real issue (false positive): do NOT change the
+       code. Record it as a false positive with a clear reason.
+
+     ### 3. TEST
+     - After all fixes are applied, run the test command to verify nothing broke:
+       [TEST_COMMAND]
+     - If the test command fails or the test infrastructure doesn't exist yet,
+       note this in your output but do not block on it.
+
+     ## Findings to Review
+
+     [paste the filtered JSON array of critical comments]
+
+     ## Output Format
+
+     After completing all verifications and fixes, output a structured results
+     block. This MUST be the last thing you output:
+
+     === FIXER RESULTS ===
+     [For each finding, exactly one line:]
+     FIXED: [path]:[line] — [what was changed and why]
+     or
+     FALSE_POSITIVE: [path]:[line] — [why this is not a real issue]
+     === END RESULTS ===
+
+     ## Rules
+     - Read before fixing — never apply a fix without understanding the context
      - Stage only the changed files by name (do NOT use git add -A)
-     - Run: git commit -m "fix: address critical review comments (pass [REVIEW_PASS])"
-     - Run: git push -u origin [BRANCH_NAME]
+     - If any fixes were made:
+       git commit -m "fix: address review findings (pass [REVIEW_PASS])"
+       git push -u origin [BRANCH_NAME]
+     - If ALL findings are false positives: do NOT commit or push
      ```
-  4. Increment `REVIEW_PASS`.
-  5. Return to the top of the review loop (re-launch code-reviewer).
+
+  6. Parse the fixer's output between `=== FIXER RESULTS ===` and `=== END RESULTS ===`:
+     - Count lines starting with `FIXED:` → `FIXES_APPLIED`
+     - Collect lines starting with `FALSE_POSITIVE:` → add their `[path]:[line]` to `PREVIOUS_FALSE_POSITIVES`
+
+     **If the fixer output does not contain the structured results block:** assume all findings were addressed (`FIXES_APPLIED = number of criticals`). This is the safe default — the re-reviewer will catch anything still broken.
+
+  7. **If `FIXES_APPLIED == 0`** (all false positives this round):
+     Post a PR comment summarizing the assessments:
+     ```bash
+     gh pr comment $PR_NUMBER --body "$(cat <<'FPEOF'
+     ## False Positive Assessment (Pass [REVIEW_PASS])
+
+     The independent fixer agent verified each critical finding and determined
+     they are false positives:
+
+     [For each FALSE_POSITIVE entry: "- **[path]:[line]** — [reason]"]
+
+     No code changes were made.
+     FPEOF
+     )"
+     ```
+     Proceed to Step 5 (skip re-review — no code changed).
+
+  8. **If `FIXES_APPLIED > 0`:**
+     Increment `REVIEW_PASS`. Return to the top of the review loop (re-launch code-reviewer).
 
 - **If Critical > 0 AND REVIEW_PASS >= MAX_REVIEW_PASSES:**
   1. If ISSUE_NUMBER is not "none":
@@ -206,9 +334,6 @@ EOF
 )"
      ```
   2. Stop. Report to user: `"Critical issues persist after 3 review passes. Needs human review. PR: [PR_URL]"`
-
-- **If Critical == 0 (only Warnings/Info)** → proceed to Step 5.
-  Warnings are informational — the human reviewer decides whether to fix them before merging.
 
 ---
 
@@ -238,3 +363,36 @@ Output a clean summary to the user:
 [If Critical == 0 and Warnings == 0]:
 🚀 No critical issues. Ready for human review.
 ```
+
+---
+
+## Step 6 — In-Terminal Changelog
+
+After printing the Final Report, output a high-level overview of what changed in the repo so the user doesn't have to open the PR to understand what was done.
+
+Run:
+```bash
+git log --oneline origin/main..HEAD
+```
+
+and:
+```bash
+git diff --stat origin/main..HEAD
+```
+
+Then output a human-readable summary in this format:
+
+```
+📋 What changed:
+   - [1-sentence summary of the most significant change]
+   - [1-sentence summary of second change, if any]
+   - [... more bullets as needed, one per logical change — not per commit]
+
+   Files: N changed, N insertions(+), N deletions(-)
+```
+
+Guidelines:
+- Group related commits into a single bullet (e.g. 3 commits that set up Supabase = one bullet about Supabase init)
+- Use plain language, not commit message jargon
+- Keep it to 3-7 bullets max — if more changes exist, summarize the tail as "... and N other minor changes"
+- The file stats line comes from `git diff --stat` (the last summary line)

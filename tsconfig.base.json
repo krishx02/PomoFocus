@@ -1,0 +1,29 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@pomofocus/types": ["packages/types/src/index.ts"],
+      "@pomofocus/core": ["packages/core/src/index.ts"],
+      "@pomofocus/analytics": ["packages/analytics/src/index.ts"],
+      "@pomofocus/data-access": ["packages/data-access/src/index.ts"],
+      "@pomofocus/state": ["packages/state/src/index.ts"],
+      "@pomofocus/ui": ["packages/ui/src/index.ts"],
+      "@pomofocus/ble-protocol": ["packages/ble-protocol/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

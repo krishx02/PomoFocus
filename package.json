@@ -1,0 +1,17 @@
+{
+  "name": "@pomofocus/root",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "nx": "nx"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["nx", "supabase"]
+  },
+  "devDependencies": {
+    "nx": "^21.3.2",
+    "supabase": "^2.78.1",
+    "typescript": "^5.8.3"
+  }
+}
