@@ -59,7 +59,7 @@ enabled = true
 sql_paths = ["./seed.sql"]
 
 [realtime]
-enabled = true
+enabled = false
 
 [studio]
 enabled = true
