@@ -57,3 +57,7 @@ CREATE TRIGGER tr_long_term_goals_updated_at
 
 CREATE TRIGGER tr_process_goals_updated_at
   BEFORE UPDATE ON process_goals FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Enable RLS (default-deny until policies are added in #41)
+ALTER TABLE long_term_goals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE process_goals ENABLE ROW LEVEL SECURITY;

@@ -29,3 +29,7 @@ CREATE TABLE user_preferences (
   created_at                  timestamptz NOT NULL DEFAULT now(),
   updated_at                  timestamptz NOT NULL DEFAULT now()
 );
+
+-- Enable RLS (default-deny until policies are added in #41)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
