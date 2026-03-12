@@ -9,6 +9,16 @@ CREATE OR REPLACE FUNCTION get_user_id() RETURNS uuid AS $$
   SELECT id FROM profiles WHERE auth_user_id = auth.uid()
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
+-- ---- Missing updated_at triggers for profiles and user_preferences ----
+-- (update_updated_at() was created in migration 000002 but these tables
+--  were created in 000001 before the function existed)
+
+CREATE TRIGGER tr_profiles_updated_at
+  BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER tr_user_preferences_updated_at
+  BEFORE UPDATE ON user_preferences FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- ---- profiles (uses auth.uid() directly, not get_user_id()) ----
 
 CREATE POLICY "profiles_select_own" ON profiles
