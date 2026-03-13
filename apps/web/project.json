@@ -11,6 +11,12 @@
         "cwd": "apps/web"
       }
     },
+    "test": {
+      "command": "vitest run --config vitest.config.ts",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.json --noEmit",
       "options": {
