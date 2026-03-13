@@ -11,6 +11,12 @@
         "cwd": "packages/data-access"
       }
     },
+    "test": {
+      "command": "vitest run --config vitest.config.ts",
+      "options": {
+        "cwd": "packages/data-access"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.lib.json --noEmit",
       "options": {

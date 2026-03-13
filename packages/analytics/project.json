@@ -11,6 +11,12 @@
         "cwd": "packages/analytics"
       }
     },
+    "test": {
+      "command": "vitest run --config vitest.config.ts",
+      "options": {
+        "cwd": "packages/analytics"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.lib.json --noEmit",
       "options": {

@@ -11,6 +11,12 @@
         "cwd": "packages/ble-protocol"
       }
     },
+    "test": {
+      "command": "vitest run --config vitest.config.ts",
+      "options": {
+        "cwd": "packages/ble-protocol"
+      }
+    },
     "type-check": {
       "command": "tsc -p tsconfig.lib.json --noEmit",
       "options": {
