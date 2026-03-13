@@ -62,13 +62,19 @@ gh api repos/{owner}/{repo}/branches/main/protection \
     "contexts": ["Lint, Test, Type-check, Build"]
   },
   "enforce_admins": true,
-  "required_pull_request_reviews": null,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 0
+  },
   "restrictions": null,
   "allow_force_pushes": false,
   "allow_deletions": false
 }
 EOF
 ```
+
+> **Note:** `required_pull_request_reviews` must be an object (even with 0 approvals) to block
+> direct pushes to `main`. Setting it to `null` only enforces status checks — it does not
+> require a PR. The GitHub UI toggle "Require a pull request before merging" maps to this field.
 
 To verify the rules are applied:
 
