@@ -17,8 +17,8 @@ export type SessionData = {
   readonly deviceId: string | null;
 };
 
-/** Post-session reflection data. */
-export type ReflectionData = {
+/** Persisted reflection fields on a session record. */
+export type SessionReflection = {
   readonly focusQuality: FocusQuality | null;
   readonly distractionType: DistractionType | null;
   readonly notes: string | null;

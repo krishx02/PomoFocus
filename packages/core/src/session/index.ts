@@ -1,1 +1,1 @@
-export type { SessionData, ReflectionData } from './types.js';
+export type { SessionData, SessionReflection } from './types.js';
