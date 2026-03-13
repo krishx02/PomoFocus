@@ -6,6 +6,7 @@ import type {
 
 /** Pre-persistence session shape (domain layer, camelCase). */
 export type SessionData = {
+  readonly id: string;
   readonly userId: string;
   readonly processGoalId: string;
   readonly intentionText: string | null;
