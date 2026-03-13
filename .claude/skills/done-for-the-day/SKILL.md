@@ -147,6 +147,7 @@ prs_merged: [count of MERGED_PRS]
 [For each issue in CLOSED_ISSUES:]
 
 - [x] #[number] — [title] `[label1]` `[label2]`
+  - Why: [Read the issue body, labels (especially phase:* labels), and cross-reference with `research/mvp-roadmap.md` or the v1 build order in CLAUDE.md to write a 1-sentence explanation of WHY this issue existed — what phase it belongs to, what capability it unlocks, or what prerequisite it satisfies. Example: "Part of Phase 1 (monorepo scaffold) — establishes the shared type system that all packages depend on."]
   - How: [Read the issue body or PR description to write a 1-2 sentence summary of HOW the issue was implemented — what approach was taken, key files changed. If no detail is available, write "See PR for details."]
 
 [If CLOSED_ISSUES is empty:]
