@@ -102,34 +102,75 @@ export default tseslint.config(
       'no-var': 'error',
       'prefer-const': 'error',
 
-      // Nx module boundaries (existing — see issue #54 for future changes)
+      // Nx module boundaries (ADR-001)
       '@nx/enforce-module-boundaries': [
         'error',
         {
           enforceBuildableLibDependency: true,
           allow: [],
           depConstraints: [
-            { sourceTag: 'type:types', onlyDependOnLibsWithTags: [] },
+            // === Type tag constraints (ADR-001 dependency graph) ===
+
+            // types is a leaf — depends on nothing, no runtime dependencies
+            {
+              sourceTag: 'type:types',
+              onlyDependOnLibsWithTags: [],
+              bannedExternalImports: [
+                'react', 'react-native', '@supabase/*', 'zustand',
+                '@tanstack/*', 'hono', 'expo-*', '@sentry/*',
+              ],
+            },
+
+            // domain (core, analytics) depends on domain + types — no frameworks, no IO
             {
               sourceTag: 'type:domain',
               onlyDependOnLibsWithTags: ['type:domain', 'type:types'],
+              bannedExternalImports: [
+                'react', 'react-dom', 'react-native', 'react-native-*',
+                '@supabase/*', '@tanstack/*', 'zustand', 'zustand/*',
+                'hono', 'hono/*', 'expo-*', '@sentry/*',
+              ],
             },
+
+            // infra (data-access) depends on domain + types — no React, no state management
             {
               sourceTag: 'type:infra',
               onlyDependOnLibsWithTags: ['type:domain', 'type:types'],
+              bannedExternalImports: [
+                'react', 'react-dom', 'react-native',
+                'zustand', 'zustand/*', '@tanstack/*', '@sentry/*',
+              ],
             },
+
+            // ble-protocol depends on types only (PKG-B01) — no runtime deps
             {
               sourceTag: 'type:ble',
               onlyDependOnLibsWithTags: ['type:types'],
+              bannedExternalImports: [
+                'react', 'react-dom', 'react-native', 'react-native-*',
+                '@supabase/*', '@tanstack/*', 'zustand', 'zustand/*',
+                'hono', 'hono/*', 'expo-*', '@sentry/*',
+              ],
             },
+
+            // state depends on domain + infra + types — no direct Supabase
             {
               sourceTag: 'type:state',
               onlyDependOnLibsWithTags: ['type:domain', 'type:infra', 'type:types'],
+              bannedExternalImports: ['@supabase/*', '@sentry/*'],
             },
+
+            // ui depends on types only — no business logic, no state, no Supabase
             {
               sourceTag: 'type:ui',
               onlyDependOnLibsWithTags: ['type:types'],
+              bannedExternalImports: [
+                '@supabase/*', 'zustand', 'zustand/*',
+                '@tanstack/*', '@sentry/*',
+              ],
             },
+
+            // apps depend on everything
             {
               sourceTag: 'type:app',
               onlyDependOnLibsWithTags: [
@@ -141,6 +182,10 @@ export default tseslint.config(
                 'type:types',
               ],
             },
+
+            // === Scope tag constraints ===
+
+            // Platform apps can only depend on shared packages
             {
               sourceTag: 'scope:web',
               onlyDependOnLibsWithTags: ['scope:shared'],
@@ -159,6 +204,10 @@ export default tseslint.config(
             },
             {
               sourceTag: 'scope:api',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+            {
+              sourceTag: 'scope:shared',
               onlyDependOnLibsWithTags: ['scope:shared'],
             },
           ],
