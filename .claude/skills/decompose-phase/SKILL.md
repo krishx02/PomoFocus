@@ -4,8 +4,8 @@ description: Decompose a single phase from research/mvp-roadmap.md into agent-re
 user-invocable: true
 context: conversation
 allowed-tools: Bash(gh *), Bash(git *), Read, Grep, Glob, Agent
-compatibility: "Requires gh CLI, git. Claude Code only."
-argument-hint: "[phase number, e.g. 0, 1, 2, 3, 4, 5, 6, 7A, 7B, 8, 9]"
+compatibility: 'Requires gh CLI, git. Claude Code only.'
+argument-hint: '[phase number, e.g. 0, 1, 2, 3, 4, 5, 6, 7A, 7B, 8, 9]'
 metadata:
   author: PomoFocus
   version: 1.0.0
@@ -19,25 +19,26 @@ The valid phase identifiers are: `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7A`, `7B`, 
 
 If `$ARGUMENTS` is empty or not one of these, stop and ask the user which phase they want to decompose. List the phases with their names:
 
-| Phase | Name |
-|-------|------|
-| 0 | Foundation — "Make the Change Easy" |
-| 1 | Walking Skeleton — Thinnest Vertical Slice |
-| 2 | Auth + Sync + Goals |
-| 3 | Session Lifecycle + Reflection |
-| 4 | Mobile App |
-| 5 | Analytics |
-| 6 | iOS Widget |
-| 7A | Device Firmware — Independent Hardware Track |
-| 7B | BLE Protocol + Client Integration |
-| 8 | Social Features |
-| 9 | Polish + Ship |
+| Phase | Name                                         |
+| ----- | -------------------------------------------- |
+| 0     | Foundation — "Make the Change Easy"          |
+| 1     | Walking Skeleton — Thinnest Vertical Slice   |
+| 2     | Auth + Sync + Goals                          |
+| 3     | Session Lifecycle + Reflection               |
+| 4     | Mobile App                                   |
+| 5     | Analytics                                    |
+| 6     | iOS Widget                                   |
+| 7A    | Device Firmware — Independent Hardware Track |
+| 7B    | BLE Protocol + Client Integration            |
+| 8     | Social Features                              |
+| 9     | Polish + Ship                                |
 
 ## Step 1 — Read the Roadmap Phase
 
 Read `research/mvp-roadmap.md` and extract ONLY the section for the requested phase.
 
 For each **sub-item** in the phase (e.g., 0.1, 0.2, ...), capture:
+
 - **What** — the description of work
 - **Why here** — the sequencing rationale
 - **Packages/files** — exact directories and files
@@ -46,6 +47,7 @@ For each **sub-item** in the phase (e.g., 0.1, 0.2, ...), capture:
 - **Est. issues** — the estimated issue count range (this is your target)
 
 Also capture the phase-level metadata:
+
 - **Appetite** — the time budget
 - **Done milestone** — the phase completion criteria
 - **Circuit breaker** — if one exists (Phases 7A and 7B have these)
@@ -58,6 +60,7 @@ For each unique ADR referenced by any sub-item in this phase:
 2. If a design doc exists at `research/designs/*.md` for that ADR, read it too
 
 This is NOT optional. The ADRs and design docs contain:
+
 - Exact TypeScript/Swift/C++ type names and interfaces
 - Exact file path conventions
 - State enums, transition tables, API route definitions
@@ -66,8 +69,9 @@ This is NOT optional. The ADRs and design docs contain:
 You need this information to write issues with specific enough file paths, type names, and test assertions.
 
 Additionally, ALWAYS read these files regardless of which phase:
+
 - `research/coding-standards-eslint-nx.md` — Exact Nx tag names (Section 4), depConstraints (Section 5), bannedExternalImports (Section 5), tsconfig settings (Section 1), Vitest config (Section 6). Use ONLY tag names defined here.
-- `research/coding-standards.md` — Universal rules (U-001 through U-013) and package-level rules (PKG-*).
+- `research/coding-standards.md` — Universal rules (U-001 through U-013) and package-level rules (PKG-\*).
 
 These files contain exact configuration details that ADRs and design docs reference but don't fully reproduce.
 
@@ -80,6 +84,7 @@ gh issue list --label "phase:$ARGUMENTS" --state all --limit 100 --json number,t
 ```
 
 If issues already exist for this phase, report them to the user and ask how to proceed:
+
 - Skip already-created sub-items?
 - Recreate everything (will create duplicates)?
 - Stop and let the user clean up first?
@@ -128,11 +133,13 @@ For each sub-item (e.g., 0.1, 0.2, ...), plan how to split it into individual is
 ## Step 5 — Determine Labels for Each Issue
 
 Every issue gets these labels:
+
 - `agent-ready` (unless `needs-human`)
 - `effort:small` (unless explicitly large)
 - `phase:$ARGUMENTS` (e.g., `phase:0`, `phase:7A`)
 
 Plus ONE platform label based on the affected files:
+
 - `platform:shared` — `packages/` (anything cross-platform)
 - `platform:web` — `apps/web/`
 - `platform:api` — `apps/api/`
@@ -142,10 +149,12 @@ Plus ONE platform label based on the affected files:
 - `platform:infra` — `.github/`, `supabase/`, root config files
 
 Plus a type label:
+
 - `enhancement` — new feature or capability
 - `chore` — scaffolding, config, infrastructure (no user-facing change)
 
 When specifying Nx project tags in issue body (Affected Files or Acceptance Criteria), always include BOTH dimensions from `coding-standards-eslint-nx.md` Section 4:
+
 - Type tag: `type:domain`, `type:types`, `type:infra`, `type:ble`, `type:state`, `type:ui`, `type:app`
 - Scope tag: `scope:shared`, `scope:web`, `scope:mobile`, `scope:vscode`, `scope:mcp`
 
@@ -178,7 +187,7 @@ Use `2>/dev/null || true` so existing labels don't cause errors.
 
 For each issue, create it using `gh issue create`. Use the **exact template below** — do not deviate from this structure:
 
-```bash
+````bash
 gh issue create \
   --title "[Sub-item number] [Short descriptive title]" \
   --label "agent-ready,effort:small,phase:$ARGUMENTS,[platform-label],[type-label]" \
@@ -219,14 +228,15 @@ Phase $ARGUMENTS, sub-item [N.M] of the [MVP Roadmap](../research/mvp-roadmap.md
 
 ```bash
 [exact command(s) to run]
-```
+````
 
 ## Platform
 
 [Platform from the dropdown: Shared/Cross-platform, Web, iOS, etc.]
 EOF
 )"
-```
+
+````
 
 **IMPORTANT:** Record the issue number returned by each `gh issue create` command. You need these for dependency references in subsequent issues.
 
@@ -274,7 +284,7 @@ gh issue create \
 ### Total: [N] issues created
 EOF
 )"
-```
+````
 
 ## Step 9 — Final Report
 

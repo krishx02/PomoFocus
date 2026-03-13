@@ -4,7 +4,7 @@ description: Run a structured clarification interview before implementing any fe
 user-invocable: true
 context: fork
 agent: general-purpose
-argument-hint: "[optional: brief description of what you want to build]"
+argument-hint: '[optional: brief description of what you want to build]'
 metadata:
   author: PomoFocus
   version: 1.0.0
@@ -44,21 +44,27 @@ Use today's date: !`date +%Y-%m-%d`
 **Status:** Ready to implement
 
 ## Goal
+
 [User's answer to question 1]
 
 ## Scope
+
 [User's answer to question 2 — list specific files if named]
 
 ## Constraints
+
 [User's answer to question 3]
 
 ## Out of Scope / Must Not Change
+
 [User's answer to question 4]
 
 ## Success Criteria
+
 [User's answer to question 5]
 
 ## Implementation Notes
+
 [Your brief analysis: key risks, dependencies to check, approach you'll take]
 ```
 
@@ -77,6 +83,7 @@ Reference the written spec throughout implementation. If the spec doesn't cover 
 ## Step 4 — Summary
 
 When done, report:
+
 - What was changed (file list)
 - What was explicitly left unchanged
 - How to verify success (from the success criteria)

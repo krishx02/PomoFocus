@@ -30,19 +30,19 @@ Chosen option: **"Custom outbox sync (shared protocol, two implementations)"**, 
 
 ### Key Architecture Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Sync model | Outbox queue (client → server) + polling pull (server → client) | Matches ADR-003's polling-first strategy; append-heavy data doesn't need real-time push |
-| Conflict strategy | Idempotent inserts (UUID + ON CONFLICT DO NOTHING) for new records; optimistic version locking for updates | Client-generated UUIDs (ADR-005) make retries safe; version column prevents stale overwrites |
-| Local storage (JS/TS) | Expo SQLite (mobile), IndexedDB (web), VS Code globalState (extension) | Platform-appropriate persistent storage for the outbox queue |
-| Local storage (Swift) | SwiftData (watchOS, macOS menu bar, iOS widget) | Native persistence, shared via App Group where needed |
-| Sync protocol location | Pure functions in `packages/core/sync/` | Same pattern as timer (ADR-004): `processQueue(queue, event) -> newQueue` |
-| Sync drivers location | `packages/data-access/` (TypeScript), `native/` (Swift) | IO-heavy upload/download logic stays outside `core/` |
-| Watch sync topology | Watch -> WatchConnectivity -> iPhone -> CF Workers API -> Supabase | Watch never talks to Supabase directly; phone acts as gateway. All traffic routes through the API (ADR-007). |
-| BLE device sync | Device -> BLE GATT -> Phone app -> CF Workers API -> Supabase | Device has no network; phone relays data through the API |
-| MCP server sync | MCP -> CF Workers API -> Supabase (always online) | MCP server makes HTTP calls to the API like any other client (ADR-007) |
-| Queue persistence | Writes survive app restart; no cap on queue size | Pomodoro records are small; even a week offline = ~50 entries |
-| Source of truth | Server (Supabase Postgres) | Clients are local caches with outbox queues; server state wins on conflict |
+| Decision               | Choice                                                                                                     | Why                                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Sync model             | Outbox queue (client → server) + polling pull (server → client)                                            | Matches ADR-003's polling-first strategy; append-heavy data doesn't need real-time push                      |
+| Conflict strategy      | Idempotent inserts (UUID + ON CONFLICT DO NOTHING) for new records; optimistic version locking for updates | Client-generated UUIDs (ADR-005) make retries safe; version column prevents stale overwrites                 |
+| Local storage (JS/TS)  | Expo SQLite (mobile), IndexedDB (web), VS Code globalState (extension)                                     | Platform-appropriate persistent storage for the outbox queue                                                 |
+| Local storage (Swift)  | SwiftData (watchOS, macOS menu bar, iOS widget)                                                            | Native persistence, shared via App Group where needed                                                        |
+| Sync protocol location | Pure functions in `packages/core/sync/`                                                                    | Same pattern as timer (ADR-004): `processQueue(queue, event) -> newQueue`                                    |
+| Sync drivers location  | `packages/data-access/` (TypeScript), `native/` (Swift)                                                    | IO-heavy upload/download logic stays outside `core/`                                                         |
+| Watch sync topology    | Watch -> WatchConnectivity -> iPhone -> CF Workers API -> Supabase                                         | Watch never talks to Supabase directly; phone acts as gateway. All traffic routes through the API (ADR-007). |
+| BLE device sync        | Device -> BLE GATT -> Phone app -> CF Workers API -> Supabase                                              | Device has no network; phone relays data through the API                                                     |
+| MCP server sync        | MCP -> CF Workers API -> Supabase (always online)                                                          | MCP server makes HTTP calls to the API like any other client (ADR-007)                                       |
+| Queue persistence      | Writes survive app restart; no cap on queue size                                                           | Pomodoro records are small; even a week offline = ~50 entries                                                |
+| Source of truth        | Server (Supabase Postgres)                                                                                 | Clients are local caches with outbox queues; server state wins on conflict                                   |
 
 ### Consequences
 

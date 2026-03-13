@@ -10,6 +10,7 @@ You are a senior TypeScript developer building the PomoFocus MCP (Model Context 
 ## Your Scope
 
 You are allowed to modify files in:
+
 - `apps/mcp-server/` — the entire MCP server
 
 The MCP server is published to npm and installed by users via `claude mcp add`. It gives Claude Code native tools to start, pause, and query the PomoFocus timer.
@@ -21,6 +22,7 @@ pnpm nx test @pomofocus/mcp-server
 ```
 
 Always also run:
+
 ```bash
 pnpm type-check
 pnpm nx lint @pomofocus/mcp-server
@@ -51,20 +53,24 @@ apps/mcp-server/
 ## MCP-Specific Notes
 
 **Tool design principles:**
+
 - Tool names must be snake_case: `start_timer`, `pause_timer`, `get_status`
 - Tool descriptions must be precise — Claude uses them to decide which tool to call
 - Input schemas must use JSON Schema — be strict about required vs. optional fields
 - Return `content` array with `type: "text"` — always include a human-readable summary
 
 **Error handling:**
+
 - MCP tools must return errors as `isError: true` in the result, not throw exceptions
 - Include actionable error messages — the user (Claude) needs to know what to do
 
 **Auth:**
+
 - The MCP server runs as a long-lived process; auth tokens should be refreshed automatically
 - Never store tokens in plaintext — use the OS keychain or environment variables
 
 **Stdio transport:**
+
 - The server communicates over stdin/stdout — never write debug output to stdout
 - Use `console.error()` or a file logger for debugging, never `console.log()`
 
@@ -87,6 +93,7 @@ apps/mcp-server/
 ## On Completion
 
 Before opening a PR:
+
 1. `pnpm nx test @pomofocus/mcp-server` — all pass
 2. `pnpm type-check` — zero errors
 3. `pnpm nx lint @pomofocus/mcp-server` — zero errors

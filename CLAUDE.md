@@ -141,6 +141,7 @@ See [ADR-011](./research/decisions/011-monitoring-observability.md) for full rat
 IMPORTANT: Before implementing any task, ask "What should NOT change?" and confirm the scope explicitly.
 
 YOU MUST ask one clarifying question before proceeding if ANY of the following are true:
+
 - The request uses "everywhere", "all", "refactor", "clean up", or "update" without specifying exact files
 - More than 3 files would be touched
 - The request does not name a specific file, function, or component
@@ -156,6 +157,7 @@ When asking for clarification, ask EXACTLY ONE targeted question — not a list.
 ## Destructive Operations
 
 YOU MUST confirm with the user before running any of the following:
+
 - `git reset --hard` or `git reset` with unstaged changes
 - `rm -rf` on any directory
 - `git push --force` or `git push --force-with-lease`

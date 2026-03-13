@@ -4,8 +4,8 @@ description: Runs build verification, integration tests, E2E tests, and cross-pa
 user-invocable: true
 context: fork
 allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Bash(maestro *), Bash(node *), Bash(npx *), Bash(ls *), Bash(test *), Read, Edit, Write, Grep, Glob
-compatibility: "Requires gh CLI, git, pnpm. Claude Code only. Optional: xcodebuild (Apple), maestro (mobile E2E)."
-argument-hint: "[issue number]"
+compatibility: 'Requires gh CLI, git, pnpm. Claude Code only. Optional: xcodebuild (Apple), maestro (mobile E2E).'
+argument-hint: '[issue number]'
 metadata:
   author: PomoFocus
   version: 1.0.0
@@ -28,26 +28,31 @@ git branch --show-current
 ```
 
 Confirm the branch is NOT `main` or `master`. If it is, stop:
+
 ```
 ERROR: You are on main. /pre-finalize must run on a feature or fix branch, not the default branch.
 ```
 
 Verify there are no uncommitted changes:
+
 ```bash
 git status --porcelain
 ```
 
 If there are uncommitted changes, stop:
+
 ```
 ERROR: Uncommitted changes detected. /ship-issue should have committed all changes. Commit or stash first.
 ```
 
 Verify the branch has been pushed (push if not):
+
 ```bash
 git push -u origin $(git branch --show-current) 2>/dev/null || true
 ```
 
 Fetch latest main for accurate diffing:
+
 ```bash
 git fetch origin main
 ```
@@ -55,37 +60,40 @@ git fetch origin main
 ## Step 2 — Detect Affected Platforms
 
 Get the list of changed files on this branch:
+
 ```bash
 git diff --name-only origin/main...HEAD
 ```
 
 Map each changed file to a platform bucket using these path prefixes:
 
-| Prefix | Bucket |
-|--------|--------|
-| `packages/core/` | `core` |
-| `packages/types/` | `core` |
-| `packages/analytics/` | `analytics` |
-| `packages/data-access/` | `data-access` |
-| `packages/state/` | `state` |
-| `packages/ui/` | `ui` |
-| `packages/ble-protocol/` | `ble-protocol` |
-| `apps/web/` | `web` |
-| `apps/mobile/` | `mobile` |
-| `apps/vscode-extension/` | `vscode` |
-| `apps/mcp-server/` | `mcp-server` |
-| `native/apple/mac-widget/` | `apple-mac` |
+| Prefix                            | Bucket             |
+| --------------------------------- | ------------------ |
+| `packages/core/`                  | `core`             |
+| `packages/types/`                 | `core`             |
+| `packages/analytics/`             | `analytics`        |
+| `packages/data-access/`           | `data-access`      |
+| `packages/state/`                 | `state`            |
+| `packages/ui/`                    | `ui`               |
+| `packages/ble-protocol/`          | `ble-protocol`     |
+| `apps/web/`                       | `web`              |
+| `apps/mobile/`                    | `mobile`           |
+| `apps/vscode-extension/`          | `vscode`           |
+| `apps/mcp-server/`                | `mcp-server`       |
+| `native/apple/mac-widget/`        | `apple-mac`        |
 | `apps/mobile/targets/ios-widget/` | `apple-ios-widget` |
-| `native/apple/watchos-app/` | `apple-watchos` |
+| `native/apple/watchos-app/`       | `apple-watchos`    |
 
 Files not matching any prefix (docs, CI config, root config) do not trigger platform tests — ignore them.
 
 **Cross-package propagation:** If any `packages/*` bucket is affected, determine downstream consumers. Try Nx first:
+
 ```bash
 pnpm nx affected --target=build --base=origin/main --head=HEAD --plain 2>/dev/null
 ```
 
 If Nx is not configured yet, fall back to this manual propagation table:
+
 - `core` or `types` changed → also test: `web`, `mobile`, `vscode`, `mcp-server`
 - `analytics` changed → also test: `web`, `mobile`, `vscode`
 - `data-access` changed → also test: `web`, `mobile`, `vscode`, `mcp-server`
@@ -94,6 +102,7 @@ If Nx is not configured yet, fall back to this manual propagation table:
 - `ble-protocol` changed → also test: `mobile`
 
 Log the results clearly:
+
 ```
 Affected platforms: [comma-separated list]
 Cross-package propagation: [what was added and why, or "none"]
@@ -106,11 +115,13 @@ If no platform buckets are affected (e.g., only docs changed), skip to Step 6 wi
 Before running E2E or integration tests, verify the build succeeds for affected TypeScript packages.
 
 For each affected Nx-managed bucket, check if the build target exists and run it:
+
 ```bash
 pnpm nx show project @pomofocus/[package] --json 2>/dev/null
 ```
 
 Parse the JSON to check if `targets.build` exists. If it does:
+
 ```bash
 pnpm nx build @pomofocus/[package]
 ```
@@ -120,6 +131,7 @@ For Apple targets, the build is implicit in `xcodebuild test` (Step 4) — skip 
 **If any build fails:** this is a blocking error. Do NOT proceed to E2E tests. Record the failure and jump to Step 5 (Fix Loop).
 
 If no build targets exist for any affected platform (early project phase), log:
+
 ```
 Build verification: SKIPPED — no build targets configured yet
 ```
@@ -131,6 +143,7 @@ Build verification: SKIPPED — no build targets configured yet
 For each affected platform bucket, run the corresponding test command. **Before each command, check that the test infrastructure exists.** If it does not, skip with a clear message.
 
 ### web
+
 ```bash
 if [ -d "apps/web-e2e" ]; then
   pnpm nx e2e @pomofocus/web-e2e
@@ -140,6 +153,7 @@ fi
 ```
 
 ### mobile
+
 ```bash
 if [ -d "apps/mobile/maestro" ] && command -v maestro &>/dev/null; then
   maestro test apps/mobile/maestro/
@@ -149,6 +163,7 @@ fi
 ```
 
 ### vscode
+
 ```bash
 if pnpm nx show project @pomofocus/vscode-extension --json 2>/dev/null | grep -q '"test"'; then
   pnpm nx test @pomofocus/vscode-extension
@@ -158,6 +173,7 @@ fi
 ```
 
 ### mcp-server (Vitest)
+
 ```bash
 if pnpm nx show project @pomofocus/mcp-server --json 2>/dev/null | grep -q '"test"'; then
   pnpm nx test @pomofocus/mcp-server
@@ -167,6 +183,7 @@ fi
 ```
 
 ### data-access (Vitest)
+
 ```bash
 if pnpm nx show project @pomofocus/data-access --json 2>/dev/null | grep -q '"test"'; then
   pnpm nx test @pomofocus/data-access
@@ -176,6 +193,7 @@ fi
 ```
 
 ### apple-mac
+
 ```bash
 if [ -d "native/apple/mac-widget" ] && ([ -d "native/apple/mac-widget/PomoFocusMac.xcodeproj" ] || [ -d "native/apple/mac-widget/PomoFocusMac.xcworkspace" ]); then
   xcodebuild test \
@@ -188,6 +206,7 @@ fi
 ```
 
 ### apple-ios-widget
+
 ```bash
 if [ -d "apps/mobile/targets/ios-widget" ]; then
   xcodebuild test \
@@ -200,6 +219,7 @@ fi
 ```
 
 ### apple-watchos
+
 ```bash
 if [ -d "native/apple/watchos-app" ] && ([ -d "native/apple/watchos-app/PomoFocusWatch.xcodeproj" ] || [ -d "native/apple/watchos-app/PomoFocusWatch.xcworkspace" ]); then
   xcodebuild test \
@@ -214,6 +234,7 @@ fi
 ### Cross-package affected tests (Nx dependency graph)
 
 If any `packages/*` bucket was affected and Nx is configured:
+
 ```bash
 pnpm nx affected --target=test --base=origin/main --head=HEAD
 ```
@@ -225,6 +246,7 @@ Record all results: which tests ran, which passed, which were skipped, which fai
 ## Step 4b — Visual Regression Tests
 
 If the `web` bucket is affected and Playwright E2E infrastructure exists:
+
 ```bash
 # Playwright screenshot tests are part of the E2E suite (toHaveScreenshot assertions)
 # They run automatically as part of `pnpm nx e2e @pomofocus/web-e2e` in Step 4.
@@ -242,6 +264,7 @@ For Apple native targets: skip — visual testing is manual via Xcode previews.
 ## Step 4c — Accessibility Tests
 
 If the `web` bucket is affected:
+
 ```bash
 # Check if @axe-core/playwright is installed and accessibility tests exist
 if [ -d "apps/web-e2e" ] && (grep -rq "axe" apps/web-e2e/ 2>/dev/null || grep -q "axe-core" apps/web/package.json 2>/dev/null); then
@@ -259,6 +282,7 @@ For Apple native: skip — rely on XCTest accessibility assertions + manual Voic
 ## Step 4d — Code Coverage Check
 
 If any TypeScript bucket is affected and Vitest coverage is configured:
+
 ```bash
 # Check if coverage is configured in any vitest config
 if grep -rq "coverage" vitest.config.* 2>/dev/null || grep -rq "coverage" packages/*/vitest.config.* 2>/dev/null || grep -rq "coverage" apps/*/vitest.config.* 2>/dev/null; then
@@ -294,6 +318,7 @@ If any test failed, enter the fix loop.
 Set `FIX_ATTEMPT = 1`.
 
 **Loop:**
+
 1. Read the failure output carefully. Identify the root cause.
 2. Fix the failing code. Rules:
    - Do NOT modify files outside the issue's platform scope
@@ -332,6 +357,7 @@ EOF
 ```
 
 Stop. Do NOT proceed to `/finalize`. Output:
+
 ```
 Integration/E2E tests failed after 3 fix attempts for issue #$ARGUMENTS.
 Issue labeled needs-human. A comment has been posted with failure details.

@@ -14,6 +14,7 @@ The data model (ADR-005) is append-heavy and single-writer: sessions are created
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Sessions completed offline are never lost — they reach the server when connectivity returns
 - One conceptual sync model across all 9 platforms
 - Pure sync protocol in `packages/core/sync/` (no IO, testable, portable to Swift)
@@ -21,6 +22,7 @@ The data model (ADR-005) is append-heavy and single-writer: sessions are created
 - Works for free users (offline-only) and paid users (offline + sync)
 
 **Non-Goals:**
+
 - Real-time collaborative editing (shared goals, co-working sessions) — not in scope
 - Sub-second sync latency — polling at 30s (ADR-003) is sufficient
 - Supabase Realtime WebSocket subscriptions — deferred per ADR-003
@@ -70,12 +72,14 @@ This mirrors ADR-004's timer pattern: `processQueue(queue, event) -> newQueue` i
 PomoFocus's data falls into two categories with different conflict strategies:
 
 **Append-only data (sessions, breaks, encouragement_taps):**
+
 - Client generates UUID before saving locally (ADR-005: `gen_random_uuid()`)
 - Server uses `INSERT ... ON CONFLICT (id) DO NOTHING`
 - Retries are inherently safe — same UUID = same record, ignored on duplicate
 - Two sessions created on different devices offline = two different sessions (different UUIDs). Not a conflict.
 
 **Updatable data (user_preferences, long_term_goals, process_goals):**
+
 - Server adds a `version` column (integer, starts at 1)
 - Client reads current version, makes local change, uploads with `WHERE version = N`
 - If another device updated first (version is now N+1), the upload fails (0 rows affected)
@@ -168,11 +172,13 @@ native/
 ```
 
 The sync protocol in `core/sync/` defines:
+
 - The outbox queue data structure and state transitions (pure)
 - Conflict detection rules (pure)
 - Retry policy: exponential backoff with jitter, max 5 retries, then surface error to user (pure)
 
 The sync drivers in `data-access/sync/` handle:
+
 - Persisting the outbox queue to platform-specific storage
 - Uploading queued writes via generated OpenAPI client (routes through CF Workers API per ADR-007)
 - Detecting network state changes

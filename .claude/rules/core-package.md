@@ -1,6 +1,6 @@
 ---
 paths:
-  - "packages/core/**"
+  - 'packages/core/**'
 ---
 
 # Core Package Standards

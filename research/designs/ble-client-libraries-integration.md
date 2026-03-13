@@ -17,12 +17,14 @@ The fundamental insight driving this design: BLE has two very different usage pa
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Select BLE libraries for each client platform that can implement the full GATT protocol (ADR-013)
 - Define a shared TypeScript abstraction in `packages/ble-protocol/` that separates transport (platform-specific) from sync orchestration (shared logic)
 - Establish the sync trigger model (when does sync happen?)
 - Define reconnection behavior (how does the app find the device?)
 
 **Non-Goals:**
+
 - Background BLE sync (explicitly deferred to v2 — iOS background BLE is unreliable and a major source of bugs)
 - Multi-device support (one device per user for v1)
 - BLE mesh or multi-central connections
@@ -33,12 +35,12 @@ The fundamental insight driving this design: BLE has two very different usage pa
 
 ### Library Selection
 
-| Platform | Library | Why This One |
-|----------|---------|-------------|
-| iOS / Android | **react-native-ble-plx** v3.x | Most full-featured RN BLE library (90K weekly downloads). MTU negotiation, multi-device support, guaranteed transactions. Expo config plugin — no ejecting. iOS state restoration support for future v2 background BLE. |
-| Web | **Web Bluetooth API** (browser native) | Only option. No library needed — it's a browser API. Chrome/Edge/Opera only (~78% global coverage). No Safari, no Firefox (Mozilla position: "Harmful"). |
-| macOS | **CoreBluetooth** (Apple framework) | Only option for macOS. CBCentralManager + CBPeripheralDelegate. SwiftUI-compatible. |
-| watchOS | None | Gets data through phone relay via WatchConnectivity (ADR-010). |
+| Platform      | Library                                | Why This One                                                                                                                                                                                                            |
+| ------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| iOS / Android | **react-native-ble-plx** v3.x          | Most full-featured RN BLE library (90K weekly downloads). MTU negotiation, multi-device support, guaranteed transactions. Expo config plugin — no ejecting. iOS state restoration support for future v2 background BLE. |
+| Web           | **Web Bluetooth API** (browser native) | Only option. No library needed — it's a browser API. Chrome/Edge/Opera only (~78% global coverage). No Safari, no Firefox (Mozilla position: "Harmful").                                                                |
+| macOS         | **CoreBluetooth** (Apple framework)    | Only option for macOS. CBCentralManager + CBPeripheralDelegate. SwiftUI-compatible.                                                                                                                                     |
+| watchOS       | None                                   | Gets data through phone relay via WatchConnectivity (ADR-010).                                                                                                                                                          |
 
 ### Sync Trigger Model: App-Open Sync
 
@@ -61,6 +63,7 @@ App updates local state → widget refreshes via WidgetCenter.reloadAllTimelines
 ```
 
 **Why not background sync:**
+
 - iOS aggressively kills background BLE connections (30s-3min inactivity)
 - State restoration is unreliable — iOS may take minutes to wake the app
 - Android background BLE varies by manufacturer — Samsung/Xiaomi/Huawei kill background processes
@@ -88,6 +91,7 @@ Check: is there a bonded device ID stored locally?
 ```
 
 **Key behaviors:**
+
 - Scan uses device UUID filtering (from ADR-013 advertising) — no broad scan needed
 - Connection timeout: 10s scan, then 5s connection timeout
 - Auto-retry: 1 retry with 2s delay on connection failure, then surface error to user
@@ -112,7 +116,7 @@ interface BleTransport {
   subscribe(
     serviceUuid: string,
     charUuid: string,
-    onData: (data: Uint8Array) => void
+    onData: (data: Uint8Array) => void,
   ): Subscription;
 
   // MTU
@@ -120,8 +124,8 @@ interface BleTransport {
 }
 
 interface ConnectOptions {
-  timeoutMs?: number;       // default: 5000
-  requestMtu?: number;      // default: 512
+  timeoutMs?: number; // default: 5000
+  requestMtu?: number; // default: 512
 }
 
 interface BleConnection {
@@ -157,6 +161,7 @@ class SyncOrchestrator {
 ```
 
 The `SyncOrchestrator` handles:
+
 - Reading `sync_status` to determine outbox size
 - Writing `sync_control` to initiate sync and send acknowledgments
 - Receiving `session_data` notifications and reassembling chunks
@@ -166,6 +171,7 @@ The `SyncOrchestrator` handles:
 This is pure protocol logic — no platform-specific code. It calls `BleTransport` methods and handles the sync state machine from ADR-013.
 
 **Implementation order:**
+
 1. Build mobile BLE with react-native-ble-plx directly (no abstraction)
 2. Get end-to-end sync working on iOS and Android
 3. Extract `BleTransport` interface from the working mobile code
@@ -176,6 +182,7 @@ This is pure protocol logic — no platform-specific code. It calls `BleTranspor
 ### Platform-Specific Notes
 
 **iOS (react-native-ble-plx):**
+
 - Config plugin in app.json: `["react-native-ble-plx", { "isBackgroundEnabled": false, "modes": ["central"], "bluetoothAlwaysPermission": "PomoFocus uses Bluetooth to sync with your focus device" }]`
 - Must use development build — ble-plx not included in Expo Go
 - Testing requires physical device with Bluetooth hardware
@@ -183,12 +190,14 @@ This is pure protocol logic — no platform-specific code. It calls `BleTranspor
 - Pairing: OS-managed system dialog when device requests passkey
 
 **Android (react-native-ble-plx):**
+
 - Permissions: `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT` (API 31+); `ACCESS_FINE_LOCATION` (API 30 and below)
 - MTU: call `requestMTU(512)` after connection — not guaranteed but Android 14+ defaults to 517
 - Pairing: OS-managed system dialog
 - No background service needed for v1 (app-open sync)
 
 **Web (Web Bluetooth API):**
+
 - Must call `navigator.bluetooth.requestDevice()` from a user gesture (click/tap)
 - No MTU control — browser handles negotiation
 - No background mode — page must be open and focused
@@ -197,6 +206,7 @@ This is pure protocol logic — no platform-specific code. It calls `BleTranspor
 - Web Bluetooth is progressive enhancement, not a primary sync path
 
 **macOS (CoreBluetooth) — post-v1:**
+
 - `CBCentralManager` + `CBPeripheralDelegate` in SwiftUI
 - Same GATT profile — device doesn't care who connects
 - Needs Bluetooth entitlement in macOS app

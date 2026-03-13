@@ -14,6 +14,7 @@ This design defines: (1) the state model — which states exist and which transi
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Define the complete set of timer states and valid transitions
 - Keep the state machine as a pure function: `(state, event) → newState`
 - Make the state model translatable to Swift `enum` and C++ `enum class` without modification
@@ -21,6 +22,7 @@ This design defines: (1) the state model — which states exist and which transi
 - Support configurable durations (focus, short break, long break, sessions before long break)
 
 **Non-Goals:**
+
 - Timer interval management (owned by platform-specific timer drivers, not `core/`)
 - Sound/haptic feedback on transitions (side effects handled by consumers)
 - BLE device sync conflict resolution (BLE device syncs sessions through phone app via outbox queue — see [ADR-006](../decisions/006-offline-first-sync-architecture.md); GATT protocol detailed in [ADR-013](../decisions/013-ble-gatt-protocol-design.md))
@@ -65,40 +67,40 @@ This design defines: (1) the state model — which states exist and which transi
 
 ### States
 
-| State | Description | Data |
-|-------|-------------|------|
-| `idle` | No active session. Waiting for user to start. | `config` (durations, session count target) |
-| `focusing` | Focus timer counting down. | `timeRemaining`, `startedAt`, `sessionNumber`, `config` |
-| `paused` | Focus timer paused. | `timeRemaining`, `pausedAt`, `sessionNumber`, `config` |
-| `short_break` | Short break timer counting down. | `timeRemaining`, `startedAt`, `sessionNumber`, `config` |
-| `long_break` | Long break timer counting down (every Nth session). | `timeRemaining`, `startedAt`, `sessionNumber`, `config` |
-| `break_paused` | Break timer paused. | `timeRemaining`, `pausedAt`, `breakType`, `sessionNumber`, `config` |
-| `reflection` | Post-session reflection prompt. No timer. | `sessionNumber`, `config` |
-| `completed` | Session cycle finished. Terminal state. | `sessionNumber`, `reflectionData?` |
-| `abandoned` | User abandoned the session. Terminal state. | `sessionNumber`, `abandonedAt` |
+| State          | Description                                         | Data                                                                |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------------- |
+| `idle`         | No active session. Waiting for user to start.       | `config` (durations, session count target)                          |
+| `focusing`     | Focus timer counting down.                          | `timeRemaining`, `startedAt`, `sessionNumber`, `config`             |
+| `paused`       | Focus timer paused.                                 | `timeRemaining`, `pausedAt`, `sessionNumber`, `config`              |
+| `short_break`  | Short break timer counting down.                    | `timeRemaining`, `startedAt`, `sessionNumber`, `config`             |
+| `long_break`   | Long break timer counting down (every Nth session). | `timeRemaining`, `startedAt`, `sessionNumber`, `config`             |
+| `break_paused` | Break timer paused.                                 | `timeRemaining`, `pausedAt`, `breakType`, `sessionNumber`, `config` |
+| `reflection`   | Post-session reflection prompt. No timer.           | `sessionNumber`, `config`                                           |
+| `completed`    | Session cycle finished. Terminal state.             | `sessionNumber`, `reflectionData?`                                  |
+| `abandoned`    | User abandoned the session. Terminal state.         | `sessionNumber`, `abandonedAt`                                      |
 
 ### Events
 
-| Event | Valid From | Transitions To |
-|-------|-----------|---------------|
-| `START` | `idle` | `focusing` |
-| `PAUSE` | `focusing`, `short_break`, `long_break` | `paused`, `break_paused` |
-| `RESUME` | `paused`, `break_paused` | `focusing`, `short_break` or `long_break` |
-| `TICK` | `focusing`, `short_break`, `long_break` | same state (decremented `timeRemaining`) |
-| `TIMER_DONE` | `focusing` | `short_break` or `long_break` (guard: session count) |
-| `TIMER_DONE` | `short_break`, `long_break` | `reflection` (if enabled) or `focusing` (next session) or `completed` (all sessions done) |
-| `SKIP` | `reflection` | `completed` or `focusing` (next session) |
-| `SUBMIT` | `reflection` | `completed` or `focusing` (next session) |
-| `SKIP_BREAK` | `short_break`, `long_break`, `break_paused` | `reflection` (if enabled) or `focusing` (next session) or `completed` (user chose "Done for now") |
-| `ABANDON` | `focusing`, `paused`, `short_break`, `long_break`, `break_paused` | `abandoned` |
-| `RESET` | any terminal state (`completed`, `abandoned`) | `idle` |
+| Event        | Valid From                                                        | Transitions To                                                                                    |
+| ------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `START`      | `idle`                                                            | `focusing`                                                                                        |
+| `PAUSE`      | `focusing`, `short_break`, `long_break`                           | `paused`, `break_paused`                                                                          |
+| `RESUME`     | `paused`, `break_paused`                                          | `focusing`, `short_break` or `long_break`                                                         |
+| `TICK`       | `focusing`, `short_break`, `long_break`                           | same state (decremented `timeRemaining`)                                                          |
+| `TIMER_DONE` | `focusing`                                                        | `short_break` or `long_break` (guard: session count)                                              |
+| `TIMER_DONE` | `short_break`, `long_break`                                       | `reflection` (if enabled) or `focusing` (next session) or `completed` (all sessions done)         |
+| `SKIP`       | `reflection`                                                      | `completed` or `focusing` (next session)                                                          |
+| `SUBMIT`     | `reflection`                                                      | `completed` or `focusing` (next session)                                                          |
+| `SKIP_BREAK` | `short_break`, `long_break`, `break_paused`                       | `reflection` (if enabled) or `focusing` (next session) or `completed` (user chose "Done for now") |
+| `ABANDON`    | `focusing`, `paused`, `short_break`, `long_break`, `break_paused` | `abandoned`                                                                                       |
+| `RESET`      | any terminal state (`completed`, `abandoned`)                     | `idle`                                                                                            |
 
 ### Guards
 
-| Guard | Checks | Used By |
-|-------|--------|---------|
-| `isLongBreak` | `sessionNumber % config.sessionsBeforeLongBreak === 0` | `TIMER_DONE` from `focusing` |
-| `isReflectionEnabled` | `config.reflectionEnabled` | `TIMER_DONE` from break states |
+| Guard                 | Checks                                                 | Used By                        |
+| --------------------- | ------------------------------------------------------ | ------------------------------ |
+| `isLongBreak`         | `sessionNumber % config.sessionsBeforeLongBreak === 0` | `TIMER_DONE` from `focusing`   |
+| `isReflectionEnabled` | `config.reflectionEnabled`                             | `TIMER_DONE` from break states |
 
 > **Note (resolved via ADR-005):** `totalSessions` and `isAllSessionsDone` guard removed. Session cycles are open-ended — the user decides when to stop ("Start another?" / "Done for now"). The `completed` terminal state is only reached via user choice, not an auto-complete count. `reflectionEnabled` is stored in `user_preferences.reflection_enabled` (default `true`).
 
@@ -108,14 +110,45 @@ This design defines: (1) the state model — which states exist and which transi
 // Discriminated union — each state carries only its relevant data
 type TimerState =
   | { status: 'idle'; config: TimerConfig }
-  | { status: 'focusing'; timeRemaining: number; startedAt: number; sessionNumber: number; config: TimerConfig }
-  | { status: 'paused'; timeRemaining: number; pausedAt: number; sessionNumber: number; config: TimerConfig }
-  | { status: 'short_break'; timeRemaining: number; startedAt: number; sessionNumber: number; config: TimerConfig }
-  | { status: 'long_break'; timeRemaining: number; startedAt: number; sessionNumber: number; config: TimerConfig }
-  | { status: 'break_paused'; timeRemaining: number; pausedAt: number; breakType: 'short' | 'long'; sessionNumber: number; config: TimerConfig }
+  | {
+      status: 'focusing';
+      timeRemaining: number;
+      startedAt: number;
+      sessionNumber: number;
+      config: TimerConfig;
+    }
+  | {
+      status: 'paused';
+      timeRemaining: number;
+      pausedAt: number;
+      sessionNumber: number;
+      config: TimerConfig;
+    }
+  | {
+      status: 'short_break';
+      timeRemaining: number;
+      startedAt: number;
+      sessionNumber: number;
+      config: TimerConfig;
+    }
+  | {
+      status: 'long_break';
+      timeRemaining: number;
+      startedAt: number;
+      sessionNumber: number;
+      config: TimerConfig;
+    }
+  | {
+      status: 'break_paused';
+      timeRemaining: number;
+      pausedAt: number;
+      breakType: 'short' | 'long';
+      sessionNumber: number;
+      config: TimerConfig;
+    }
   | { status: 'reflection'; sessionNumber: number; config: TimerConfig }
   | { status: 'completed'; sessionNumber: number; reflectionData?: ReflectionData }
-  | { status: 'abandoned'; sessionNumber: number; abandonedAt: number }
+  | { status: 'abandoned'; sessionNumber: number; abandonedAt: number };
 
 type TimerEvent =
   | { type: 'START' }
@@ -127,15 +160,15 @@ type TimerEvent =
   | { type: 'SUBMIT'; data: ReflectionData }
   | { type: 'SKIP_BREAK' }
   | { type: 'ABANDON' }
-  | { type: 'RESET' }
+  | { type: 'RESET' };
 
 // Pure function — no side effects, no intervals
 function transition(state: TimerState, event: TimerEvent): TimerState {
   switch (state.status) {
     case 'idle':
-      // only START is valid
+    // only START is valid
     case 'focusing':
-      // PAUSE, TICK, TIMER_DONE, ABANDON
+    // PAUSE, TICK, TIMER_DONE, ABANDON
     // ... exhaustive switch
   }
 }
@@ -171,6 +204,7 @@ function transition(state: TimerState, event: TimerEvent): TimerState {
 ```
 
 **Timer driver responsibilities** (per platform):
+
 1. Call `transition(state, 'START')` when user taps start
 2. If new state is a "running" state (`focusing`, `short_break`, `long_break`), start the platform's timing mechanism
 3. Every ~1 second, call `transition(state, { type: 'TICK' })` to decrement `timeRemaining`
@@ -240,11 +274,12 @@ Breaks are **recommended but skippable**. The timer always transitions to break 
 
 **New event: `SKIP_BREAK`**
 
-| Event | Valid From | Transitions To |
-|-------|-----------|---------------|
+| Event        | Valid From                                  | Transitions To                                                                                    |
+| ------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `SKIP_BREAK` | `short_break`, `long_break`, `break_paused` | `reflection` (if enabled) or `focusing` (next session) or `completed` (user chose "Done for now") |
 
 When a break is skipped:
+
 - No `breaks` table record is created (or if already created on break entry, `ended_at` is set immediately and `usefulness` is `NULL`)
 - Break skipped vs. taken is derivable from break record existence + duration
 - No new schema column needed

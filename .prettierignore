@@ -1,0 +1,9 @@
+dist/
+coverage/
+node_modules/
+.next/
+pnpm-lock.yaml
+
+# Generated files — never format manually
+**/generated/**
+**/database.ts

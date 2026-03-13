@@ -4,8 +4,8 @@ description: Break a large GitHub issue (labeled effort:large) into 3-5 smaller,
 user-invocable: true
 context: conversation
 allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Read, Grep, Glob
-compatibility: "Requires gh CLI, git. Claude Code only."
-argument-hint: "[issue number]"
+compatibility: 'Requires gh CLI, git. Claude Code only.'
+argument-hint: '[issue number]'
 metadata:
   author: PomoFocus
   version: 1.0.0
@@ -20,6 +20,7 @@ gh issue view $ARGUMENTS --json number,title,body,labels,comments
 ```
 
 Read the full body. Identify:
+
 - The overall Goal
 - All Affected Files
 - All Acceptance Criteria
@@ -29,6 +30,7 @@ Read the full body. Identify:
 ## Step 2 — Explore the Codebase
 
 Read the files listed in "Affected Files". Understand the full scope:
+
 - How many layers are involved (data / logic / UI)?
 - Which parts are independent vs. which depend on others?
 - What is the minimum viable split that makes each piece independently testable?
@@ -125,6 +127,7 @@ gh issue edit $ARGUMENTS \
 ## Step 6 — Final Report
 
 Output a summary:
+
 - Number of sub-issues created and their GitHub issue numbers
 - Titles and brief descriptions
 - Dependency order
@@ -134,6 +137,7 @@ Output a summary:
 ## "Too Large" Signals (for reference)
 
 An issue should be decomposed if ANY of:
+
 - Changes to more than ~10 files
 - Spans multiple layers (data + logic + UI in the same issue)
 - Acceptance criteria list is longer than 8 items

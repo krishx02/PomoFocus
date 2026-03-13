@@ -12,6 +12,7 @@ PomoFocus stores user goals, focus sessions, reflection data, social connections
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Model all v1 domains: users, goals, sessions, social, devices
 - Support all analytics queries from product brief Section 10
 - Enable RLS with a clean path to `auth.uid()` on every table
@@ -20,6 +21,7 @@ PomoFocus stores user goals, focus sessions, reflection data, social connections
 - Use Postgres-native features (enums, timestamptz, gen_random_uuid())
 
 **Non-Goals:**
+
 - Offline-first sync strategy (deferred to separate /tech-design session)
 - Post-v1 features: shared sessions, study crews, subscription billing, data export
 - Materialized views for analytics caching (add when performance requires it)
@@ -31,22 +33,23 @@ PomoFocus stores user goals, focus sessions, reflection data, social connections
 
 ### Entity List
 
-| Domain | Entity | Description | Product Brief Source |
-|--------|--------|-------------|---------------------|
-| Users | `auth.users` | Supabase-managed auth identities (email, OAuth, anonymous) | S8, ADR-002 |
-| Users | `profiles` | Application user data (display name, username, avatar) | S8, S9 |
-| Users | `user_preferences` | Timer defaults, timezone | S6, S8 |
-| Goals | `long_term_goals` | Big-picture aspirations: "Get strong at calculus" | S3, S6 |
-| Goals | `process_goals` | Daily/weekly habits: "3 sessions/day." Streaks attach here. | S3, S6 |
-| Sessions | `sessions` | Focus blocks with reflection data (8 data points per S10) | S6, S10 |
-| Sessions | `breaks` | Break periods with usefulness rating | S6 |
-| Social | `friend_requests` | Pending friend request (sender → recipient) | S9 |
-| Social | `friendships` | Confirmed mutual friendship (dual-row pattern) | S9 |
-| Social | `encouragement_taps` | Private one-tap kudos | S9 |
-| Devices | `devices` | Registered BLE devices | S5 |
-| Devices | `device_sync_log` | Incremental sync tracking per device | S5 |
+| Domain   | Entity               | Description                                                 | Product Brief Source |
+| -------- | -------------------- | ----------------------------------------------------------- | -------------------- |
+| Users    | `auth.users`         | Supabase-managed auth identities (email, OAuth, anonymous)  | S8, ADR-002          |
+| Users    | `profiles`           | Application user data (display name, username, avatar)      | S8, S9               |
+| Users    | `user_preferences`   | Timer defaults, timezone                                    | S6, S8               |
+| Goals    | `long_term_goals`    | Big-picture aspirations: "Get strong at calculus"           | S3, S6               |
+| Goals    | `process_goals`      | Daily/weekly habits: "3 sessions/day." Streaks attach here. | S3, S6               |
+| Sessions | `sessions`           | Focus blocks with reflection data (8 data points per S10)   | S6, S10              |
+| Sessions | `breaks`             | Break periods with usefulness rating                        | S6                   |
+| Social   | `friend_requests`    | Pending friend request (sender → recipient)                 | S9                   |
+| Social   | `friendships`        | Confirmed mutual friendship (dual-row pattern)              | S9                   |
+| Social   | `encouragement_taps` | Private one-tap kudos                                       | S9                   |
+| Devices  | `devices`            | Registered BLE devices                                      | S5                   |
+| Devices  | `device_sync_log`    | Incremental sync tracking per device                        | S5                   |
 
 **Not modeled as tables (and why):**
+
 - **Session intentions** — text column on `sessions`, not a separate table (1:1, no independent lifecycle). Collected pre-session after goal selection. Optional (nullable). Not editable after session starts (commitment device per implementation intentions research). Max 200 characters, enforced at API validation layer (Zod schema) — DB column is `text` with no DB-level length constraint. `intention_text` is a per-session refinement of `process_goal_id` (e.g., "Finish problem set 4" for goal "Study calculus"). Independent columns, not a sub-goal — no lifecycle of its own. BLE protocol supports intentions (ADR-013: `string intention = 10; // max 200 chars`).
 - **Quiet Feed** — derived query: `SELECT DISTINCT DATE(started_at), user_id FROM sessions WHERE completed = true`
 - **Library Mode** — derived query: `sessions WHERE ended_at IS NULL` for active sessions
@@ -77,18 +80,18 @@ erDiagram
 
 ### Business Rules
 
-| Rule | Source | Schema Enforcement |
-|------|--------|--------------------|
-| Every auth user has exactly one profile | ADR-002 | UNIQUE on `profiles.auth_user_id` |
-| A session always belongs to a process goal | S6 L241 | `sessions.process_goal_id NOT NULL` |
-| A process goal always belongs to a long-term goal | S6 L199-204 | `process_goals.long_term_goal_id NOT NULL` |
-| Friendships are mutual | S9 L433 | Dual-row pattern: (A,B) and (B,A) |
-| Can't befriend yourself | Common sense | `CHECK(user_id != friend_id)` |
-| One friend request per pair | S9 | `UNIQUE(sender_id, recipient_id)` |
-| One break per session max | S6 L276 | `UNIQUE(session_id)` on breaks |
-| "Had to stop" excluded from success rate | S10 L536-539 | `abandonment_reason` enum, filtered in queries |
-| Distraction type only when "struggled" | S10 L547 | Application-level; `distraction_type` nullable |
-| One device per hardware ID | S5 L172 | `UNIQUE(hardware_id)` on devices |
+| Rule                                              | Source       | Schema Enforcement                             |
+| ------------------------------------------------- | ------------ | ---------------------------------------------- |
+| Every auth user has exactly one profile           | ADR-002      | UNIQUE on `profiles.auth_user_id`              |
+| A session always belongs to a process goal        | S6 L241      | `sessions.process_goal_id NOT NULL`            |
+| A process goal always belongs to a long-term goal | S6 L199-204  | `process_goals.long_term_goal_id NOT NULL`     |
+| Friendships are mutual                            | S9 L433      | Dual-row pattern: (A,B) and (B,A)              |
+| Can't befriend yourself                           | Common sense | `CHECK(user_id != friend_id)`                  |
+| One friend request per pair                       | S9           | `UNIQUE(sender_id, recipient_id)`              |
+| One break per session max                         | S6 L276      | `UNIQUE(session_id)` on breaks                 |
+| "Had to stop" excluded from success rate          | S10 L536-539 | `abandonment_reason` enum, filtered in queries |
+| Distraction type only when "struggled"            | S10 L547     | Application-level; `distraction_type` nullable |
+| One device per hardware ID                        | S5 L172      | `UNIQUE(hardware_id)` on devices               |
 
 ---
 
@@ -241,16 +244,16 @@ Duration is NOT stored — computed as `EXTRACT(EPOCH FROM ended_at - started_at
 
 ### Key Design Decisions
 
-| Decision | Chosen | Alternative | Why |
-|----------|--------|------------|-----|
-| Reflection data location | Columns on `sessions` | Separate `session_reflections` table | 1:1 relationship, always queried together, avoids join on every analytics query |
-| Timer preferences storage | Normalized columns | jsonb blob | Explicit columns have DB-level defaults, validation, and are easier for agents to type |
-| Friendship representation | Dual-row (A,B) + (B,A) | Single-row with OR clause | Doubles storage (negligible for friend counts) but makes queries and RLS trivially simple |
-| Session intention | Text column on sessions | Separate table | 1:1, no independent lifecycle, no separate queries needed |
-| Quiet Feed / Library Mode | Derived queries | Dedicated tables | Avoids data duplication; queries are simple and fast with proper indexes |
-| ID strategy | UUID v4 (gen_random_uuid) | Serial, UUID v7 | Required for offline BLE sync (collision-free). v7 considered but Postgres doesn't natively generate it yet. |
-| Timestamps | Always timestamptz | timestamp without tz | Users span timezones; sessions created in EST must render correctly in PST |
-| Deletes | Hard deletes | Soft deletes (deleted_at) | Simpler for v1. No undo flow in product brief. Can add per-table later if needed. |
+| Decision                  | Chosen                    | Alternative                          | Why                                                                                                          |
+| ------------------------- | ------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Reflection data location  | Columns on `sessions`     | Separate `session_reflections` table | 1:1 relationship, always queried together, avoids join on every analytics query                              |
+| Timer preferences storage | Normalized columns        | jsonb blob                           | Explicit columns have DB-level defaults, validation, and are easier for agents to type                       |
+| Friendship representation | Dual-row (A,B) + (B,A)    | Single-row with OR clause            | Doubles storage (negligible for friend counts) but makes queries and RLS trivially simple                    |
+| Session intention         | Text column on sessions   | Separate table                       | 1:1, no independent lifecycle, no separate queries needed                                                    |
+| Quiet Feed / Library Mode | Derived queries           | Dedicated tables                     | Avoids data duplication; queries are simple and fast with proper indexes                                     |
+| ID strategy               | UUID v4 (gen_random_uuid) | Serial, UUID v7                      | Required for offline BLE sync (collision-free). v7 considered but Postgres doesn't natively generate it yet. |
+| Timestamps                | Always timestamptz        | timestamp without tz                 | Users span timezones; sessions created in EST must render correctly in PST                                   |
+| Deletes                   | Hard deletes              | Soft deletes (deleted_at)            | Simpler for v1. No undo flow in product brief. Can add per-table later if needed.                            |
 
 ---
 

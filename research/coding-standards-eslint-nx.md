@@ -41,8 +41,8 @@ These settings enforce rules U-013 and provide the strictness foundation.
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
-  }
+    "isolatedModules": true,
+  },
 }
 ```
 
@@ -129,7 +129,8 @@ export default tseslint.config(
         'error',
         {
           selector: 'TSEnumDeclaration',
-          message: 'Use `as const` objects with derived union types instead of enum. See rule U-010.',
+          message:
+            'Use `as const` objects with derived union types instead of enum. See rule U-010.',
         },
       ],
 
@@ -170,7 +171,7 @@ export default tseslint.config(
       '**/.next/**',
       '**/coverage/**',
     ],
-  }
+  },
 );
 ```
 
@@ -394,27 +395,27 @@ Every project in `nx.json` or `project.json` must have both a `type:` and `scope
     "@pomofocus/mobile": { "tags": ["type:app", "scope:mobile"] },
     "@pomofocus/api": { "tags": ["type:app", "scope:shared"] },
     "@pomofocus/vscode-extension": { "tags": ["type:app", "scope:vscode"] },
-    "@pomofocus/mcp-server": { "tags": ["type:app", "scope:mcp"] }
-  }
+    "@pomofocus/mcp-server": { "tags": ["type:app", "scope:mcp"] },
+  },
 }
 ```
 
 ### Tag Definitions
 
-| Tag | Meaning | Packages |
-|-----|---------|----------|
-| `type:types` | Auto-generated types, leaf node | `types` |
-| `type:domain` | Pure domain logic, no IO | `core`, `analytics` |
-| `type:infra` | IO/infrastructure adapters | `data-access` |
-| `type:ble` | BLE protocol (types only) | `ble-protocol` |
-| `type:state` | React state management | `state` |
-| `type:ui` | React UI components | `ui` |
-| `type:app` | Application shells | `web`, `mobile`, `api`, `vscode-extension`, `mcp-server` |
-| `scope:shared` | Used by multiple apps | All packages + `api` |
-| `scope:web` | Web-only | `web` |
-| `scope:mobile` | Mobile-only | `mobile` |
-| `scope:vscode` | VS Code-only | `vscode-extension` |
-| `scope:mcp` | MCP server-only | `mcp-server` |
+| Tag            | Meaning                         | Packages                                                 |
+| -------------- | ------------------------------- | -------------------------------------------------------- |
+| `type:types`   | Auto-generated types, leaf node | `types`                                                  |
+| `type:domain`  | Pure domain logic, no IO        | `core`, `analytics`                                      |
+| `type:infra`   | IO/infrastructure adapters      | `data-access`                                            |
+| `type:ble`     | BLE protocol (types only)       | `ble-protocol`                                           |
+| `type:state`   | React state management          | `state`                                                  |
+| `type:ui`      | React UI components             | `ui`                                                     |
+| `type:app`     | Application shells              | `web`, `mobile`, `api`, `vscode-extension`, `mcp-server` |
+| `scope:shared` | Used by multiple apps           | All packages + `api`                                     |
+| `scope:web`    | Web-only                        | `web`                                                    |
+| `scope:mobile` | Mobile-only                     | `mobile`                                                 |
+| `scope:vscode` | VS Code-only                    | `vscode-extension`                                       |
+| `scope:mcp`    | MCP server-only                 | `mcp-server`                                             |
 
 ---
 
@@ -615,15 +616,15 @@ export default defineConfig({
 
 How each rule category is enforced in the CI pipeline:
 
-| Phase | Command | Rules Enforced |
-|-------|---------|----------------|
-| **Lint** | `pnpm nx affected --target=lint` | U-001–U-010, U-014, all `no-restricted-*` rules, Nx module boundaries |
-| **Type check** | `pnpm nx affected --target=type-check` | U-005, U-006, U-007, U-008, U-013 (via tsconfig) |
-| **Test** | `pnpm nx affected --target=test` | TST-001–TST-006, PKG-C08 (coverage thresholds) |
-| **Build** | `pnpm nx affected --target=build` | Catches import errors not caught by lint/type-check |
-| **Type drift** | `supabase gen types --diff` (in `supabase.yml`) | PKG-T01, PKG-T02, DB-008 |
-| **Protobuf** | `protoc --check` (in future CI) | PKG-T03, PKG-B02 |
-| **Firmware** | `pio run` + `pio test` (in `firmware.yml`) | NAT-F01, NAT-F06 |
+| Phase          | Command                                         | Rules Enforced                                                        |
+| -------------- | ----------------------------------------------- | --------------------------------------------------------------------- |
+| **Lint**       | `pnpm nx affected --target=lint`                | U-001–U-010, U-014, all `no-restricted-*` rules, Nx module boundaries |
+| **Type check** | `pnpm nx affected --target=type-check`          | U-005, U-006, U-007, U-008, U-013 (via tsconfig)                      |
+| **Test**       | `pnpm nx affected --target=test`                | TST-001–TST-006, PKG-C08 (coverage thresholds)                        |
+| **Build**      | `pnpm nx affected --target=build`               | Catches import errors not caught by lint/type-check                   |
+| **Type drift** | `supabase gen types --diff` (in `supabase.yml`) | PKG-T01, PKG-T02, DB-008                                              |
+| **Protobuf**   | `protoc --check` (in future CI)                 | PKG-T03, PKG-B02                                                      |
+| **Firmware**   | `pio run` + `pio test` (in `firmware.yml`)      | NAT-F01, NAT-F06                                                      |
 
 ---
 
@@ -631,26 +632,26 @@ How each rule category is enforced in the CI pipeline:
 
 These rules require code review. Agents must self-check these before opening a PR.
 
-| Rule | Why Not Automatable |
-|------|-------------------|
-| PKG-C06 | FSM transition pattern is a design pattern, not a syntax rule |
-| PKG-A02 | "No composite Focus Score" is a product decision, not a code pattern |
-| PKG-A04 | "Pure function" is a property, not a syntactic feature |
-| PKG-S01 | Distinguishing server data from UI state requires semantic understanding |
-| PKG-S02 | "Thin wrapper" is a judgment call on complexity |
-| PKG-S03–S07 | Zustand/TanStack Query usage patterns require semantic understanding |
-| PKG-S08 | `useEffect` for derivation vs. legitimate effects requires context |
-| APP-004 | Platform-specific secure storage varies by app |
-| APP-006 | Auth flow direction is an architectural pattern |
-| API-002–003 | Global handler setup is verified by reading app.ts, not by syntax |
-| API-004 | "Expensive work" is a judgment call |
-| API-005 | JWT vs. service_role usage requires understanding the route's purpose |
-| API-007 | Privacy JOIN pattern requires understanding the query's intent |
-| DB-001–DB-011 | SQL migration review requires human/agent judgment |
-| NAT-S01–S05 | Swift patterns require language-specific review |
-| NAT-F01–F07 | Firmware patterns require embedded expertise |
-| TST-003 | Integration vs. unit test balance requires judgment |
-| TST-005 | "Test must be able to fail" requires manual verification |
+| Rule          | Why Not Automatable                                                      |
+| ------------- | ------------------------------------------------------------------------ |
+| PKG-C06       | FSM transition pattern is a design pattern, not a syntax rule            |
+| PKG-A02       | "No composite Focus Score" is a product decision, not a code pattern     |
+| PKG-A04       | "Pure function" is a property, not a syntactic feature                   |
+| PKG-S01       | Distinguishing server data from UI state requires semantic understanding |
+| PKG-S02       | "Thin wrapper" is a judgment call on complexity                          |
+| PKG-S03–S07   | Zustand/TanStack Query usage patterns require semantic understanding     |
+| PKG-S08       | `useEffect` for derivation vs. legitimate effects requires context       |
+| APP-004       | Platform-specific secure storage varies by app                           |
+| APP-006       | Auth flow direction is an architectural pattern                          |
+| API-002–003   | Global handler setup is verified by reading app.ts, not by syntax        |
+| API-004       | "Expensive work" is a judgment call                                      |
+| API-005       | JWT vs. service_role usage requires understanding the route's purpose    |
+| API-007       | Privacy JOIN pattern requires understanding the query's intent           |
+| DB-001–DB-011 | SQL migration review requires human/agent judgment                       |
+| NAT-S01–S05   | Swift patterns require language-specific review                          |
+| NAT-F01–F07   | Firmware patterns require embedded expertise                             |
+| TST-003       | Integration vs. unit test balance requires judgment                      |
+| TST-005       | "Test must be able to fail" requires manual verification                 |
 
 ---
 
@@ -682,58 +683,58 @@ pnpm add -D -w eslint-plugin-playwright
 
 ## 10. Summary: Rule → Enforcement Mapping
 
-| Rule ID | ESLint Rule / Mechanism |
-|---------|------------------------|
-| U-001 | `@typescript-eslint/no-unsafe-*`, `no-explicit-any` |
-| U-002 | `import/no-default-export` |
-| U-003 | `@typescript-eslint/consistent-type-imports` |
-| U-004 | `@typescript-eslint/consistent-type-definitions` |
-| U-005 | `@typescript-eslint/explicit-function-return-type` |
-| U-006 | `@typescript-eslint/no-floating-promises` |
-| U-007 | `@typescript-eslint/no-misused-promises` |
-| U-008 | `@typescript-eslint/switch-exhaustiveness-check` |
-| U-009 | `@typescript-eslint/consistent-type-assertions` |
-| U-010 | `no-restricted-syntax` (TSEnumDeclaration) |
-| U-011 | Code review |
-| U-012 | Code review |
-| U-013 | `tsconfig.base.json` → `noUncheckedIndexedAccess` |
-| U-014 | Code review + Nx |
-| PKG-C01 | `no-restricted-globals` + `no-restricted-imports` (core override) |
-| PKG-C02 | `no-restricted-imports` (core override) |
-| PKG-C03 | `no-restricted-imports` (core override) + Nx `bannedExternalImports` |
-| PKG-C04 | `no-restricted-globals` (core override) |
-| PKG-C05 | Nx `bannedExternalImports` + type system |
-| PKG-C06 | Code review |
-| PKG-C07 | `@nx/enforce-module-boundaries` depConstraints |
-| PKG-C08 | Vitest coverage thresholds (100%) |
-| PKG-A01 | `no-restricted-globals` + `no-restricted-imports` (analytics override) |
-| PKG-A02 | Code review |
-| PKG-A03 | `@nx/enforce-module-boundaries` depConstraints |
-| PKG-A04 | Code review |
-| PKG-D01 | Nx depConstraints |
-| PKG-D02 | Nx `bannedExternalImports` |
-| PKG-D03 | Code review + PKG-C01 |
-| PKG-D04 | `no-restricted-imports` (data-access override) |
-| PKG-S01–S08 | Code review |
-| PKG-U01 | `@nx/enforce-module-boundaries` depConstraints + `no-restricted-imports` |
-| PKG-U02 | `no-restricted-imports` (ui override) + Nx `bannedExternalImports` |
-| PKG-U03 | `no-restricted-imports` (FlatList) |
-| PKG-B01 | `@nx/enforce-module-boundaries` depConstraints |
-| PKG-B02 | CI protobuf check |
-| PKG-B03 | TypeScript type system |
-| APP-001 | `no-restricted-imports` (client apps override) |
-| APP-002 | Code review + env audit |
-| APP-003 | Nx `bannedExternalImports` |
-| APP-004 | Code review |
-| APP-005 | `no-restricted-imports` (ban `@supabase/realtime-js`) |
-| APP-006 | Code review |
-| TST-001 | CI coverage thresholds |
-| TST-002 | `testing-library/prefer-role-queries` |
-| TST-003 | Code review |
-| TST-004 | Code review |
-| TST-005 | Code review |
-| TST-006 | Vitest `include` pattern |
-| DB-001–011 | Migration review |
-| API-001–007 | Code review + integration tests |
-| NAT-S01–S05 | SwiftLint + code review |
-| NAT-F01–F07 | Compiler + code review |
+| Rule ID     | ESLint Rule / Mechanism                                                  |
+| ----------- | ------------------------------------------------------------------------ |
+| U-001       | `@typescript-eslint/no-unsafe-*`, `no-explicit-any`                      |
+| U-002       | `import/no-default-export`                                               |
+| U-003       | `@typescript-eslint/consistent-type-imports`                             |
+| U-004       | `@typescript-eslint/consistent-type-definitions`                         |
+| U-005       | `@typescript-eslint/explicit-function-return-type`                       |
+| U-006       | `@typescript-eslint/no-floating-promises`                                |
+| U-007       | `@typescript-eslint/no-misused-promises`                                 |
+| U-008       | `@typescript-eslint/switch-exhaustiveness-check`                         |
+| U-009       | `@typescript-eslint/consistent-type-assertions`                          |
+| U-010       | `no-restricted-syntax` (TSEnumDeclaration)                               |
+| U-011       | Code review                                                              |
+| U-012       | Code review                                                              |
+| U-013       | `tsconfig.base.json` → `noUncheckedIndexedAccess`                        |
+| U-014       | Code review + Nx                                                         |
+| PKG-C01     | `no-restricted-globals` + `no-restricted-imports` (core override)        |
+| PKG-C02     | `no-restricted-imports` (core override)                                  |
+| PKG-C03     | `no-restricted-imports` (core override) + Nx `bannedExternalImports`     |
+| PKG-C04     | `no-restricted-globals` (core override)                                  |
+| PKG-C05     | Nx `bannedExternalImports` + type system                                 |
+| PKG-C06     | Code review                                                              |
+| PKG-C07     | `@nx/enforce-module-boundaries` depConstraints                           |
+| PKG-C08     | Vitest coverage thresholds (100%)                                        |
+| PKG-A01     | `no-restricted-globals` + `no-restricted-imports` (analytics override)   |
+| PKG-A02     | Code review                                                              |
+| PKG-A03     | `@nx/enforce-module-boundaries` depConstraints                           |
+| PKG-A04     | Code review                                                              |
+| PKG-D01     | Nx depConstraints                                                        |
+| PKG-D02     | Nx `bannedExternalImports`                                               |
+| PKG-D03     | Code review + PKG-C01                                                    |
+| PKG-D04     | `no-restricted-imports` (data-access override)                           |
+| PKG-S01–S08 | Code review                                                              |
+| PKG-U01     | `@nx/enforce-module-boundaries` depConstraints + `no-restricted-imports` |
+| PKG-U02     | `no-restricted-imports` (ui override) + Nx `bannedExternalImports`       |
+| PKG-U03     | `no-restricted-imports` (FlatList)                                       |
+| PKG-B01     | `@nx/enforce-module-boundaries` depConstraints                           |
+| PKG-B02     | CI protobuf check                                                        |
+| PKG-B03     | TypeScript type system                                                   |
+| APP-001     | `no-restricted-imports` (client apps override)                           |
+| APP-002     | Code review + env audit                                                  |
+| APP-003     | Nx `bannedExternalImports`                                               |
+| APP-004     | Code review                                                              |
+| APP-005     | `no-restricted-imports` (ban `@supabase/realtime-js`)                    |
+| APP-006     | Code review                                                              |
+| TST-001     | CI coverage thresholds                                                   |
+| TST-002     | `testing-library/prefer-role-queries`                                    |
+| TST-003     | Code review                                                              |
+| TST-004     | Code review                                                              |
+| TST-005     | Code review                                                              |
+| TST-006     | Vitest `include` pattern                                                 |
+| DB-001–011  | Migration review                                                         |
+| API-001–007 | Code review + integration tests                                          |
+| NAT-S01–S05 | SwiftLint + code review                                                  |
+| NAT-F01–F07 | Compiler + code review                                                   |

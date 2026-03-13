@@ -20,14 +20,14 @@ Claude Code conversations are ephemeral. Context compaction drops details. Sessi
 
 ### What Obsidian Adds
 
-| Capability | How It Helps |
-|-----------|-------------|
-| **Persistence** | Markdown files on disk survive conversation resets, compaction, and tool changes |
-| **Backlinks** | Daily notes link to issues, ADRs, and each other — building a knowledge graph over time |
-| **Queryability** | Dataview plugin turns frontmatter into queryable databases (issues shipped this week, velocity trends) |
-| **Local-first** | No cloud dependency, no API costs, no privacy concerns — just files |
-| **Plaintext** | Works with git, grep, any editor — not locked into Obsidian |
-| **Human-readable** | Unlike JSONL transcripts or database dumps, daily notes are designed to be read |
+| Capability         | How It Helps                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| **Persistence**    | Markdown files on disk survive conversation resets, compaction, and tool changes                       |
+| **Backlinks**      | Daily notes link to issues, ADRs, and each other — building a knowledge graph over time                |
+| **Queryability**   | Dataview plugin turns frontmatter into queryable databases (issues shipped this week, velocity trends) |
+| **Local-first**    | No cloud dependency, no API costs, no privacy concerns — just files                                    |
+| **Plaintext**      | Works with git, grep, any editor — not locked into Obsidian                                            |
+| **Human-readable** | Unlike JSONL transcripts or database dumps, daily notes are designed to be read                        |
 
 ### Complementary to Existing Systems
 
@@ -81,13 +81,13 @@ Worth adding when: you want to search across hundreds of notes by content, query
 
 When the time comes to add an MCP server, these are the leading options:
 
-| Server | Approach | Dependencies | Best For |
-|--------|----------|-------------|----------|
-| [bitbonsai/mcp-obsidian](https://github.com/bitbonsai/mcp-obsidian) | Direct filesystem | Zero — no Obsidian plugins | Lightweight read/write, 14 methods |
-| [cyanheads/obsidian-mcp-server](https://github.com/cyanheads/obsidian-mcp-server) | REST API bridge | Obsidian Local REST API plugin | Full-featured: search, tags, frontmatter |
-| [iansinnott/obsidian-claude-code-mcp](https://github.com/iansinnott/obsidian-claude-code-mcp) | Claude Code specific | Minimal | Purpose-built for Claude Code workflows |
-| [MarkusPfundstein/mcp-obsidian](https://github.com/MarkusPfundstein/mcp-obsidian) | REST API bridge | Obsidian Local REST API plugin | List, get, search, patch, append, delete |
-| [jacksteamdev/obsidian-mcp-tools](https://github.com/jacksteamdev/obsidian-mcp-tools) | Semantic search | Obsidian plugin | Semantic search + custom Templater prompts |
+| Server                                                                                        | Approach             | Dependencies                   | Best For                                   |
+| --------------------------------------------------------------------------------------------- | -------------------- | ------------------------------ | ------------------------------------------ |
+| [bitbonsai/mcp-obsidian](https://github.com/bitbonsai/mcp-obsidian)                           | Direct filesystem    | Zero — no Obsidian plugins     | Lightweight read/write, 14 methods         |
+| [cyanheads/obsidian-mcp-server](https://github.com/cyanheads/obsidian-mcp-server)             | REST API bridge      | Obsidian Local REST API plugin | Full-featured: search, tags, frontmatter   |
+| [iansinnott/obsidian-claude-code-mcp](https://github.com/iansinnott/obsidian-claude-code-mcp) | Claude Code specific | Minimal                        | Purpose-built for Claude Code workflows    |
+| [MarkusPfundstein/mcp-obsidian](https://github.com/MarkusPfundstein/mcp-obsidian)             | REST API bridge      | Obsidian Local REST API plugin | List, get, search, patch, append, delete   |
+| [jacksteamdev/obsidian-mcp-tools](https://github.com/jacksteamdev/obsidian-mcp-tools)         | Semantic search      | Obsidian plugin                | Semantic search + custom Templater prompts |
 
 **Recommendation when ready:** Start with `bitbonsai/mcp-obsidian` (zero deps). Upgrade to `cyanheads/obsidian-mcp-server` if you need tag queries or semantic search.
 
@@ -102,10 +102,10 @@ Adding an MCP server to `.claude/settings.json`:
       "command": "npx",
       "args": ["-y", "@bitbonsai/mcp-obsidian"],
       "env": {
-        "OBSIDIAN_VAULT_PATH": "~/Documents/Obsidian/PomoFocus"
-      }
-    }
-  }
+        "OBSIDIAN_VAULT_PATH": "~/Documents/Obsidian/PomoFocus",
+      },
+    },
+  },
 }
 ```
 
@@ -144,12 +144,12 @@ Separate from the existing `~/Documents/Obsidian/Notes/` personal vault. This ke
 
 Install these after the vault has some notes:
 
-| Plugin | Purpose | When to Install |
-|--------|---------|----------------|
-| [Dataview](https://github.com/blacksmithgu/obsidian-dataview) | Query notes with SQL-like syntax | After ~2 weeks of daily notes |
-| [Templater](https://github.com/SilentVoid13/Templater) | Dynamic template rendering | When you want to create notes manually with auto-filled fields |
-| [Calendar](https://github.com/liamcain/obsidian-calendar-plugin) | Calendar sidebar for navigating daily notes | Immediately — low effort, high value |
-| [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) | Weekly/monthly/quarterly note creation | When weekly rollups are added |
+| Plugin                                                                | Purpose                                     | When to Install                                                |
+| --------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------- |
+| [Dataview](https://github.com/blacksmithgu/obsidian-dataview)         | Query notes with SQL-like syntax            | After ~2 weeks of daily notes                                  |
+| [Templater](https://github.com/SilentVoid13/Templater)                | Dynamic template rendering                  | When you want to create notes manually with auto-filled fields |
+| [Calendar](https://github.com/liamcain/obsidian-calendar-plugin)      | Calendar sidebar for navigating daily notes | Immediately — low effort, high value                           |
+| [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) | Weekly/monthly/quarterly note creation      | When weekly rollups are added                                  |
 
 **Do not install Dataview, Templater, or Periodic Notes upfront.** They add complexity before there's data to query. The Calendar plugin is the one exception — install it immediately.
 
@@ -173,26 +173,26 @@ The `/done-for-the-day` skill generates notes with this structure. The frontmatt
 
 ```yaml
 ---
-date: 2026-03-11           # ISO date — Dataview can sort/filter on this
-day: Tuesday                # Human-readable day name
-tags: [daily, pomofocus]    # Obsidian tags for filtering
-issues_shipped: 3           # Numeric — enables velocity queries
-prs_merged: 2               # Numeric — enables throughput queries
+date: 2026-03-11 # ISO date — Dataview can sort/filter on this
+day: Tuesday # Human-readable day name
+tags: [daily, pomofocus] # Obsidian tags for filtering
+issues_shipped: 3 # Numeric — enables velocity queries
+prs_merged: 2 # Numeric — enables throughput queries
 ---
 ```
 
 ### Sections
 
-| Section | Source | Purpose |
-|---------|--------|---------|
-| **Issues Shipped** | `gh issue list --state closed` | What was completed, with implementation summary |
-| **PRs Merged** | `gh pr list --state merged` | Links to PRs for detailed review |
-| **Key Changes** | `git log --oneline` | Grouped commit summary |
-| **Files Changed** | `git diff --stat` | Scope indicator |
-| **Still In Progress** | `gh issue list --label in-progress` | Carry-forward context |
-| **Decisions Made** | Manual (user fills in) | Capture reasoning that git doesn't |
-| **Tomorrow** | Manual (user fills in) | Priority planning |
-| **Notes** | Manual (user fills in) | Free-form reflection |
+| Section               | Source                              | Purpose                                         |
+| --------------------- | ----------------------------------- | ----------------------------------------------- |
+| **Issues Shipped**    | `gh issue list --state closed`      | What was completed, with implementation summary |
+| **PRs Merged**        | `gh pr list --state merged`         | Links to PRs for detailed review                |
+| **Key Changes**       | `git log --oneline`                 | Grouped commit summary                          |
+| **Files Changed**     | `git diff --stat`                   | Scope indicator                                 |
+| **Still In Progress** | `gh issue list --label in-progress` | Carry-forward context                           |
+| **Decisions Made**    | Manual (user fills in)              | Capture reasoning that git doesn't              |
+| **Tomorrow**          | Manual (user fills in)              | Priority planning                               |
+| **Notes**             | Manual (user fills in)              | Free-form reflection                            |
 
 The first four sections are auto-populated. The last three are empty placeholders for human input — the most valuable part of the journal over time.
 
@@ -214,11 +214,11 @@ The primary integration point. A Claude Code skill that:
 
 ### Potential Future Skills
 
-| Skill | Trigger | What It Does |
-|-------|---------|-------------|
-| `/morning-standup` | Start of day | Reads yesterday's daily note, surfaces "Tomorrow" and "Still In Progress" sections |
-| `/weekly-review` | End of week | Aggregates daily notes into weekly summary with velocity metrics |
-| `/decision-log` | After `/tech-design` | Appends ADR summary to today's daily note |
+| Skill              | Trigger              | What It Does                                                                       |
+| ------------------ | -------------------- | ---------------------------------------------------------------------------------- |
+| `/morning-standup` | Start of day         | Reads yesterday's daily note, surfaces "Tomorrow" and "Still In Progress" sections |
+| `/weekly-review`   | End of week          | Aggregates daily notes into weekly summary with velocity metrics                   |
+| `/decision-log`    | After `/tech-design` | Appends ADR summary to today's daily note                                          |
 
 These are not built yet. Build them when a real pain point emerges, not speculatively.
 
@@ -303,34 +303,34 @@ Do not build rollup infrastructure before there is data to roll up.
 
 ### Now
 
-| Item | Why Now |
-|------|---------|
+| Item                      | Why Now                                                  |
+| ------------------------- | -------------------------------------------------------- |
 | `/done-for-the-day` skill | Solves the immediate pain point — "what did I do today?" |
-| Vault directory structure | Auto-created by the skill on first run |
-| Daily note template | Defined in the skill, Dataview-ready from day one |
+| Vault directory structure | Auto-created by the skill on first run                   |
+| Daily note template       | Defined in the skill, Dataview-ready from day one        |
 
 ### After 2 Weeks of Daily Notes
 
-| Item | Why Then |
-|------|---------|
-| Dataview plugin | Need data to query before queries are useful |
-| `dashboard.md` | Velocity queries become meaningful with 10+ data points |
+| Item            | Why Then                                                        |
+| --------------- | --------------------------------------------------------------- |
+| Dataview plugin | Need data to query before queries are useful                    |
+| `dashboard.md`  | Velocity queries become meaningful with 10+ data points         |
 | Calendar plugin | Nice-to-have for navigation, but notes are browsable without it |
 
 ### After 1 Month
 
-| Item | Why Then |
-|------|---------|
-| `/weekly-review` skill | Enough weeks to aggregate |
-| Periodic Notes plugin | Automates weekly/monthly note creation from Obsidian |
+| Item                   | Why Then                                             |
+| ---------------------- | ---------------------------------------------------- |
+| `/weekly-review` skill | Enough weeks to aggregate                            |
+| Periodic Notes plugin  | Automates weekly/monthly note creation from Obsidian |
 
 ### After 3 Months (or when pain arises)
 
-| Item | Why Then |
-|------|---------|
-| MCP server integration | Semantic search becomes valuable at 100+ notes |
+| Item                     | Why Then                                                |
+| ------------------------ | ------------------------------------------------------- |
+| MCP server integration   | Semantic search becomes valuable at 100+ notes          |
 | `/morning-standup` skill | Only useful if daily journaling is an established habit |
-| Monthly trend notes | Need months of data for trends to be meaningful |
+| Monthly trend notes      | Need months of data for trends to be meaningful         |
 
 ---
 

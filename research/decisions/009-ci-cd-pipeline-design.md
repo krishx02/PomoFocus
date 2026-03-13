@@ -55,21 +55,22 @@ Chosen option: **"Hybrid Incremental"**, because it matches the project's curren
 | `firmware.yml` | PlatformIO compile + test | `ubuntu-latest` | PR (path: `firmware/**`) |
 
 **Deferred entirely:**
+
 - Native Swift CI (macOS widget, iOS widget, watchOS) — build and test from Xcode locally. No GitHub Actions macOS runners. Revisit when native targets ship, potentially using Xcode Cloud (free with Apple Developer Program).
 - Claude Code Action (`@claude` in PR comments) — requires Anthropic API key (pay-per-use), incompatible with Max subscription. Agent work stays local. Revisit if official Max OAuth support is added.
 
 ### Key Tooling Decisions
 
-| Concern | Decision | Rationale |
-|---------|----------|-----------|
-| Mobile builds | **Expo EAS Build** (not Fastlane) | EAS manages signing certs, provisioning profiles, and builds in the cloud. No macOS runner needed. Free tier: 15 iOS + 15 Android builds/month. |
-| Web deploys | **Vercel GitHub integration** | Zero-config: connect repo, get preview deploys on every PR. No workflow file needed for Phase 1. |
-| API deploys | **`cloudflare/wrangler-action@v3`** | Official action. Preview on PR, production on merge. |
-| TS CI | **Nx affected** (`lint`, `test`, `type-check`, `build`) | Only runs tasks for packages changed by the PR. `actions/cache` for `.nx/cache`, or Nx Cloud (free for solo devs). |
-| Change detection | **`dorny/paths-filter@v3`** or Nx affected | Path filters for deploy workflows; Nx affected for TS validation. |
-| Success gate | **`ci-complete` job** with `if: always()` | Single required check in branch protection. Skipped platforms = passing. |
-| Firmware CI | **PlatformIO** on `ubuntu-latest` | `pip install platformio` + `platformio run` + `platformio test`. No special hardware. |
-| Agent CI | **None for now** | `/ship-issue` runs locally (Max subscription). Claude Code Action deferred. |
+| Concern          | Decision                                                | Rationale                                                                                                                                       |
+| ---------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mobile builds    | **Expo EAS Build** (not Fastlane)                       | EAS manages signing certs, provisioning profiles, and builds in the cloud. No macOS runner needed. Free tier: 15 iOS + 15 Android builds/month. |
+| Web deploys      | **Vercel GitHub integration**                           | Zero-config: connect repo, get preview deploys on every PR. No workflow file needed for Phase 1.                                                |
+| API deploys      | **`cloudflare/wrangler-action@v3`**                     | Official action. Preview on PR, production on merge.                                                                                            |
+| TS CI            | **Nx affected** (`lint`, `test`, `type-check`, `build`) | Only runs tasks for packages changed by the PR. `actions/cache` for `.nx/cache`, or Nx Cloud (free for solo devs).                              |
+| Change detection | **`dorny/paths-filter@v3`** or Nx affected              | Path filters for deploy workflows; Nx affected for TS validation.                                                                               |
+| Success gate     | **`ci-complete` job** with `if: always()`               | Single required check in branch protection. Skipped platforms = passing.                                                                        |
+| Firmware CI      | **PlatformIO** on `ubuntu-latest`                       | `pip install platformio` + `platformio run` + `platformio test`. No special hardware.                                                           |
+| Agent CI         | **None for now**                                        | `/ship-issue` runs locally (Max subscription). Claude Code Action deferred.                                                                     |
 
 ### Consequences
 

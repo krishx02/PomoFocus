@@ -38,67 +38,67 @@ Chosen option: **"Lean GDPR"**, because the data PomoFocus handles does not just
 
 ### Encryption
 
-| Layer | Mechanism | Responsibility |
-|-------|-----------|----------------|
-| In transit | TLS 1.2+ (HTTPS) | Supabase, Cloudflare Workers, Vercel (automatic) |
-| At rest | AES-256 | Supabase (automatic, no configuration needed) |
-| Application-level | None | Not required for low-to-moderate sensitivity data |
+| Layer             | Mechanism        | Responsibility                                    |
+| ----------------- | ---------------- | ------------------------------------------------- |
+| In transit        | TLS 1.2+ (HTTPS) | Supabase, Cloudflare Workers, Vercel (automatic)  |
+| At rest           | AES-256          | Supabase (automatic, no configuration needed)     |
+| Application-level | None             | Not required for low-to-moderate sensitivity data |
 
 No additional encryption is needed. Supabase's shared responsibility model covers encryption at rest and in transit. Application-level encryption (e.g., `pgcrypto`) is not warranted because: (1) the data is not health, financial, or credential data; (2) encrypted fields cannot be queried, breaking analytics; (3) key management adds significant complexity for marginal security gain.
 
 ### Access Control
 
-| Layer | Mechanism | Reference |
-|-------|-----------|-----------|
-| API gateway | Hono on CF Workers — clients never access Supabase directly | ADR-007 |
-| Row-level security | RLS on every table via `get_user_id()` helper | ADR-005 |
-| JWT validation | Server-side validation of Supabase JWT in API middleware | ADR-007 |
-| Social visibility | Scoped functions (`is_friend_focusing`, `did_friend_focus_today`) — friends never see raw session data | ADR-005 |
+| Layer              | Mechanism                                                                                              | Reference |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | --------- |
+| API gateway        | Hono on CF Workers — clients never access Supabase directly                                            | ADR-007   |
+| Row-level security | RLS on every table via `get_user_id()` helper                                                          | ADR-005   |
+| JWT validation     | Server-side validation of Supabase JWT in API middleware                                               | ADR-007   |
+| Social visibility  | Scoped functions (`is_friend_focusing`, `did_friend_focus_today`) — friends never see raw session data | ADR-005   |
 
 ### GDPR Compliance
 
-| Requirement | Implementation |
-|-------------|----------------|
-| Right to erasure (Art. 17) | `DELETE /v1/me` — cascade deletes all user data (sessions, goals, friendships, devices, preferences). Hard deletes (ADR-005). |
-| Right to data portability (Art. 20) | `GET /v1/me/export` — returns all user data as JSON download |
-| Privacy policy | Static page at `/privacy` — describes data collected, purposes, retention, and rights |
-| Consent | Acknowledgment at sign-up (link to privacy policy). No cookie banner needed — no tracking, no ads, no third-party analytics. |
-| Data minimization | Store only what's needed: provider user ID, email (account recovery), display name (social features). No profile pictures unless user uploads. |
-| Data retention | 30 days post-deletion for backup safety, then hard purge via scheduled CF Worker cron job |
+| Requirement                         | Implementation                                                                                                                                 |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Right to erasure (Art. 17)          | `DELETE /v1/me` — cascade deletes all user data (sessions, goals, friendships, devices, preferences). Hard deletes (ADR-005).                  |
+| Right to data portability (Art. 20) | `GET /v1/me/export` — returns all user data as JSON download                                                                                   |
+| Privacy policy                      | Static page at `/privacy` — describes data collected, purposes, retention, and rights                                                          |
+| Consent                             | Acknowledgment at sign-up (link to privacy policy). No cookie banner needed — no tracking, no ads, no third-party analytics.                   |
+| Data minimization                   | Store only what's needed: provider user ID, email (account recovery), display name (social features). No profile pictures unless user uploads. |
+| Data retention                      | 30 days post-deletion for backup safety, then hard purge via scheduled CF Worker cron job                                                      |
 
 ### OAuth Data Minimization
 
-| Provider | Scopes Requested | Data Stored |
-|----------|-----------------|-------------|
-| Apple Sign-In | `name`, `email` | Provider `sub` (user ID), email (real or private relay), display name (cached on first login — Apple only returns it once) |
-| Google | `openid`, `email`, `profile` | Provider `sub`, email, display name |
-| Email/password | N/A | Email, hashed password (Supabase Auth handles hashing) |
+| Provider       | Scopes Requested             | Data Stored                                                                                                                |
+| -------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Apple Sign-In  | `name`, `email`              | Provider `sub` (user ID), email (real or private relay), display name (cached on first login — Apple only returns it once) |
+| Google         | `openid`, `email`, `profile` | Provider `sub`, email, display name                                                                                        |
+| Email/password | N/A                          | Email, hashed password (Supabase Auth handles hashing)                                                                     |
 
 Supabase Auth manages all OAuth tokens, refresh cycles, and session management. `packages/data-access/` wraps Supabase Auth; `packages/core/` never handles auth data — it receives `userId: string` per ADR-002.
 
 ### BLE Security
 
-| Measure | Implementation |
-|---------|----------------|
-| Pairing | LE Secure Connections with Passkey Entry — 6-digit code displayed on e-ink screen, entered on phone |
-| Bonding | Persist Long Term Key (LTK) after initial pairing — re-pairing not needed for subsequent sessions |
-| Link encryption | AES-CCM 128-bit (standard for LE Secure Connections) |
-| Accepted risk | Timer/goal data is low-stakes — brute-forcing a 6-digit passkey to intercept "user focused 25 minutes" is not a credible threat |
+| Measure         | Implementation                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Pairing         | LE Secure Connections with Passkey Entry — 6-digit code displayed on e-ink screen, entered on phone                             |
+| Bonding         | Persist Long Term Key (LTK) after initial pairing — re-pairing not needed for subsequent sessions                               |
+| Link encryption | AES-CCM 128-bit (standard for LE Secure Connections)                                                                            |
+| Accepted risk   | Timer/goal data is low-stakes — brute-forcing a 6-digit passkey to intercept "user focused 25 minutes" is not a credible threat |
 
 Advanced BLE hardening (Secure Connections Only mode, GATT-level encryption, MAC rotation) is deferred — the threat model does not justify the firmware complexity and OS compatibility issues.
 
 ### Platform Security Notes
 
-| Platform | Security Considerations |
-|----------|----------------------|
-| Web (Next.js) | HTTPS via Vercel. HttpOnly cookies for session. CSP headers. No localStorage for tokens. |
-| Mobile (Expo) | Secure storage via `expo-secure-store` for tokens. Certificate pinning deferred. |
-| iOS Widget | Data via App Group (on-device transfer, not network). No additional concern. |
-| watchOS | Data via WatchConnectivity (on-device transfer). No additional concern. |
-| macOS menu bar | CoreBluetooth for BLE fallback. Keychain for token storage. |
-| VS Code | `SecretStorage` API for tokens. Extension sandbox provides isolation. |
-| MCP Server | Token stored via Claude Code's credential management. No browser context. |
-| BLE Device | LE Secure Connections + bonding. Session data in internal flash (not network-accessible). |
+| Platform       | Security Considerations                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| Web (Next.js)  | HTTPS via Vercel. HttpOnly cookies for session. CSP headers. No localStorage for tokens.  |
+| Mobile (Expo)  | Secure storage via `expo-secure-store` for tokens. Certificate pinning deferred.          |
+| iOS Widget     | Data via App Group (on-device transfer, not network). No additional concern.              |
+| watchOS        | Data via WatchConnectivity (on-device transfer). No additional concern.                   |
+| macOS menu bar | CoreBluetooth for BLE fallback. Keychain for token storage.                               |
+| VS Code        | `SecretStorage` API for tokens. Extension sandbox provides isolation.                     |
+| MCP Server     | Token stored via Claude Code's credential management. No browser context.                 |
+| BLE Device     | LE Secure Connections + bonding. Session data in internal flash (not network-accessible). |
 
 ## Pros and Cons of the Options
 

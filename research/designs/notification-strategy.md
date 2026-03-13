@@ -12,6 +12,7 @@ PomoFocus is a multi-platform Pomodoro productivity app that needs notifications
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Deliver timer end alerts reliably across all platforms (local notification on mobile, Notification API on web, vibration on BLE)
 - Enable real-time encouragement taps on mobile via push notifications
 - Provide opt-in goal-aware habit nudges that help users maintain their focus practice
@@ -20,6 +21,7 @@ PomoFocus is a multi-platform Pomodoro productivity app that needs notifications
 - Maintain $0/month notification infrastructure cost
 
 **Non-Goals:**
+
 - Web push notifications — excluded due to ~6% opt-in rates and service worker complexity
 - Marketing or re-engagement notifications — "we miss you" messages are antithetical to the app's values
 - Streak-at-risk warnings — creates extrinsic pressure, undermines autonomy (consistent with ADR-014's rejection of composite Focus Score)
@@ -82,6 +84,7 @@ PomoFocus is a multi-platform Pomodoro productivity app that needs notifications
 #### 2. Encouragement Tap (Push + In-App Fallback)
 
 **Server flow:**
+
 1. Sender calls `POST /v1/taps` (existing ADR-018 endpoint)
 2. API creates the tap record in the database
 3. API queries `devices` table for recipient's `expo_push_token`
@@ -153,6 +156,7 @@ PomoFocus sends exactly four types of notifications. No more. Ever.
 4. **Goal nudge** — your commitment, your time (your goal, self-cancelling)
 
 Explicitly excluded:
+
 - "You haven't focused in X days" — re-engagement guilt
 - "Your streak is at risk!" — extrinsic pressure (anti-SDT, consistent with ADR-014)
 - "New feature available!" — marketing

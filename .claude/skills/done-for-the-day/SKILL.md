@@ -4,8 +4,8 @@ description: Summarize today's work and write a structured daily note to the Obs
 user-invocable: true
 context: conversation
 allowed-tools: Bash(gh *), Bash(git *), Bash(date *), Bash(ls *), Bash(mkdir *), Read, Write, Grep, Glob
-compatibility: "Requires gh CLI, git. Claude Code only."
-argument-hint: "[optional: YYYY-MM-DD date, defaults to today]"
+compatibility: 'Requires gh CLI, git. Claude Code only.'
+argument-hint: '[optional: YYYY-MM-DD date, defaults to today]'
 metadata:
   author: PomoFocus
   version: 1.0.0
@@ -117,6 +117,7 @@ ls ~/Documents/Obsidian/PomoFocus/journal/daily/$TARGET_DATE.md 2>/dev/null
 ```
 
 If the file exists, read it. You will **merge** new data into it:
+
 - Add any newly closed issues that are not already listed under "## Issues Shipped"
 - Add any newly merged PRs that are not already listed under "## PRs Merged"
 - Update the frontmatter counts (`issues_shipped`, `prs_merged`)
@@ -142,7 +143,9 @@ prs_merged: [count of MERGED_PRS]
 # $DAY_NAME, $DISPLAY_DATE
 
 ## Issues Shipped
+
 [For each issue in CLOSED_ISSUES:]
+
 - [x] #[number] — [title] `[label1]` `[label2]`
   - How: [Read the issue body or PR description to write a 1-2 sentence summary of HOW the issue was implemented — what approach was taken, key files changed. If no detail is available, write "See PR for details."]
 
@@ -150,7 +153,9 @@ prs_merged: [count of MERGED_PRS]
 No issues shipped today.
 
 ## PRs Merged
+
 [For each PR in MERGED_PRS:]
+
 - [PR #[number]]([url]) — [title]
   - Branch: `[headRefName]`
 
@@ -158,7 +163,9 @@ No issues shipped today.
 No PRs merged today.
 
 ## Key Changes
+
 [Group TODAYS_COMMITS by logical change and summarize in 3-5 bullets. Example:]
+
 - Scaffolded data-access package with OpenAPI client stub
 - Added Supabase migration for profiles table
 - Updated CI workflow for affected detection
@@ -167,22 +174,28 @@ No PRs merged today.
 No commits today.
 
 ## Files Changed
+
 [FILE_STATS — e.g., "12 files changed, 340 insertions(+), 25 deletions(-)"]
 
 ## Still In Progress
+
 [For each issue in IN_PROGRESS_ISSUES:]
+
 - #[number] — [title]
 
 [If IN_PROGRESS_ISSUES is empty:]
 No issues currently in progress.
 
 ## Decisions Made
+
 [Leave empty for user to fill in]
 
 ## Tomorrow
+
 [Leave empty for user to fill in]
 
 ## Notes
+
 [Leave empty for user to fill in]
 ```
 
@@ -244,14 +257,18 @@ prs_merged: 0
 # $TOMORROW_DAY_NAME, $TOMORROW_DISPLAY_DATE
 
 ## Carry-Forward from [[LINK_TO_TODAY]]
+
 [For each issue in IN_PROGRESS_ISSUES from Step 3c:]
+
 - [ ] #[number] — [title]
 
 [If IN_PROGRESS_ISSUES is empty:]
 Nothing carried forward — clean slate.
 
 ## PRs to Review
+
 [For each PR in OPEN_PRS:]
+
 - [ ] [PR #[number]]([url]) — [title]
   - Branch: `[headRefName]`
 
@@ -259,7 +276,9 @@ Nothing carried forward — clean slate.
 No open PRs.
 
 ## Ready to Pick Up
+
 [For each issue in READY_ISSUES, list up to 5:]
+
 - [ ] #[number] — [title] `[label1]` `[label2]`
   - Start: `/ship-issue [number]`
 
@@ -267,30 +286,39 @@ No open PRs.
 No agent-ready issues in backlog.
 
 ## Plan for Today
+
 [Leave empty — fill in at start of day]
 
 ## Issues Shipped
+
 [Will be filled by /done-for-the-day tomorrow]
 
 ## PRs Merged
+
 [Will be filled by /done-for-the-day tomorrow]
 
 ## Key Changes
+
 [Will be filled by /done-for-the-day tomorrow]
 
 ## Files Changed
+
 [Will be filled by /done-for-the-day tomorrow]
 
 ## Still In Progress
+
 [Will be filled by /done-for-the-day tomorrow]
 
 ## Decisions Made
+
 [Leave empty for user to fill in]
 
 ## Tomorrow
+
 [Leave empty for user to fill in]
 
 ## Notes
+
 [Leave empty for user to fill in]
 ```
 

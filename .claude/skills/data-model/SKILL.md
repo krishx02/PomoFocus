@@ -62,6 +62,7 @@ Extract entities from the product brief, grouped by domain. Present them in a ta
 Include a brief note on each entity explaining what it represents and why it exists as a separate entity (not embedded in another).
 
 **Important distinctions to surface:**
+
 - Which entities are managed by Supabase (e.g., `auth.users`) vs. application-managed
 - Which entities store user-generated data vs. system-generated data
 - Which entities are needed for v1 vs. post-v1 (reference Section 12)
@@ -77,6 +78,7 @@ Wait for confirmation before proceeding.
 Goal: Define relationships and cardinality between entities. NO attributes yet.
 
 For each pair of related entities, determine:
+
 - Relationship type (1:1, 1:N, M:N)
 - Whether the relationship is identifying or non-identifying
 - Cardinality constraints (zero-or-one, exactly-one, zero-or-more, one-or-more)
@@ -92,6 +94,7 @@ erDiagram
 ```
 
 **Mermaid cardinality reference:**
+
 - `||` = exactly one
 - `o|` = zero or one
 - `}|` = one or more
@@ -112,7 +115,9 @@ Goal: Catch errors before they cascade into logical and physical models.
 This is the highest-error-rate phase. Run these checks systematically:
 
 ### D1 — Completeness Check
+
 Walk through each major user story from the product brief and verify the entity graph supports it:
+
 - Can a user create goals, run sessions, and see progress? (S6, S12)
 - Can the system compute all Tier 1/2/3 analytics? (S10)
 - Can social features work (friends, Library Mode, Quiet Feed, kudos)? (S9)
@@ -120,13 +125,16 @@ Walk through each major user story from the product brief and verify the entity 
 - Does deferred sign-up (anonymous → authenticated) work? (ADR-002)
 
 ### D2 — Redundancy Check
+
 - Are any two entities storing the same data?
 - Are any M:N relationships that should be 1:N (or vice versa)?
 
 ### D3 — Cardinality Stress Test
+
 For each relationship, ask: "Can this ever be zero? Can this ever be more than one?" Challenge your own assumptions with concrete scenarios.
 
 ### D4 — Missing Entity Check
+
 - Are there junction tables needed for M:N relationships?
 - Are there enum-like entities that should be Postgres enums instead?
 - Are there audit/history needs (e.g., goal changes over time)?
@@ -140,6 +148,7 @@ Present findings. Fix any issues before proceeding. If changes were made, show t
 Goal: Add attributes, types, PKs, FKs. Resolve M:N relationships. Normalize.
 
 For each entity, define:
+
 - Primary key (and key strategy: UUID v7, serial, etc.)
 - All attributes with platform-agnostic types (text, integer, boolean, timestamp, etc.)
 - Foreign keys with ON DELETE behavior
@@ -166,6 +175,7 @@ erDiagram
 ```
 
 **Surface key design decisions to the user.** These are modeling choices where reasonable people would disagree. Examples:
+
 - Embedding reflection data in sessions vs. separate table
 - Storing timer preferences as jsonb vs. normalized columns
 - Whether break data is a separate table or part of sessions
@@ -184,7 +194,9 @@ Wait for confirmation before proceeding.
 Goal: Verify the logical model supports all downstream needs.
 
 ### F1 — Analytics Query Feasibility
+
 For each metric in ADR-014 (three tiers), verify the schema can compute it:
+
 - Daily completion rate
 - Goal-level completion rate
 - Focus quality distribution
@@ -198,7 +210,9 @@ For each metric in ADR-014 (three tiers), verify the schema can compute it:
 Write a brief pseudo-query for each to prove feasibility.
 
 ### F2 — RLS Feasibility
+
 For every table, verify there is a path to `auth.uid()`:
+
 - Direct: table has `user_id` column
 - Indirect: table joins to another table that has `user_id`
 - Social: tables that need cross-user visibility (friends, presence, feed)
@@ -206,13 +220,17 @@ For every table, verify there is a path to `auth.uid()`:
 Flag any table where RLS will be complex or where the user_id path is unclear.
 
 ### F3 — Deferred Sign-Up Flow
+
 Verify the schema works for anonymous users:
+
 - Can an anonymous user create goals, run sessions, see stats?
 - When they link an identity, does data migrate cleanly?
 - Are there any tables that require a "real" (non-anonymous) user?
 
 ### F4 — Sync Feasibility
+
 Verify the schema supports:
+
 - BLE device sync (goals down, sessions up)
 - Cross-device cloud sync (web ↔ mobile)
 - Offline operation with eventual consistency
@@ -226,7 +244,9 @@ Present findings. Fix any issues before proceeding. If changes were made, show t
 Goal: Map to Postgres types, design indexes, RLS policies, and produce DDL.
 
 ### G1 — Type Mapping
+
 Map all logical types to Postgres types:
+
 - `timestamp` → `timestamptz` (always use timezone-aware)
 - `text` stays `text` (no varchar limits unless there's a real reason)
 - Enums → Postgres `CREATE TYPE ... AS ENUM`
@@ -234,7 +254,9 @@ Map all logical types to Postgres types:
 - UUIDs → `uuid` with `gen_random_uuid()` default
 
 ### G2 — Index Strategy
+
 Design indexes for:
+
 - Foreign keys (Postgres does NOT auto-index FK columns)
 - Columns used in WHERE clauses for analytics queries (from F1)
 - Columns used in ORDER BY for feeds and lists
@@ -242,7 +264,9 @@ Design indexes for:
 - Partial indexes where appropriate (e.g., only active goals)
 
 ### G3 — RLS Policies
+
 Design Row Level Security policies for every table:
+
 - Name each policy descriptively
 - Use `auth.uid()` for user-scoped access
 - Handle social visibility (friends can see presence/feed data)
@@ -250,19 +274,24 @@ Design Row Level Security policies for every table:
 - Separate SELECT / INSERT / UPDATE / DELETE policies where behavior differs
 
 ### G4 — Triggers and Functions
+
 Design any needed:
+
 - `updated_at` auto-update triggers
 - Computed column functions
 - Data validation triggers
 - Materialized view refresh logic
 
 ### G5 — Mermaid Physical Diagram
+
 Produce a final Mermaid erDiagram with Postgres-specific types.
 
 If the schema is large (>10 tables), split into domain-focused diagrams that each render cleanly, plus one overview diagram showing only entities and relationships (no attributes).
 
 ### G6 — SQL DDL
+
 Produce the complete DDL as an appendix. Include:
+
 - Extension setup (`CREATE EXTENSION IF NOT EXISTS ...`)
 - Enum type definitions
 - Table definitions with constraints
@@ -286,6 +315,7 @@ The three-level data model is complete. Summarize what was produced:
 Tell the user:
 
 > The data model is complete. The next step is to run `/tech-design "Database Schema & Data Model"` to:
+>
 > - **Stress test** the schema (Phase 3) — query performance, edge cases, scale implications
 > - **Record** the ADR + design doc (Phase 4) — using the three-level model as the design doc content
 > - **Run propagation audit** (Phase 5) — update CLAUDE.md, cross-reference with existing ADRs

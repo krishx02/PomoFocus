@@ -12,6 +12,7 @@ PomoFocus is a multi-platform Pomodoro productivity app built from a single Nx +
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Define clear package boundaries with one responsibility per package
 - Enforce dependency direction via Nx tags so packages never import "upward"
 - Eliminate manual cross-language type sync between TypeScript, Swift, and C++
@@ -19,6 +20,7 @@ PomoFocus is a multi-platform Pomodoro productivity app built from a single Nx +
 - Keep the number of packages manageable for a solo developer
 
 **Non-Goals:**
+
 - Defining the internal file structure within each package (deferred to implementation)
 - Choosing specific libraries for state management, UI framework, etc. (separate /tech-design sessions)
 - Setting up CI/CD pipelines (separate decision)
@@ -202,24 +204,24 @@ Two dimensions: **type** (architectural layer) and **scope** (platform/domain).
 
 **Type tags and dependency rules:**
 
-| Source Tag | Can Depend On |
-|---|---|
-| `type:app` | `type:state`, `type:domain`, `type:data-access`, `type:ui`, `type:infra`, `type:types` |
-| `type:state` | `type:domain`, `type:data-access`, `type:types` |
-| `type:domain` | `type:domain`, `type:types` |
-| `type:data-access` | `type:domain`, `type:types` |
-| `type:ui` | `type:types` |
-| `type:infra` | `type:types` |
-| `type:types` | (nothing — leaf node) |
+| Source Tag         | Can Depend On                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| `type:app`         | `type:state`, `type:domain`, `type:data-access`, `type:ui`, `type:infra`, `type:types` |
+| `type:state`       | `type:domain`, `type:data-access`, `type:types`                                        |
+| `type:domain`      | `type:domain`, `type:types`                                                            |
+| `type:data-access` | `type:domain`, `type:types`                                                            |
+| `type:ui`          | `type:types`                                                                           |
+| `type:infra`       | `type:types`                                                                           |
+| `type:types`       | (nothing — leaf node)                                                                  |
 
 **Scope tags and dependency rules:**
 
-| Source Tag | Can Depend On |
-|---|---|
-| `scope:web` | `scope:shared` |
+| Source Tag     | Can Depend On  |
+| -------------- | -------------- |
+| `scope:web`    | `scope:shared` |
 | `scope:mobile` | `scope:shared` |
 | `scope:vscode` | `scope:shared` |
-| `scope:mcp` | `scope:shared` |
+| `scope:mcp`    | `scope:shared` |
 | `scope:shared` | `scope:shared` |
 
 ### Cross-Language Type Generation
@@ -246,15 +248,15 @@ protoc --ts_out=packages/ble-protocol/src/generated \
 
 ### Package Responsibilities
 
-| Package | Imports | Exports | Key Principle |
-|---|---|---|---|
-| `@pomofocus/types` | Nothing | TS interfaces, enums, constants | Auto-generated from Postgres. No logic. |
-| `@pomofocus/core` | `types` | Timer reducer, goal model, session logic | Pure functions. No IO, no React, no Supabase. |
-| `@pomofocus/analytics` | `types`, `core` | Component metrics (completion rate, focus quality, consistency, streaks), trend computation, insights | Read-only consumer of core types. Pure computation. No composite Focus Score — individual metrics with trends (ADR-014). |
-| `@pomofocus/data-access` | `types`, `core` | API client (OpenAPI), auth token mgmt, sync drivers | All IO lives here. Uses generated OpenAPI client to talk to CF Workers API (ADR-007). Core never knows about the API. |
-| `@pomofocus/state` | `types`, `core`, `data-access` | Zustand stores, TanStack Query hooks | React state wiring. Thin wrapper around core + data-access. See [ADR-003](../decisions/003-client-state-management.md). |
-| `@pomofocus/ui` | `types` | React/RN components | Presentational. Props typed from types. No business logic. |
-| `@pomofocus/ble-protocol` | `types` | BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), Protobuf types | Protocol definition from Protobuf. Transport adapters (react-native-ble-plx, Web Bluetooth) implement `BleTransport`. Only mobile + web consume. See [ADR-016](../decisions/016-ble-client-libraries-integration.md). |
+| Package                   | Imports                        | Exports                                                                                                  | Key Principle                                                                                                                                                                                                         |
+| ------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@pomofocus/types`        | Nothing                        | TS interfaces, enums, constants                                                                          | Auto-generated from Postgres. No logic.                                                                                                                                                                               |
+| `@pomofocus/core`         | `types`                        | Timer reducer, goal model, session logic                                                                 | Pure functions. No IO, no React, no Supabase.                                                                                                                                                                         |
+| `@pomofocus/analytics`    | `types`, `core`                | Component metrics (completion rate, focus quality, consistency, streaks), trend computation, insights    | Read-only consumer of core types. Pure computation. No composite Focus Score — individual metrics with trends (ADR-014).                                                                                              |
+| `@pomofocus/data-access`  | `types`, `core`                | API client (OpenAPI), auth token mgmt, sync drivers                                                      | All IO lives here. Uses generated OpenAPI client to talk to CF Workers API (ADR-007). Core never knows about the API.                                                                                                 |
+| `@pomofocus/state`        | `types`, `core`, `data-access` | Zustand stores, TanStack Query hooks                                                                     | React state wiring. Thin wrapper around core + data-access. See [ADR-003](../decisions/003-client-state-management.md).                                                                                               |
+| `@pomofocus/ui`           | `types`                        | React/RN components                                                                                      | Presentational. Props typed from types. No business logic.                                                                                                                                                            |
+| `@pomofocus/ble-protocol` | `types`                        | BLE GATT profile, shared BLE abstraction (`BleTransport` interface + sync orchestration), Protobuf types | Protocol definition from Protobuf. Transport adapters (react-native-ble-plx, Web Bluetooth) implement `BleTransport`. Only mobile + web consume. See [ADR-016](../decisions/016-ble-client-libraries-integration.md). |
 
 ## Alternatives Considered
 

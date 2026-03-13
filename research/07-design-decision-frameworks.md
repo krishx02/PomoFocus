@@ -29,6 +29,7 @@ AI agents excel at executing well-scoped tasks: implement this function, fix thi
 4. **Agents are yes-machines by default.** Without explicit instruction to challenge, they'll validate whatever the user suggests rather than stress-testing it.
 
 **The solution:** Keep humans as the decision-makers, but use AI to:
+
 - Research options and surface trade-offs they might miss
 - Apply structured frameworks to prevent sloppy thinking
 - Document decisions in version-controlled, machine-readable formats
@@ -44,13 +45,13 @@ Google's design doc culture is one of the most proven approaches to technical de
 
 ### Structure
 
-| Section | Purpose |
-|---------|---------|
-| **Context & Scope** | Objective background facts. What's the landscape? What's being built? Keep succinct. |
-| **Goals & Non-Goals** | Bullet-pointed objectives. Non-goals are NOT negations ("won't crash") — they're things that *could* reasonably be goals but are *deliberately excluded*. |
-| **The Actual Design** | The core decision with emphasis on trade-offs. Not an implementation manual. |
-| **Alternatives Considered** | What else was evaluated and why it was rejected. This is the most valuable section for future readers. |
-| **Cross-Cutting Concerns** | Security, privacy, observability, cost, maintainability. |
+| Section                     | Purpose                                                                                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context & Scope**         | Objective background facts. What's the landscape? What's being built? Keep succinct.                                                                      |
+| **Goals & Non-Goals**       | Bullet-pointed objectives. Non-goals are NOT negations ("won't crash") — they're things that _could_ reasonably be goals but are _deliberately excluded_. |
+| **The Actual Design**       | The core decision with emphasis on trade-offs. Not an implementation manual.                                                                              |
+| **Alternatives Considered** | What else was evaluated and why it was rejected. This is the most valuable section for future readers.                                                    |
+| **Cross-Cutting Concerns**  | Security, privacy, observability, cost, maintainability.                                                                                                  |
 
 ### Key Insights
 
@@ -110,14 +111,17 @@ Chosen option: "[Option B]", because [justification referencing drivers].
 ## Pros and Cons of the Options
 
 ### [Option A]
+
 - Good, because [argument]
 - Bad, because [argument]
 
 ### [Option B]
+
 - Good, because [argument]
 - Bad, because [argument]
 
 ### [Option C]
+
 - Good, because [argument]
 - Bad, because [argument]
 ```
@@ -145,12 +149,12 @@ The C4 Model provides four zoom levels for thinking about architecture. This is 
 
 ### The Four Levels
 
-| Level | Name | What It Shows | Decision Examples |
-|-------|------|---------------|-------------------|
-| 1 | **Context** | System in its environment — users, external systems | "How does PomoFocus interact with Apple HealthKit?" |
-| 2 | **Container** | Major runtime units — apps, databases, APIs | "Should sync go through Supabase Realtime or Cloudflare DO?" |
-| 3 | **Component** | Internal structure of a container | "How should the timer state machine be organized?" |
-| 4 | **Code** | Class/module level | "Should we use Zustand or Jotai for state management?" |
+| Level | Name          | What It Shows                                       | Decision Examples                                            |
+| ----- | ------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| 1     | **Context**   | System in its environment — users, external systems | "How does PomoFocus interact with Apple HealthKit?"          |
+| 2     | **Container** | Major runtime units — apps, databases, APIs         | "Should sync go through Supabase Realtime or Cloudflare DO?" |
+| 3     | **Component** | Internal structure of a container                   | "How should the timer state machine be organized?"           |
+| 4     | **Code**      | Class/module level                                  | "Should we use Zustand or Jotai for state management?"       |
 
 ### Key Insight for the Skill
 
@@ -178,11 +182,11 @@ This maps directly to the user's request for adaptive depth: the skill detects t
 
 Rather than flat prohibitions, Osmani recommends graduated guidance:
 
-| Tier | Meaning | Example |
-|------|---------|---------|
-| **Always** | Safe to execute without approval | "Always use TypeScript strict mode" |
-| **Ask first** | High-impact, needs human review | "Ask before choosing a new database" |
-| **Never** | Hard stops | "Never commit secrets" |
+| Tier          | Meaning                          | Example                              |
+| ------------- | -------------------------------- | ------------------------------------ |
+| **Always**    | Safe to execute without approval | "Always use TypeScript strict mode"  |
+| **Ask first** | High-impact, needs human review  | "Ask before choosing a new database" |
+| **Never**     | Hard stops                       | "Never commit secrets"               |
 
 ### Six Core Areas for Completeness (GitHub's Analysis of 2,500+ Agent Files)
 
@@ -263,10 +267,10 @@ Phase 5: Integration
 
 ### Output Artifacts
 
-| Decision Scale | Output |
-|---------------|--------|
-| Quick (Level 3–4) | Single ADR in `research/decisions/NNN-title.md` |
-| Full (Level 1–2) | Design doc in `research/designs/title.md` + ADR summarizing the decision |
+| Decision Scale    | Output                                                                   |
+| ----------------- | ------------------------------------------------------------------------ |
+| Quick (Level 3–4) | Single ADR in `research/decisions/NNN-title.md`                          |
+| Full (Level 1–2)  | Design doc in `research/designs/title.md` + ADR summarizing the decision |
 
 ### How It Fits the Workflow
 
@@ -285,12 +289,14 @@ Phase 5: Integration
 ## Sources {#sources}
 
 ### Design Docs & Architecture
+
 - [Design Docs at Google — Malte Ubl](https://www.industrialempathy.com/posts/design-docs-at-google/)
 - [Design Docs — A Design Doc — Malte Ubl](https://www.industrialempathy.com/posts/design-doc-a-design-doc/)
 - [C4 Model — Simon Brown](https://c4model.com/)
 - [C4 Model — InfoQ Article](https://www.infoq.com/articles/C4-architecture-model/)
 
 ### Architecture Decision Records
+
 - [MADR — Markdown Any Decision Records](https://adr.github.io/madr/)
 - [ADR Templates — adr.github.io](https://adr.github.io/adr-templates/)
 - [AWS — Master ADR Best Practices](https://aws.amazon.com/blogs/architecture/master-architecture-decision-records-adrs-best-practices-for-effective-decision-making/)
@@ -299,6 +305,7 @@ Phase 5: Integration
 - [Joel Parker Henderson — ADR Repository](https://github.com/joelparkerhenderson/architecture-decision-record)
 
 ### AI-Assisted Design Workflows
+
 - [Addy Osmani — My LLM Coding Workflow Going Into 2026](https://addyosmani.com/blog/ai-coding-workflow/)
 - [Addy Osmani — How to Write a Good Spec for AI Agents](https://addyosmani.com/blog/good-spec/)
 - [O'Reilly — How to Write a Good Spec for AI Agents](https://www.oreilly.com/radar/how-to-write-a-good-spec-for-ai-agents/)
@@ -307,5 +314,6 @@ Phase 5: Integration
 - [How Boris Uses Claude Code](https://howborisusesclaudecode.com/)
 
 ### Agent Architecture & Evaluation
+
 - [Amazon — Evaluating AI Agents](https://aws.amazon.com/blogs/machine-learning/evaluating-ai-agents-real-world-lessons-from-building-agentic-systems-at-amazon/)
 - [Addy Osmani — LLM Coding Workflow (Substack)](https://addyo.substack.com/p/my-llm-coding-workflow-going-into)

@@ -1,6 +1,6 @@
 ---
 paths:
-  - "packages/state/**"
+  - 'packages/state/**'
 ---
 
 # State Management Standards

@@ -1,6 +1,6 @@
 ---
 paths:
-  - "supabase/**"
+  - 'supabase/**'
 ---
 
 # Database Migration Standards

@@ -4,7 +4,7 @@ description: Orchestrates the end of a completed implementation. Launches the gi
 user-invocable: true
 context: fork
 allowed-tools: Bash(gh *), Bash(git *), Bash(timeout *), Bash(echo *), Agent
-compatibility: "Requires gh CLI, git. Claude Code only."
+compatibility: 'Requires gh CLI, git. Claude Code only.'
 argument-hint: "[issue number(s)] — e.g. '28' or '28 29 36 37' or '28,29,36,37'"
 metadata:
   author: PomoFocus
@@ -22,6 +22,7 @@ Do NOT implement any code. Do NOT read or modify source files. You are a coordin
 ## Step 1 — Detect Issue Numbers and Branch
 
 Get the current branch:
+
 ```bash
 git branch --show-current
 ```
@@ -46,6 +47,7 @@ Store as `BRANCH_NAME`.
 Store `ISSUE_NUMBERS` as a list (e.g. `[28, 29, 36, 37]`), or the string `"none"` if no issues.
 
 For convenience, also store:
+
 - `PRIMARY_ISSUE` — the first number in the list (used when a single reference is needed)
 - `IS_MULTI_ISSUE` — true if `ISSUE_NUMBERS` has more than one entry
 
@@ -58,6 +60,7 @@ gh pr list --head $BRANCH_NAME --json number,url,state
 ```
 
 **If a PR already exists (state: OPEN):**
+
 - Record `PR_URL` and `PR_NUMBER` from this output.
 - Push any new commits so the remote branch is up to date:
   ```bash
@@ -101,10 +104,12 @@ Your final output line must match exactly:
 Wait for the agent to complete.
 
 **Parse the output:**
+
 - Look for a line starting with `PR: https://`
 - Extract `PR_URL` (the URL) and `PR_NUMBER` (the integer inside `(#...)`)
 
 **If the output does not contain a line starting with `PR: https://`:**
+
 - Stop immediately
 - Report to the user: `"github-issue-manager failed to create the PR. Raw output: [output]"`
 - Do not proceed to Step 4.
@@ -118,6 +123,7 @@ Set `CI_ATTEMPT = 1` and `MAX_CI_ATTEMPTS = 2`.
 **CI loop** — repeat until all checks pass or max attempts exceeded:
 
 Poll until CI checks complete (up to 10 minutes):
+
 ```bash
 timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10 minutes"
 ```
@@ -125,6 +131,7 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
 **If all checks pass:** proceed to Step 4.
 
 **If any check fails AND CI_ATTEMPT < MAX_CI_ATTEMPTS:**
+
 1. Report: `"CI failed on attempt [CI_ATTEMPT]. Fetching failure logs..."`
 2. Fetch the failed run logs:
    ```bash
@@ -132,6 +139,7 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
    gh run list --branch $BRANCH_NAME --json databaseId,conclusion --jq '.[] | select(.conclusion == "failure") | .databaseId' | head -1 | xargs gh run view --log-failed
    ```
 3. Use the Agent tool with `subagent_type: general-purpose` to fix the failures:
+
    ```
    You are a CI fixer. The following GitHub Actions logs show failures on branch [BRANCH_NAME].
    Fix the root cause. Do not change anything else.
@@ -143,9 +151,11 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
    - Run: git commit -m "fix: resolve CI failure (attempt [CI_ATTEMPT])"
    - Run: git push -u origin [BRANCH_NAME]
    ```
+
 4. Increment `CI_ATTEMPT`. Return to top of CI loop.
 
 **If any check fails AND CI_ATTEMPT >= MAX_CI_ATTEMPTS:**
+
 1. If ISSUE_NUMBERS is not "none", run for EACH issue number:
    ```bash
    gh issue edit $N --add-label "needs-human"
@@ -179,15 +189,15 @@ Ignore non-source files (`.md`, `.yml`, `.json` at root) when determining the bu
 
 Determine the test command from the agent type:
 
-| Agent Type | Test Command |
-|-----------|-------------|
+| Agent Type         | Test Command                                                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared-developer` | `pnpm nx affected --target=test --base=origin/main --head=HEAD && pnpm nx affected --target=type-check --base=origin/main --head=HEAD` |
-| `web-developer` | `pnpm nx test @pomofocus/web && pnpm nx type-check @pomofocus/web` |
-| `mobile-developer` | `pnpm nx test @pomofocus/mobile && pnpm nx type-check @pomofocus/mobile` |
-| `ios-developer` | `xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"` |
-| `vscode-developer` | `pnpm nx test @pomofocus/vscode-extension && pnpm nx type-check @pomofocus/vscode-extension` |
-| `mcp-developer` | `pnpm nx test @pomofocus/mcp-server && pnpm nx type-check @pomofocus/mcp-server` |
-| `general-purpose` | `pnpm nx affected --target=test --base=origin/main --head=HEAD && pnpm nx affected --target=type-check --base=origin/main --head=HEAD` |
+| `web-developer`    | `pnpm nx test @pomofocus/web && pnpm nx type-check @pomofocus/web`                                                                     |
+| `mobile-developer` | `pnpm nx test @pomofocus/mobile && pnpm nx type-check @pomofocus/mobile`                                                               |
+| `ios-developer`    | `xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"`                                                                   |
+| `vscode-developer` | `pnpm nx test @pomofocus/vscode-extension && pnpm nx type-check @pomofocus/vscode-extension`                                           |
+| `mcp-developer`    | `pnpm nx test @pomofocus/mcp-server && pnpm nx type-check @pomofocus/mcp-server`                                                       |
+| `general-purpose`  | `pnpm nx affected --target=test --base=origin/main --head=HEAD && pnpm nx affected --target=type-check --base=origin/main --head=HEAD` |
 
 Store as `TEST_COMMAND`. If the test infrastructure doesn't exist yet, the fixer will skip gracefully.
 
@@ -198,6 +208,7 @@ When the branch solves multiple issues, launch **one code-reviewer per issue IN 
 **Build per-issue file scopes:**
 
 For each issue number in `ISSUE_NUMBERS`:
+
 1. Read the issue body from GitHub: `gh issue view $N --json body,title`
 2. Extract the file paths mentioned in the issue (acceptance criteria, file paths section, etc.)
 3. Cross-reference with the actual changed files on the branch (`git diff --name-only origin/main..HEAD`)
@@ -230,6 +241,7 @@ Your final output must include:
 Wait for ALL reviewers to complete. Collect results from each.
 
 **Aggregate results:**
+
 - `TOTAL_CRITICAL` = sum of Critical counts across all reviewers
 - `TOTAL_WARNINGS` = sum of Warning counts
 - `TOTAL_INFO` = sum of Info counts
@@ -247,6 +259,7 @@ Set `REVIEW_PASS = 1`, `MAX_REVIEW_PASSES = 3`, and `PREVIOUS_FALSE_POSITIVES = 
 **Review loop** — repeat until verdict is LGTM or max passes exceeded:
 
 Record the current UTC timestamp before launching the reviewer:
+
 ```bash
 REVIEW_START=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 ```
@@ -276,10 +289,10 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
   Warnings are informational — the human reviewer decides whether to fix them before merging.
 
 - **If Critical > 0 AND REVIEW_PASS < MAX_REVIEW_PASSES:**
-
   1. Report to the user: `"Review pass [REVIEW_PASS]: Found [Critical] critical issue(s). Launching independent fixer..."`
 
   2. Fetch critical inline comments from THIS review pass only (filter by timestamp):
+
      ```bash
      REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
      gh api repos/$REPO/pulls/$PR_NUMBER/comments \
@@ -289,6 +302,7 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
   3. Filter out previously confirmed false positives. For each comment, check if `[path]:[line]` appears in `PREVIOUS_FALSE_POSITIVES`. Remove matches from the list.
 
   4. **If ALL remaining criticals were filtered out** (all are repeat false positives):
+
      ```bash
      gh pr comment $PR_NUMBER --body "$(cat <<'FPEOF'
      ## False Positive Assessment
@@ -300,6 +314,7 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      FPEOF
      )"
      ```
+
      Proceed to Step 5 (skip re-review — no code changed).
 
   5. **Otherwise**, launch the fixer agent using the Agent tool with `subagent_type: [FIXER_AGENT_TYPE]`:
@@ -365,6 +380,7 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
 
   7. **If `FIXES_APPLIED == 0`** (all false positives this round):
      Post a PR comment summarizing the assessments:
+
      ```bash
      gh pr comment $PR_NUMBER --body "$(cat <<'FPEOF'
      ## False Positive Assessment (Pass [REVIEW_PASS])
@@ -378,6 +394,7 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      FPEOF
      )"
      ```
+
      Proceed to Step 5 (skip re-review — no code changed).
 
   8. **If `FIXES_APPLIED > 0`:**
@@ -388,6 +405,8 @@ Wait for the agent to complete. Parse `Critical` count and `Verdict` from its ou
      ```bash
      gh issue edit $N --add-label "needs-human"
      gh issue comment $N --body "$(cat <<'EOF'
+     ```
+
 ## Review Loop Exhausted — Needs Human
 
 Critical issues found by the code-reviewer persist after 2 auto-fix attempts
@@ -395,8 +414,7 @@ Critical issues found by the code-reviewer persist after 2 auto-fix attempts
 critical findings manually.
 EOF
 )"
-     ```
-  2. Stop. Report to user: `"Critical issues persist after 3 review passes. Needs human review. PR: [PR_URL]"`
+```  2. Stop. Report to user:`"Critical issues persist after 3 review passes. Needs human review. PR: [PR_URL]"`
 
 ---
 
@@ -444,11 +462,13 @@ Output a clean summary to the user:
 After printing the Final Report, output a high-level overview of what changed in the repo so the user doesn't have to open the PR to understand what was done.
 
 Run:
+
 ```bash
 git log --oneline origin/main..HEAD
 ```
 
 and:
+
 ```bash
 git diff --stat origin/main..HEAD
 ```
@@ -465,6 +485,7 @@ Then output a human-readable summary in this format:
 ```
 
 Guidelines:
+
 - Group related commits into a single bullet (e.g. 3 commits that set up Supabase = one bullet about Supabase init)
 - Use plain language, not commit message jargon
 - Keep it to 3-7 bullets max — if more changes exist, summarize the tail as "... and N other minor changes"

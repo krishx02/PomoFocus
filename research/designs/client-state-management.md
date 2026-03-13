@@ -12,6 +12,7 @@ PomoFocus needs a state management architecture that serves 9 platforms from one
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Unified state layer for all React apps (mobile, web, VS Code) via shared `packages/state/`
 - Clean separation: domain logic in `core/`, data fetching in `data-access/`, React state wiring in `state/`
 - Polling-first server data strategy (30s default) with no WebSocket connections by default
@@ -20,6 +21,7 @@ PomoFocus needs a state management architecture that serves 9 platforms from one
 - Selector-based Zustand access for performant timer rendering
 
 **Non-Goals:**
+
 - Designing the full offline sync/conflict resolution strategy (decided in [ADR-006: Offline-First Sync Architecture](../decisions/006-offline-first-sync-architecture.md) — custom outbox pattern)
 - Choosing the timer state machine implementation (decided — see [ADR-004](../decisions/004-timer-state-machine.md): hand-rolled TypeScript reducer)
 - Implementing Supabase Realtime WebSocket subscriptions (deferred; polling meets all v1 latency requirements)
@@ -31,11 +33,11 @@ PomoFocus needs a state management architecture that serves 9 platforms from one
 
 All application state falls into one of three categories:
 
-| Category | Examples | Tool | Persistence |
-|----------|----------|------|-------------|
-| **Domain state** | Timer phase, seconds remaining, current goal, session history | Zustand stores (wrapping `@pomofocus/core`) | MMKV / localStorage |
+| Category         | Examples                                                              | Tool                                               | Persistence                    |
+| ---------------- | --------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------ |
+| **Domain state** | Timer phase, seconds remaining, current goal, session history         | Zustand stores (wrapping `@pomofocus/core`)        | MMKV / localStorage            |
 | **Server state** | User profile, goals list, session records, friend activity, analytics | TanStack Query (wrapping `@pomofocus/data-access`) | TanStack Query cache + polling |
-| **UI state** | Modal open/closed, selected tab, form input | React local state (`useState`) or Zustand | None (ephemeral) |
+| **UI state**     | Modal open/closed, selected tab, form input                           | React local state (`useState`) or Zustand          | None (ephemeral)               |
 
 ### Package Structure
 
@@ -145,8 +147,8 @@ export const createTimerStore = (adapter: PersistenceAdapter) =>
         pause: () => set((s) => pauseTimer(s)),
         tick: () => set((s) => tick(s)),
       }),
-      { name: 'timer', storage: adapter }
-    )
+      { name: 'timer', storage: adapter },
+    ),
   );
 ```
 
@@ -170,8 +172,8 @@ export function useSessions(userId: string) {
   return useQuery({
     queryKey: ['sessions', userId],
     queryFn: () => fetchSessions(userId),
-    staleTime: 30_000,        // 30s before considered stale
-    refetchInterval: 30_000,  // Poll every 30s when window is focused
+    staleTime: 30_000, // 30s before considered stale
+    refetchInterval: 30_000, // Poll every 30s when window is focused
   });
 }
 
@@ -209,12 +211,12 @@ export default async function Providers({ children }) {
 
 These are NOT part of the React state layer but complete the full-platform picture:
 
-| Platform | Bridge | Direction | Mechanism |
-|----------|--------|-----------|-----------|
-| iOS Widget | App Group | React Native writes → SwiftUI reads | `UserDefaults(suiteName:)` written by a native module in the Expo app; WidgetKit reads on timeline refresh |
-| watchOS | WatchConnectivity | Bidirectional | `WCSession` transfers goals to watch, sessions from watch. Expo app uses a native module. |
-| macOS Widget | App Group | Same as iOS Widget | `UserDefaults` shared between a helper app and the widget |
-| BLE Device | GATT Characteristics | Bidirectional | `react-native-ble-plx` (mobile) / Web Bluetooth (web) read/write GATT characteristics. Device runs its own timer independently. |
+| Platform     | Bridge               | Direction                           | Mechanism                                                                                                                       |
+| ------------ | -------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| iOS Widget   | App Group            | React Native writes → SwiftUI reads | `UserDefaults(suiteName:)` written by a native module in the Expo app; WidgetKit reads on timeline refresh                      |
+| watchOS      | WatchConnectivity    | Bidirectional                       | `WCSession` transfers goals to watch, sessions from watch. Expo app uses a native module.                                       |
+| macOS Widget | App Group            | Same as iOS Widget                  | `UserDefaults` shared between a helper app and the widget                                                                       |
+| BLE Device   | GATT Characteristics | Bidirectional                       | `react-native-ble-plx` (mobile) / Web Bluetooth (web) read/write GATT characteristics. Device runs its own timer independently. |
 
 Each bridge writes/reads the same data shapes defined in `@pomofocus/types`. The React state layer doesn't know about these bridges — the app layer coordinates writes to both Zustand/TanStack Query and the appropriate bridge.
 

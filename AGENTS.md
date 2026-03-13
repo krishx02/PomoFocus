@@ -88,23 +88,23 @@ pomofocus/
 
 ## Tech Stack
 
-| Layer | Choice | Version |
-|-------|--------|---------|
-| Language | TypeScript | 5.x — no JS files |
-| Monorepo | Nx + pnpm | Nx 19+, pnpm 9+ |
-| Database | Supabase (Postgres + RLS) | Latest |
-| API | Hono on Cloudflare Workers (REST + OpenAPI 3.1) | Latest |
-| Web hosting | Vercel | Latest |
-| Auth | Supabase Auth | Latest |
-| Mobile | Expo / React Native | SDK 51+ |
-| Mac widget | SwiftUI + WidgetKit + MenuBarExtra | macOS 13+ |
-| iOS widget | SwiftUI + WidgetKit | iOS 17+ |
-| Apple Watch | SwiftUI + WatchKit | watchOS 10+ |
-| VS Code extension | VS Code Extension API | Latest |
-| BLE | react-native-ble-plx + Web Bluetooth | Latest |
-| Test (TS) | Vitest | Latest |
-| Test (Swift) | Swift Testing + XCTest | Latest |
-| Lint | ESLint + Prettier | Latest |
+| Layer             | Choice                                          | Version           |
+| ----------------- | ----------------------------------------------- | ----------------- |
+| Language          | TypeScript                                      | 5.x — no JS files |
+| Monorepo          | Nx + pnpm                                       | Nx 19+, pnpm 9+   |
+| Database          | Supabase (Postgres + RLS)                       | Latest            |
+| API               | Hono on Cloudflare Workers (REST + OpenAPI 3.1) | Latest            |
+| Web hosting       | Vercel                                          | Latest            |
+| Auth              | Supabase Auth                                   | Latest            |
+| Mobile            | Expo / React Native                             | SDK 51+           |
+| Mac widget        | SwiftUI + WidgetKit + MenuBarExtra              | macOS 13+         |
+| iOS widget        | SwiftUI + WidgetKit                             | iOS 17+           |
+| Apple Watch       | SwiftUI + WatchKit                              | watchOS 10+       |
+| VS Code extension | VS Code Extension API                           | Latest            |
+| BLE               | react-native-ble-plx + Web Bluetooth            | Latest            |
+| Test (TS)         | Vitest                                          | Latest            |
+| Test (Swift)      | Swift Testing + XCTest                          | Latest            |
+| Lint              | ESLint + Prettier                               | Latest            |
 
 ---
 
@@ -155,6 +155,7 @@ PR body must include: Closes #42
 ## Boundaries
 
 **Always do:**
+
 - Run `pnpm nx affected --target=test` before opening any PR
 - Run `pnpm type-check` before opening any PR
 - Include "Closes #N" in every PR body
@@ -163,6 +164,7 @@ PR body must include: Closes #42
 - Add a test for every new piece of business logic
 
 **Ask first:**
+
 - Before modifying `package.json` or adding new dependencies
 - Before touching authentication code in `packages/data-access/`
 - Before changing any TypeScript interfaces in `packages/types/`
@@ -171,6 +173,7 @@ PR body must include: Closes #42
 - If the acceptance criteria are ambiguous
 
 **Never do:**
+
 - Commit secrets, API keys, or tokens
 - Commit directly to `main` or `develop`
 - Modify files outside the platform scope listed in your current issue

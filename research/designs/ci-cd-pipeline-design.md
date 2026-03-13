@@ -12,12 +12,14 @@ PomoFocus is a multi-platform Nx monorepo targeting 9+ platforms with different 
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Validate all TypeScript packages on every PR (lint, test, type-check, build) via Nx affected
 - Provide a clear, documented path from "no deploy automation" to "full deploy automation" per platform
 - Keep CI costs at zero or near-zero for a solo developer
 - Support the `/ship-issue` → PR → merge agent workflow without requiring Claude Code Action (API costs)
 
 **Non-Goals:**
+
 - Full deploy automation from day one (incremental buildup)
 - Claude Code Action in CI (agent work stays local on Max subscription)
 - Native Swift CI via GitHub Actions macOS runners (build locally from Xcode)
@@ -61,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # Full history for Nx affected
+          fetch-depth: 0 # Full history for Nx affected
 
       - uses: pnpm/action-setup@v4
 
@@ -112,6 +114,7 @@ jobs:
 ### Deploy Workflows (Dormant Templates)
 
 Each deploy workflow follows the same pattern:
+
 1. Path filter on the relevant app directory + shared packages
 2. Build step
 3. Deploy step (preview on PR, production on push to `main`)
@@ -228,6 +231,7 @@ jobs:
 ### Web Deployment Strategy
 
 For Phase 1, the **Vercel GitHub integration** handles web deploys with zero configuration:
+
 - Connect the repo to Vercel via their dashboard
 - Vercel automatically deploys preview URLs on every PR
 - Vercel automatically deploys to production on merge to `main`
@@ -239,26 +243,26 @@ The `deploy-web.yml` template exists as a fallback if the native Vercel integrat
 
 Two options, pick one:
 
-| Strategy | Setup | Cost | Best For |
-|----------|-------|------|----------|
-| **`actions/cache`** (local) | Add cache step to `ci.yml` (shown above) | Free | Solo dev, simple setup |
-| **Nx Cloud** (remote) | Run `npx nx connect`, add `NX_CLOUD_AUTH_TOKEN` secret | Free for solo devs | Faster CI when cache is warm, shared across PRs |
+| Strategy                    | Setup                                                  | Cost               | Best For                                        |
+| --------------------------- | ------------------------------------------------------ | ------------------ | ----------------------------------------------- |
+| **`actions/cache`** (local) | Add cache step to `ci.yml` (shown above)               | Free               | Solo dev, simple setup                          |
+| **Nx Cloud** (remote)       | Run `npx nx connect`, add `NX_CLOUD_AUTH_TOKEN` secret | Free for solo devs | Faster CI when cache is warm, shared across PRs |
 
 Start with `actions/cache`. Switch to Nx Cloud if CI times become painful.
 
 ### Secrets Inventory
 
-| Secret | Required When | Used By |
-|--------|---------------|---------|
-| `CLOUDFLARE_API_TOKEN` | `apps/api/` is shippable | `deploy-api.yml` |
-| `CLOUDFLARE_ACCOUNT_ID` | `apps/api/` is shippable | `deploy-api.yml` (as repo variable, not secret) |
-| `EXPO_TOKEN` | `apps/mobile/` is shippable | `mobile.yml` |
-| `VERCEL_TOKEN` | Only if Vercel native integration is insufficient | `deploy-web.yml` |
-| `VERCEL_ORG_ID` | Only if Vercel native integration is insufficient | `deploy-web.yml` |
-| `VERCEL_PROJECT_ID` | Only if Vercel native integration is insufficient | `deploy-web.yml` |
-| `VSCE_PAT` | `apps/vscode-extension/` is shippable (post-v1) | `vscode.yml` |
-| `NPM_TOKEN` | `apps/mcp-server/` is shippable (post-v1) | `mcp.yml` |
-| `NX_CLOUD_AUTH_TOKEN` | If Nx Cloud is adopted | `ci.yml` |
+| Secret                  | Required When                                     | Used By                                         |
+| ----------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | `apps/api/` is shippable                          | `deploy-api.yml`                                |
+| `CLOUDFLARE_ACCOUNT_ID` | `apps/api/` is shippable                          | `deploy-api.yml` (as repo variable, not secret) |
+| `EXPO_TOKEN`            | `apps/mobile/` is shippable                       | `mobile.yml`                                    |
+| `VERCEL_TOKEN`          | Only if Vercel native integration is insufficient | `deploy-web.yml`                                |
+| `VERCEL_ORG_ID`         | Only if Vercel native integration is insufficient | `deploy-web.yml`                                |
+| `VERCEL_PROJECT_ID`     | Only if Vercel native integration is insufficient | `deploy-web.yml`                                |
+| `VSCE_PAT`              | `apps/vscode-extension/` is shippable (post-v1)   | `vscode.yml`                                    |
+| `NPM_TOKEN`             | `apps/mcp-server/` is shippable (post-v1)         | `mcp.yml`                                       |
+| `NX_CLOUD_AUTH_TOKEN`   | If Nx Cloud is adopted                            | `ci.yml`                                        |
 
 Secrets are added incrementally — only when the corresponding deploy workflow is activated.
 
@@ -277,6 +281,7 @@ Developer runs /ship-issue N locally (Max subscription)
 ```
 
 Claude Code Action (`@claude` in PR comments) is intentionally excluded because:
+
 1. It requires an Anthropic API key (pay-per-use), incompatible with Max subscription
 2. Agent work is more effective locally where Claude has full system access
 3. CI should be deterministic (lint/test/build), not AI-driven
@@ -288,21 +293,25 @@ If Anthropic adds official Max OAuth support for GitHub Actions, Claude Code Act
 These are documented but not written as templates yet (they depend on toolchains that aren't set up):
 
 **VS Code Extension (`vscode.yml`):**
+
 - Trigger: push to `main` with changes in `apps/vscode-extension/`
 - Steps: `npm ci` → test with `@vscode/test-electron` + `coactions/setup-xvfb` → `vsce package` → publish
 - Secret: `VSCE_PAT`
 
 **MCP Server (`mcp.yml`):**
+
 - Trigger: tag `mcp-server-v*`
 - Steps: `pnpm install` → build → `npm publish --access public`
 - Secret: `NPM_TOKEN`
 
 **Firmware (`firmware.yml`):**
+
 - Trigger: PR with changes in `firmware/`
 - Steps: `pip install platformio` → `platformio run` → `platformio test`
 - No secrets needed (compile + test only)
 
 **Native Swift (deferred entirely):**
+
 - macOS widget, iOS widget, watchOS app
 - Build and test locally from Xcode
 - No GitHub Actions workflow — revisit when native targets ship
@@ -311,15 +320,19 @@ These are documented but not written as templates yet (they depend on toolchains
 ## Alternatives Considered
 
 ### Ultra-Minimal (single ci.yml, no deploy templates)
+
 Rejected because the "I'll forget to add deploy workflows" failure mode is real. Writing dormant templates now costs nothing and prevents this.
 
 ### Platform-Separated (full automation from day one)
+
 Rejected because it requires configuring 6+ workflow files and ~18 secrets before any app code exists. Premature configuration for a solo developer in pre-code phase.
 
 ### Claude Code Action for CI
+
 Rejected for v1 because it requires Anthropic API key (pay-per-use), adding cost on top of the Max subscription. Agent work is more effective locally. May be reconsidered if official Max OAuth support is added.
 
 ### Fastlane for mobile builds
+
 Rejected because PomoFocus uses Expo, and EAS Build eliminates the need for Fastlane's cert management (Match), macOS runners, and Ruby toolchain. Fastlane is only needed for native Swift targets (which are deferred and will be built locally from Xcode).
 
 ## Cross-Cutting Concerns

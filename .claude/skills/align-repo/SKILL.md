@@ -12,6 +12,7 @@ metadata:
 You are a repo consistency auditor. Your job is to find every file in the repo that has drifted from the architecture decisions recorded in the ADRs, and either fix it or report it.
 
 Mode: $ARGUMENTS
+
 - If `$ARGUMENTS` contains "report" or "dry-run" → report only, do not edit any files.
 - If `$ARGUMENTS` contains "fix" → auto-fix mechanical drift, report semantic issues.
 - If `$ARGUMENTS` is empty → default to "fix" mode.
@@ -46,6 +47,7 @@ Compare every pair of ADRs for overlapping claims. Common contradiction patterns
 - **If the newer ADR explicitly supersedes the older one** (says "supersedes ADR-NNN" or the older ADR's status is "Superseded"): the newer ADR wins. Update the older ADR's status to "Superseded by ADR-NNN" and fix its stale facts. This is an auto-fixable change.
 
 - **If both ADRs are status "Accepted" and they contradict**: this is NOT auto-fixable. Stop and ask the user which ADR reflects the current intent. Present the contradiction clearly:
+
   ```
   ADR conflict detected:
   - ADR-001 (2026-03-06) says: [claim]
@@ -131,13 +133,15 @@ Glob: .claude/skills/*/SKILL.md
 ```
 
 Also check for any other `.md` files in the repo root:
+
 ```
 Glob: *.md
 ```
 
 Exclude from checking:
+
 - `research/decisions/*.md` — already handled in Phase 0 (inter-ADR consistency)
-- `research/0[1-8]-*.md` — these are research exploration docs, not decision records. "Better Auth" or "Turborepo" mentioned as *evaluated alternatives* is correct in these files. Only flag if they state a rejected option as the *chosen* decision.
+- `research/0[1-8]-*.md` — these are research exploration docs, not decision records. "Better Auth" or "Turborepo" mentioned as _evaluated alternatives_ is correct in these files. Only flag if they state a rejected option as the _chosen_ decision.
 - `product-brief.md` — product doc, not architecture
 - `.claude/docs/` — Claude Code documentation, not project-specific
 
@@ -150,6 +154,7 @@ For each target file, check every extracted fact against the file's content. Use
 ### What to check
 
 **Terminology consistency:**
+
 - Package names match ADR-001 exactly (e.g., `data-access` not `api-client`, `ui` not `ui-components`, `ble-protocol` not `ble-client`)
 - Auth provider matches ADR-002 (e.g., "Supabase Auth" not "Better Auth", unless discussing rejected alternatives)
 - State libraries match ADR-003 (e.g., "Zustand" + "TanStack Query")
@@ -157,22 +162,26 @@ For each target file, check every extracted fact against the file's content. Use
 - Monorepo tool matches ADR-001 (e.g., "Nx" not "Turborepo", unless comparing)
 
 **Count consistency:**
+
 - Package count matches actual number defined in ADR-001 + ADR-003
 - Table count matches ADR-005
 - Enum count matches ADR-005
 
 **Structural consistency:**
+
 - Package lists include all packages (none missing)
 - Dependency/import direction descriptions are correct
 - Folder structure diagrams show correct package names and paths
 
 **Semantic consistency:**
+
 - No file claims a migration path that ADRs have rejected (e.g., "MVP → Better Auth later")
 - No file describes a package's responsibility differently than the ADR defines it
 - No file puts auth in the wrong package (must be in `data-access`, not `core`)
 - No file adds WebSocket/Realtime as default (must be polling-first per ADR-003)
 
 **Coding standards consistency** (`research/coding-standards*.md`):
+
 - ESLint `no-restricted-imports` rules match the import direction in ADR-001
 - Nx project tags in code snippets match the Tag Definitions table in the same file
 - Nx `depConstraints` match ADR-001's dependency graph
@@ -183,6 +192,7 @@ For each target file, check every extracted fact against the file's content. Use
 - Section cross-references (e.g., "Section 5 handles this") point to the correct section
 
 **MVP roadmap consistency** (`research/mvp-roadmap.md`):
+
 - Phase names and numbers match the decompose-phase skill's phase list
 - Issue estimate totals are arithmetically correct (sub-items sum to phase total, phase totals sum to grand total)
 - Critical path arithmetic is correct (sum of weeks on critical path = stated total)
@@ -241,7 +251,9 @@ If mode is "report" → stop here. Display report and exit.
 If mode is "fix" → proceed:
 
 ### Auto-fixable (mechanical drift)
+
 These have a single correct answer derivable from an ADR. Fix them with the Edit tool:
+
 - Wrong package name → replace with correct name
 - Wrong library/tool name → replace with correct name
 - Wrong count → update to correct count
@@ -252,7 +264,9 @@ These have a single correct answer derivable from an ADR. Fix them with the Edit
 For each fix, use targeted Edit calls. Do NOT rewrite entire files — make the minimum change.
 
 ### Not auto-fixable (semantic ambiguity)
+
 These require human judgment. Report them but do not edit:
+
 - Two files make contradictory claims and it's unclear which reflects the actual intent
 - A file's entire section is structured around an outdated assumption (rewriting would change the document's flow)
 - A research exploration doc states a rejected option as chosen (might be intentional historical context)

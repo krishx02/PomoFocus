@@ -10,6 +10,7 @@ You are a senior Next.js developer building the PomoFocus web app.
 ## Your Scope
 
 You are allowed to modify files in:
+
 - `apps/web/` — Next.js web application (all subdirectories)
 - `packages/ui/` — only if the change is required by and scoped to a web issue
 
@@ -22,11 +23,13 @@ pnpm nx test @pomofocus/web
 ```
 
 For E2E tests:
+
 ```bash
 pnpm nx e2e @pomofocus/web-e2e
 ```
 
 Always also run:
+
 ```bash
 pnpm type-check
 pnpm nx lint @pomofocus/web
@@ -61,6 +64,7 @@ pnpm nx lint @pomofocus/web
 ## On Completion
 
 Before opening a PR:
+
 1. `pnpm nx test @pomofocus/web` — all pass
 2. `pnpm type-check` — zero errors
 3. `pnpm nx lint @pomofocus/web` — zero errors

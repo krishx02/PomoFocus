@@ -31,25 +31,25 @@ Chosen option: **"Hybrid — Structured Services + Chunked Bulk Transfer"**, bec
 
 ### GATT Profile Overview
 
-| Service | UUID Suffix | Purpose | Direction |
-|---------|-------------|---------|-----------|
-| Timer Service | `0001` | Real-time timer state and commands | Bidirectional |
-| Goal Service | `0002` | Phone pushes goals, device reports selection | Phone → Device (goals), Device → Phone (selection) |
-| Session Sync Service | `0003` | Bulk session transfer with chunking protocol | Device → Phone (sessions), Phone → Device (cursor) |
-| Device Information Service | `0x180A` (SIG standard) | Battery, firmware version, device name | Device → Phone |
-| DFU Service | Nordic standard | Over-the-air firmware updates | Phone → Device |
+| Service                    | UUID Suffix             | Purpose                                      | Direction                                          |
+| -------------------------- | ----------------------- | -------------------------------------------- | -------------------------------------------------- |
+| Timer Service              | `0001`                  | Real-time timer state and commands           | Bidirectional                                      |
+| Goal Service               | `0002`                  | Phone pushes goals, device reports selection | Phone → Device (goals), Device → Phone (selection) |
+| Session Sync Service       | `0003`                  | Bulk session transfer with chunking protocol | Device → Phone (sessions), Phone → Device (cursor) |
+| Device Information Service | `0x180A` (SIG standard) | Battery, firmware version, device name       | Device → Phone                                     |
+| DFU Service                | Nordic standard         | Over-the-air firmware updates                | Phone → Device                                     |
 
 ### Key Protocol Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Service architecture | Hybrid (structured + bulk) | Real-time control and bulk sync need different transfer strategies |
-| Data encoding | Protobuf (per ADR-010) | 3x smaller than JSON; compact over BLE; cross-platform code generation (TS + Swift + C++) |
-| MTU strategy | Adaptive | Read negotiated MTU after connection; chunk at `MTU - 3` bytes; handles 20-509 byte range across all 4 platforms |
-| Advertising | Open | Device name + primary service UUID in advertisements; standard consumer pattern; no data exposed before pairing |
-| Phone data conversion | Protobuf → JSON | Phone deserializes BLE Protobuf, re-serializes as JSON for Hono API (ADR-007); clean architectural separation |
-| Reliability | Application-level ack | Bulk transfer uses sequence numbers + acknowledgments; handles BLE stack packet drops per Memfault guidance |
-| UUID scheme | 128-bit with shared base | `PMFC0001-CAFE-FACE-DEAD-POMOFOCUS00` pattern; increment suffix per service/characteristic |
+| Decision              | Choice                     | Why                                                                                                              |
+| --------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Service architecture  | Hybrid (structured + bulk) | Real-time control and bulk sync need different transfer strategies                                               |
+| Data encoding         | Protobuf (per ADR-010)     | 3x smaller than JSON; compact over BLE; cross-platform code generation (TS + Swift + C++)                        |
+| MTU strategy          | Adaptive                   | Read negotiated MTU after connection; chunk at `MTU - 3` bytes; handles 20-509 byte range across all 4 platforms |
+| Advertising           | Open                       | Device name + primary service UUID in advertisements; standard consumer pattern; no data exposed before pairing  |
+| Phone data conversion | Protobuf → JSON            | Phone deserializes BLE Protobuf, re-serializes as JSON for Hono API (ADR-007); clean architectural separation    |
+| Reliability           | Application-level ack      | Bulk transfer uses sequence numbers + acknowledgments; handles BLE stack packet drops per Memfault guidance      |
+| UUID scheme           | 128-bit with shared base   | `PMFC0001-CAFE-FACE-DEAD-POMOFOCUS00` pattern; increment suffix per service/characteristic                       |
 
 ### Consequences
 

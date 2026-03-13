@@ -21,15 +21,18 @@ ADR-010 chose the Seeed XIAO ePaper EN04 board (nRF52840 Plus built in) as the h
 ## Considered Options
 
 ### Build Toolchain
+
 1. PlatformIO with Arduino framework
 2. Arduino IDE 2.x
 3. Arduino IDE first, migrate to PlatformIO later
 
 ### Protobuf Encoding
+
 1. Nanopb (lightweight C implementation for embedded)
 2. Full protoc C++ (Google's standard library)
 
 ### Sleep Strategy
+
 1. System ON sleep with BLE SoftDevice active
 2. System OFF (deepest sleep, full reset on wake)
 3. Hybrid — System ON during day, System OFF overnight
@@ -37,12 +40,15 @@ ADR-010 chose the Seeed XIAO ePaper EN04 board (nRF52840 Plus built in) as the h
 ## Decision Outcome
 
 ### Build Toolchain
+
 Chosen option: **"PlatformIO with Arduino framework"**, because it provides reproducible builds via `platformio.ini` (equivalent to `package.json` for embedded), CLI builds for CI (`pio run`, `pio test`), and runs inside Cursor/VS Code — while writing standard Arduino code (`setup()`, `loop()`, Arduino libraries) that remains portable to Arduino IDE as a fallback.
 
 ### Protobuf Encoding
+
 Chosen option: **"Nanopb"**, because full protoc C++ consumes ~150-200KB+ of flash (too large for the ~232KB available) and uses dynamic memory allocation (dangerous on a microcontroller with no memory protection). Nanopb fits in ~2-5KB, uses only static buffers, and produces wire-compatible output from the same `.proto` file shared across all platforms.
 
 ### Sleep Strategy
+
 Chosen option: **"System ON sleep with BLE SoftDevice active"**, because the device must remain BLE-discoverable while idle for seamless phone sync. System ON sleep draws ~5.4μA (without BLE) + ~22μA (BLE advertising) — already modeled in ADR-010's power budget, yielding 8-10 weeks battery life. System OFF would save only ~3μA but kill BLE discoverability and require a full device reset on every wake.
 
 ### Consequences

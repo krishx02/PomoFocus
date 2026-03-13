@@ -12,12 +12,14 @@ PomoFocus is a multi-platform Pomodoro productivity app that collects timer sess
 ## Goals & Non-Goals
 
 **Goals:**
+
 - GDPR compliance from launch (right to erasure, data portability, data minimization, consent)
 - Leverage existing platform security (Supabase encryption, RLS, CF Workers TLS) rather than building custom solutions
 - Secure BLE pairing between phone and physical device
 - Store minimum OAuth data needed for the app to function
 
 **Non-Goals:**
+
 - Application-level field encryption (not warranted for productivity data)
 - Advanced BLE hardening (SCO mode, GATT-level encryption, MAC rotation)
 - SOC 2 or HIPAA compliance (not a health or enterprise app)
@@ -89,26 +91,26 @@ Implementation note: For power users with thousands of sessions, this cascade co
 
 Supabase Auth manages all OAuth complexity (tokens, refresh, sessions). PomoFocus stores only:
 
-| Field | Table | Purpose | Legal Basis (GDPR) |
-|-------|-------|---------|-------------------|
-| `auth_id` (provider `sub`) | `auth.users` (Supabase-managed) | Unique identity | Contractual necessity |
-| `email` | `auth.users` | Account recovery, notifications | Contractual necessity |
-| `display_name` | `profiles` | Social features (Quiet Feed, Library Mode) | Legitimate interest |
+| Field                      | Table                           | Purpose                                    | Legal Basis (GDPR)    |
+| -------------------------- | ------------------------------- | ------------------------------------------ | --------------------- |
+| `auth_id` (provider `sub`) | `auth.users` (Supabase-managed) | Unique identity                            | Contractual necessity |
+| `email`                    | `auth.users`                    | Account recovery, notifications            | Contractual necessity |
+| `display_name`             | `profiles`                      | Social features (Quiet Feed, Library Mode) | Legitimate interest   |
 
 **Apple Sign-In special handling:** Apple returns `given_name` and `family_name` only on the first authorization. The API must cache the display name in `profiles` immediately on first sign-in — it will not be available again.
 
 ### Token Storage per Platform
 
-| Platform | Storage Mechanism | Notes |
-|----------|-------------------|-------|
-| Web (Next.js) | HttpOnly cookie (set by API) | Not accessible to JavaScript — XSS-safe |
-| Mobile (Expo) | `expo-secure-store` | Encrypted keychain (iOS) / keystore (Android) |
-| iOS Widget | App Group `UserDefaults` | Shared with Expo app via native module |
-| watchOS | WatchConnectivity transfer | Received from paired iPhone |
-| macOS menu bar | Keychain Services | Standard macOS credential storage |
-| VS Code | `SecretStorage` API | Extension-scoped encrypted storage |
-| MCP Server | Claude Code credential management | Managed by Claude Code runtime |
-| BLE Device | N/A | No auth tokens — syncs through phone |
+| Platform       | Storage Mechanism                 | Notes                                         |
+| -------------- | --------------------------------- | --------------------------------------------- |
+| Web (Next.js)  | HttpOnly cookie (set by API)      | Not accessible to JavaScript — XSS-safe       |
+| Mobile (Expo)  | `expo-secure-store`               | Encrypted keychain (iOS) / keystore (Android) |
+| iOS Widget     | App Group `UserDefaults`          | Shared with Expo app via native module        |
+| watchOS        | WatchConnectivity transfer        | Received from paired iPhone                   |
+| macOS menu bar | Keychain Services                 | Standard macOS credential storage             |
+| VS Code        | `SecretStorage` API               | Extension-scoped encrypted storage            |
+| MCP Server     | Claude Code credential management | Managed by Claude Code runtime                |
+| BLE Device     | N/A                               | No auth tokens — syncs through phone          |
 
 ### BLE Pairing Flow
 
@@ -124,6 +126,7 @@ Supabase Auth manages all OAuth complexity (tokens, refresh, sessions). PomoFocu
 ### Privacy Policy Requirements
 
 The privacy policy (static page at `/privacy`) must include:
+
 - What data is collected (sessions, goals, focus quality, friendships)
 - Why it's collected (core app functionality, social features)
 - How it's stored (Supabase, encrypted at rest and in transit)

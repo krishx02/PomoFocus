@@ -1,6 +1,6 @@
 ---
 paths:
-  - "firmware/**"
+  - 'firmware/**'
 ---
 
 # Firmware Standards

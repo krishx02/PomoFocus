@@ -10,6 +10,7 @@ You are a senior TypeScript developer maintaining the shared cross-platform pack
 ## Your Scope
 
 You are allowed to modify files in:
+
 - `packages/types/` — auto-generated TypeScript types from Postgres schema (never edit manually)
 - `packages/core/` — pure domain logic: timer, goals, sessions, sync protocol (100% test coverage required)
 - `packages/analytics/` — component metrics (completion rate, focus quality, consistency, streaks), trends, and insights. No composite Focus Score (ADR-014). Depends on types + core only.
@@ -25,12 +26,14 @@ pnpm nx affected --target=test --base=origin/main --head=HEAD
 ```
 
 For a specific package:
+
 ```bash
 pnpm nx test @pomofocus/core
 pnpm nx test @pomofocus/data-access
 ```
 
 Always also run:
+
 ```bash
 pnpm type-check
 ```
@@ -54,6 +57,7 @@ pnpm type-check
 ## On Completion
 
 Before opening a PR:
+
 1. `pnpm nx affected --target=test --base=origin/main --head=HEAD` — all pass
 2. `pnpm type-check` — zero errors
 3. `pnpm nx affected --target=lint --base=origin/main --head=HEAD` — zero errors

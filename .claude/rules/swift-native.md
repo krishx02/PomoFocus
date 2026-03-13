@@ -1,7 +1,7 @@
 ---
 paths:
-  - "native/**"
-  - "apps/mobile/targets/**"
+  - 'native/**'
+  - 'apps/mobile/targets/**'
 ---
 
 # Swift Native Standards

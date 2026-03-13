@@ -14,6 +14,7 @@ Social features are limited to mobile + web for v1. iOS widget, Apple Watch, VS 
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Define all social API endpoints with request/response shapes
 - Design efficient data flow for Library Mode (the only polling feature)
 - Establish privacy enforcement strategy across API and database layers
@@ -21,6 +22,7 @@ Social features are limited to mobile + web for v1. iOS widget, Apple Watch, VS 
 - Handle edge cases: session expiry, tap rate limiting, invite link resolution
 
 **Non-Goals:**
+
 - Push notifications for social events (decided in [ADR-019](../decisions/019-notification-strategy.md): Expo Push on mobile, in-app fallback on web)
 - Background BLE sync of social data
 - Social features on iOS widget, watchOS, macOS, VS Code, or MCP
@@ -55,6 +57,7 @@ Social features are limited to mobile + web for v1. iOS widget, Apple Watch, VS 
 **API:** `GET /v1/friends/focusing`
 
 **Server query:**
+
 ```sql
 SELECT
   p.id,
@@ -72,6 +75,7 @@ WHERE f.user_id = get_user_id();
 ```
 
 **Response shape:**
+
 ```json
 {
   "friends": [
@@ -87,6 +91,7 @@ WHERE f.user_id = get_user_id();
 ```
 
 **Client behavior:**
+
 1. Fetch on entering Library Mode screen
 2. Compute time remaining locally: `remaining = workDuration - Math.floor((Date.now() - startedAt) / 60000)`
 3. Update countdown display every 60 seconds (local, no server call)
@@ -96,6 +101,7 @@ WHERE f.user_id = get_user_id();
 5. Stop polling when user leaves Library Mode screen
 
 **TanStack Query configuration:**
+
 ```ts
 useQuery({
   queryKey: ['friends', 'focusing'],
@@ -121,6 +127,7 @@ useQuery({
 **API:** `GET /v1/feed/today`
 
 **Server query:**
+
 ```sql
 SELECT
   p.id,
@@ -138,6 +145,7 @@ ORDER BY MAX(s.ended_at) DESC;
 ```
 
 **Response shape:**
+
 ```json
 {
   "entries": [
@@ -152,6 +160,7 @@ ORDER BY MAX(s.ended_at) DESC;
 ```
 
 **Client behavior:**
+
 - Fetch on navigate to Feed screen
 - **No polling.** Data changes at most every 25 minutes (session length). Pull-to-refresh is sufficient.
 - TanStack Query `staleTime: 5 * 60 * 1000` (5 minutes)
@@ -165,6 +174,7 @@ ORDER BY MAX(s.ended_at) DESC;
 **Concept:** Toggle-style kudos. When viewing a friend's Quiet Feed entry, the user can tap to encourage (and un-tap to remove). Max 3 taps per sender per recipient per day.
 
 **Send tap:** `POST /v1/taps`
+
 ```json
 { "recipient_id": "friend-uuid" }
 ```
@@ -172,6 +182,7 @@ ORDER BY MAX(s.ended_at) DESC;
 **Remove tap:** `DELETE /v1/taps/:id`
 
 **Receive taps:** `GET /v1/taps`
+
 ```sql
 SELECT et.id, et.created_at, p.display_name, p.avatar_url
 FROM encouragement_taps et
@@ -182,13 +193,17 @@ ORDER BY et.created_at DESC;
 ```
 
 **Rate limiting (API level):**
+
 ```ts
 // In Hono middleware for POST /v1/taps
-const todayCount = await db.query(`
+const todayCount = await db.query(
+  `
   SELECT COUNT(*) FROM encouragement_taps
   WHERE sender_id = $1 AND recipient_id = $2
     AND created_at >= CURRENT_DATE
-`, [userId, recipientId]);
+`,
+  [userId, recipientId],
+);
 
 if (todayCount >= 3) {
   return c.json({ error: 'Max 3 taps per friend per day' }, 429);
@@ -196,6 +211,7 @@ if (todayCount >= 3) {
 ```
 
 **Client behavior:**
+
 - **Sending:** Optimistic UI — tap button toggles immediately, POST fires in background
 - **Receiving:** Fetch on app open. No polling. User sees "Sarah sent you encouragement" when they next open the app.
 - TanStack Query invalidation: after sending/removing a tap, invalidate `['taps']` and `['feed', 'today']`
@@ -207,11 +223,13 @@ if (todayCount >= 3) {
 ### Feature 4: Friend Requests
 
 **Send request:** `POST /v1/friend-requests`
+
 ```json
 { "recipient_username": "sarah123" }
 ```
 
 Server logic:
+
 1. Look up recipient by username (`profiles.username`)
 2. Verify no existing request or friendship
 3. Insert into `friend_requests`
@@ -219,6 +237,7 @@ Server logic:
 **List pending:** `GET /v1/friend-requests`
 
 **Accept:** `POST /v1/friend-requests/:id/accept`
+
 - Triggers `create_friendship_pair()` Postgres function (ADR-005)
 - Creates dual friendship rows, deletes the request
 - Checks friend count limit (max 100)
@@ -226,6 +245,7 @@ Server logic:
 **Decline:** `DELETE /v1/friend-requests/:id`
 
 **Client behavior:**
+
 - Fetch pending requests on app open
 - Show badge/count indicator if pending requests > 0
 - No polling — pull-to-refresh
@@ -236,6 +256,7 @@ Server logic:
 ### Feature 5: Friend List & Unfriending
 
 **List friends:** `GET /v1/friends`
+
 ```sql
 SELECT p.id, p.display_name, p.avatar_url, p.username
 FROM friendships f
@@ -245,8 +266,10 @@ ORDER BY p.display_name;
 ```
 
 **Unfriend:** `DELETE /v1/friends/:id`
+
 - Deletes both friendship rows in a transaction (dual-row pattern)
 - Server logic:
+
 ```sql
 BEGIN;
   DELETE FROM friendships WHERE user_id = $1 AND friend_id = $2;
@@ -255,6 +278,7 @@ COMMIT;
 ```
 
 **Client behavior:**
+
 - Fetch on navigate to Friends screen
 - Cache with long `staleTime` — friend list rarely changes
 - Pull-to-refresh
@@ -269,6 +293,7 @@ COMMIT;
 **Format:** `pomofocus.app/invite/USERNAME` — stateless, no tokens, no expiry, no DB storage for the link itself.
 
 **API:** `GET /v1/invite/:username`
+
 ```sql
 SELECT p.id, p.display_name, p.avatar_url
 FROM profiles p
@@ -276,6 +301,7 @@ WHERE p.username = $1;
 ```
 
 **Flow:**
+
 1. User A shares `pomofocus.app/invite/sarah123` (text, social media, anywhere)
 2. User B clicks the link
 3. **Has app:** Deep link opens app → shows Sarah's profile → "Add Friend" button → `POST /v1/friend-requests`
@@ -307,25 +333,25 @@ packages/state/src/social/
 
 Each mutation hook invalidates relevant query keys on success:
 
-| Mutation | Invalidates |
-|----------|-------------|
-| Accept friend request | `['friend-requests']`, `['friends']` |
-| Decline friend request | `['friend-requests']` |
-| Unfriend | `['friends']`, `['friends', 'focusing']`, `['feed', 'today']` |
-| Send/remove tap | `['taps']`, `['feed', 'today']` |
+| Mutation               | Invalidates                                                   |
+| ---------------------- | ------------------------------------------------------------- |
+| Accept friend request  | `['friend-requests']`, `['friends']`                          |
+| Decline friend request | `['friend-requests']`                                         |
+| Unfriend               | `['friends']`, `['friends', 'focusing']`, `['feed', 'today']` |
+| Send/remove tap        | `['taps']`, `['feed', 'today']`                               |
 
 ---
 
 ## Privacy Model
 
-| Data | Who can see | Enforcement |
-|------|-------------|-------------|
-| Active session existence + time remaining | Confirmed friends only | Friendship JOIN in `/v1/friends/focusing` query |
-| Session count today | Confirmed friends only | Friendship JOIN in `/v1/feed/today` query |
-| Goal names, reflection data, quality ratings | User only | Not included in any social endpoint response |
-| Encouragement taps | Sender + recipient only | RLS on `encouragement_taps` table |
-| Friend list | User only | RLS on `friendships` table |
-| Profile (name, avatar, username) | Friends + anyone with invite link | RLS + public username lookup for invites |
+| Data                                         | Who can see                       | Enforcement                                     |
+| -------------------------------------------- | --------------------------------- | ----------------------------------------------- |
+| Active session existence + time remaining    | Confirmed friends only            | Friendship JOIN in `/v1/friends/focusing` query |
+| Session count today                          | Confirmed friends only            | Friendship JOIN in `/v1/feed/today` query       |
+| Goal names, reflection data, quality ratings | User only                         | Not included in any social endpoint response    |
+| Encouragement taps                           | Sender + recipient only           | RLS on `encouragement_taps` table               |
+| Friend list                                  | User only                         | RLS on `friendships` table                      |
+| Profile (name, avatar, username)             | Friends + anyone with invite link | RLS + public username lookup for invites        |
 
 **Enforcement discipline:** All social API endpoints MUST include a `friendships` JOIN that verifies the requesting user is friends with the target. The DB functions `is_friend_focusing()` and `did_friend_focus_today()` are repurposed as integration test helpers — tests verify that API endpoint results match DB function results to catch missing friendship checks.
 
@@ -334,15 +360,19 @@ Each mutation hook invalidates relevant query keys on success:
 ## Alternatives Considered
 
 ### Single composite endpoint (`GET /v1/social`)
+
 Rejected because social features have fundamentally different refresh needs. Library Mode needs polling (session state changes in real-time), while Quiet Feed data changes at most every 25 minutes, and friend requests/taps are event-driven. A composite endpoint would either over-poll for slow-changing data or under-poll for Library Mode. Screen-scoped polling eliminates the DB load concern that motivated the composite approach.
 
 ### Supabase Realtime for presence
+
 Rejected per ADR-003 (polling-first). WebSockets add infrastructure complexity and connection management. Polling at 30-60s is more than sufficient for 25-minute sessions. The user tolerates 30-60 seconds of staleness when someone starts or stops focusing.
 
 ### CF Workers KV cache for social data
+
 Evaluated but deferred. KV's eventual consistency (up to 60s between regions) would be fine for social data, but at v1 scale, Postgres handles the query volume directly. KV adds a caching layer to maintain and invalidate. Can be added later if DB load becomes a concern (unlikely at v1 scale).
 
 ### Separate presence table or system
+
 Rejected. The `sessions` table already tracks active sessions (`ended_at IS NULL`). A separate presence table would duplicate this information and create consistency challenges. "Is focusing" = "has an active session" — the sessions table IS the presence layer.
 
 ---
