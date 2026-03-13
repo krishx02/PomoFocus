@@ -32,17 +32,17 @@ Chosen option: **"Normalized relational schema (12 tables, 3NF)"**, because it m
 
 ### Key Schema Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| ID strategy | UUID v4 (`gen_random_uuid`) | Required for offline BLE sync (collision-free across devices) |
-| Timestamps | Always `timestamptz` | Multi-timezone users; sessions created in EST must display correctly in PST |
-| Deletes | Hard deletes | Simpler for v1; no undo flow in product brief; add soft deletes per-table later if needed |
-| Reflection data | Columns on `sessions` table | 1:1 with session, always queried together; avoids join on every analytics query |
-| Timer preferences | Normalized columns | DB-level defaults and validation; easier for agents to work with than jsonb |
-| Friendship model | Dual-row pattern (A,B) + (B,A) | Simplifies queries and RLS to `WHERE user_id = X`; unfriend wraps in transaction |
-| `user_id` denormalization | On `process_goals` and `breaks` | Direct RLS path to `auth.uid()` without joins |
-| Social visibility | Scoped helper functions, NOT broad RLS | `is_friend_focusing()` and `did_friend_focus_today()` — friends never see raw session data |
-| RLS helper | `get_user_id()` function | Clean abstraction — one function for all RLS policies instead of inlining the `auth.uid()` → `profiles` subquery everywhere |
+| Decision                  | Choice                                 | Why                                                                                                                         |
+| ------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| ID strategy               | UUID v4 (`gen_random_uuid`)            | Required for offline BLE sync (collision-free across devices)                                                               |
+| Timestamps                | Always `timestamptz`                   | Multi-timezone users; sessions created in EST must display correctly in PST                                                 |
+| Deletes                   | Hard deletes                           | Simpler for v1; no undo flow in product brief; add soft deletes per-table later if needed                                   |
+| Reflection data           | Columns on `sessions` table            | 1:1 with session, always queried together; avoids join on every analytics query                                             |
+| Timer preferences         | Normalized columns                     | DB-level defaults and validation; easier for agents to work with than jsonb                                                 |
+| Friendship model          | Dual-row pattern (A,B) + (B,A)         | Simplifies queries and RLS to `WHERE user_id = X`; unfriend wraps in transaction                                            |
+| `user_id` denormalization | On `process_goals` and `breaks`        | Direct RLS path to `auth.uid()` without joins                                                                               |
+| Social visibility         | Scoped helper functions, NOT broad RLS | `is_friend_focusing()` and `did_friend_focus_today()` — friends never see raw session data                                  |
+| RLS helper                | `get_user_id()` function               | Clean abstraction — one function for all RLS policies instead of inlining the `auth.uid()` → `profiles` subquery everywhere |
 
 ### Consequences
 

@@ -29,25 +29,27 @@ AI agents can now accelerate every phase of product development — but the bigg
 
 BMAD assigns distinct personas to the AI at each stage:
 
-| Agent | Role | Output |
-|-------|------|--------|
-| **Analyst** | Transforms vague business intent into structured research | `product-brief.md` |
-| **Product Manager** | Turns the brief into detailed requirements with MVP boundaries | PRD (Product Requirements Document) |
-| **Architect** | Designs technical architecture from the PRD | Architecture document |
-| **Scrum Master** | Breaks the PRD into atomic, implementable stories | Story files with full context |
-| **Developer** | Implements stories as an "obedient craftsman" — halts on conflicts | Code + tests |
-| **QA** | Validates implementation against specs | Test reports |
+| Agent               | Role                                                               | Output                              |
+| ------------------- | ------------------------------------------------------------------ | ----------------------------------- |
+| **Analyst**         | Transforms vague business intent into structured research          | `product-brief.md`                  |
+| **Product Manager** | Turns the brief into detailed requirements with MVP boundaries     | PRD (Product Requirements Document) |
+| **Architect**       | Designs technical architecture from the PRD                        | Architecture document               |
+| **Scrum Master**    | Breaks the PRD into atomic, implementable stories                  | Story files with full context       |
+| **Developer**       | Implements stories as an "obedient craftsman" — halts on conflicts | Code + tests                        |
+| **QA**              | Validates implementation against specs                             | Test reports                        |
 
 The key insight: the Developer agent is deliberately constrained. It doesn't innovate at the architecture level. If it discovers a requirement-architecture conflict, it halts and reports rather than making autonomous decisions. This separation of concerns prevents the common failure mode where an AI agent "solves" a product problem by silently changing requirements.
 
 ### The Discovery Phase in Detail
 
 The Analyst agent performs "intent-driven discovery":
+
 - **Input:** Your verbal descriptions, scattered notes, competitor links, rough ideas
 - **Process:** Structured interview using probing questions, market analysis, user persona development
 - **Output:** A `product-brief.md` that captures the problem space, target users, competitive landscape, and initial feature hypotheses
 
 The Product Manager agent then transforms this into a PRD:
+
 - Defines MVP boundaries explicitly
 - Lists what's in scope AND what's out of scope
 - Creates measurable success criteria
@@ -57,11 +59,11 @@ The Product Manager agent then transforms this into a PRD:
 
 BMAD auto-adjusts its rigor based on project complexity:
 
-| Track | When to Use | Planning Depth |
-|-------|-------------|----------------|
-| **Quick Flow** | Bug fixes, small features | Minimal — straight to implementation |
-| **BMad Method** | Products and platforms | Full pipeline: PRD + Architecture + UX |
-| **Enterprise** | Compliance, security requirements | Extended: security review, DevOps, test strategy |
+| Track           | When to Use                       | Planning Depth                                   |
+| --------------- | --------------------------------- | ------------------------------------------------ |
+| **Quick Flow**  | Bug fixes, small features         | Minimal — straight to implementation             |
+| **BMad Method** | Products and platforms            | Full pipeline: PRD + Architecture + UX           |
+| **Enterprise**  | Compliance, security requirements | Extended: security review, DevOps, test strategy |
 
 ### Spec-Driven Development (SDD)
 
@@ -76,6 +78,7 @@ npx bmad-method@alpha install   # v6
 Then open Claude Code in your project and run `/bmad-help`.
 
 **Sources:**
+
 - GitHub: https://github.com/bmad-code-org/BMAD-METHOD
 - Documentation: https://docs.bmad-method.org/
 - Applied BMAD deep-dive: https://bennycheung.github.io/bmad-reclaiming-control-in-ai-dev
@@ -112,13 +115,15 @@ The spec is the contract. It's not documentation you write after coding — it d
 ### 2026 Ecosystem Context
 
 Spec-driven development is rapidly becoming an industry norm. The ecosystem beyond Spec Kit includes:
+
 - **AWS Kiro** — A dedicated SDD IDE
-- **Tessl** — Pushes toward "spec-as-source" (the spec *is* the code)
+- **Tessl** — Pushes toward "spec-as-source" (the spec _is_ the code)
 - **Academic formalization** — A January 2026 arXiv paper categorizes SDD into three rigor levels: spec-first, spec-anchored, and spec-as-source
 
 A respected analysis in February 2026 noted: "Claude Code's improving long-range planning may eventually make spec-kit redundant, but as of Claude Code 2.1.42, the depth of planning, consistency checks, and research that spec-kit produces far exceeds what you get from Claude Code alone."
 
 **Sources:**
+
 - GitHub repo: https://github.com/github/spec-kit
 - GitHub Blog announcement: https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/
 - Microsoft Developer Blog: https://developer.microsoft.com/blog/spec-driven-development-spec-kit
@@ -129,7 +134,7 @@ A respected analysis in February 2026 noted: "Claude Code's improving long-range
 
 ## 3. Addy Osmani — Spec-First Agentic Engineering
 
-**Who:** Engineering Manager at Google, author of *Learning JavaScript Design Patterns* (O'Reilly). One of the most widely-read voices on AI-assisted engineering in 2025–2026.
+**Who:** Engineering Manager at Google, author of _Learning JavaScript Design Patterns_ (O'Reilly). One of the most widely-read voices on AI-assisted engineering in 2025–2026.
 
 **Why it matters:** Osmani has written the clearest practical guidance on how to structure specs for AI agents. His articles are cited across virtually every AI development community.
 
@@ -137,7 +142,7 @@ A respected analysis in February 2026 noted: "Claude Code's improving long-range
 
 Core principles:
 
-1. **Goal-oriented specs.** Focus on *what* and *why*, not the nitty-gritty *how*. Think user story + acceptance criteria: Who is the user? What do they need? What does success look like?
+1. **Goal-oriented specs.** Focus on _what_ and _why_, not the nitty-gritty _how_. Think user story + acceptance criteria: Who is the user? What do they need? What does success look like?
 
 2. **Structured like a PRD.** A great spec includes: Purpose & Requirements, Inputs & Outputs, Constraints, APIs, Milestones, and Coding Conventions.
 
@@ -161,9 +166,10 @@ The Orchestrator model is where product research becomes critical — if you're 
 
 ### The 80% Problem & Comprehension Debt
 
-Osmani warns about "Comprehension Debt" — when agents generate code faster than you can understand it, you're borrowing against your future ability to maintain the system. The antidote: spec-first development ensures you understand *what* is being built even if you didn't write every line.
+Osmani warns about "Comprehension Debt" — when agents generate code faster than you can understand it, you're borrowing against your future ability to maintain the system. The antidote: spec-first development ensures you understand _what_ is being built even if you didn't write every line.
 
 **Sources:**
+
 - How to Write a Good Spec: https://addyosmani.com/blog/good-spec/
 - Agentic Engineering: https://addyosmani.com/blog/agentic-engineering/
 - Self-Improving Agents: https://addyosmani.com/blog/self-improving-agents/
@@ -174,7 +180,7 @@ Osmani warns about "Comprehension Debt" — when agents generate code faster tha
 
 ## 4. Boris Cherny — CLAUDE.md as Product Context + Multi-Agent Orchestration
 
-**Who:** Creator of Claude Code at Anthropic, author of *Programming TypeScript* (O'Reilly).
+**Who:** Creator of Claude Code at Anthropic, author of _Programming TypeScript_ (O'Reilly).
 
 **Why it matters:** Cherny designed the system we're using to do this research. His workflow patterns are purpose-built for Claude Code and represent the most direct application of these ideas.
 
@@ -200,6 +206,7 @@ The CLAUDE.md serves as the persistent product context that survives across sess
 Cherny's emphasis on using the most capable model (Opus) despite slower speed reflects a critical insight for product discovery: **the real bottleneck is not output speed but error correction cost.** Getting the product definition wrong is far more expensive than getting it slowly right.
 
 **Sources:**
+
 - See `research/01-agent-workflow-experts.md` for the full synthesis
 - Claude Code docs: https://docs.anthropic.com/en/docs/claude-code/
 - Claude Code GitHub: https://github.com/anthropics/claude-code
@@ -229,6 +236,7 @@ Cherny's emphasis on using the most capable model (Opus) despite slower speed re
 Beck's "experiment with everything" philosophy directly applies to product discovery: AI makes it cheap to explore more product hypotheses, generate more user personas, simulate more competitive analyses, and test more assumptions than you ever could manually. The key is having a feedback mechanism (tests for code, validation criteria for product decisions) to tell you which experiments succeeded.
 
 **Sources:**
+
 - The Pragmatic Engineer podcast: https://newsletter.pragmaticengineer.com/p/tdd-ai-agents-and-coding-with-kent
 - Spotify episode: https://open.spotify.com/episode/1S28nbYSgRoFwvRrC8w0QI
 
@@ -238,7 +246,7 @@ Beck's "experiment with everything" philosophy directly applies to product disco
 
 **What it is:** A product development methodology introduced by Ryan Singer at Basecamp in 2019, now experiencing a renaissance in the AI era.
 
-**Why it matters for AI-agent workflows:** Shape Up's core thesis — that the hardest part of product development is deciding *what* to build, not *how* — has become the central challenge of the AI age. When AI can generate thousands of lines of code in seconds, the bottleneck shifts entirely to problem definition.
+**Why it matters for AI-agent workflows:** Shape Up's core thesis — that the hardest part of product development is deciding _what_ to build, not _how_ — has become the central challenge of the AI age. When AI can generate thousands of lines of code in seconds, the bottleneck shifts entirely to problem definition.
 
 ### Three Phases
 
@@ -256,13 +264,14 @@ Beck's "experiment with everything" philosophy directly applies to product disco
 
 - **Circuit breaker.** If a project isn't on track within its appetite, it's not extended — it's canceled and reshaped. This prevents the sunk cost fallacy that plagues AI-generated code: just because the agent wrote 2,000 lines doesn't mean you should ship them.
 
-- **Shaping is the bottleneck.** In Shape Up, the most valuable work is defining *what* to build with enough clarity that a team can execute without daily direction. In AI-agent workflows, this is exactly equivalent to writing a good spec.
+- **Shaping is the bottleneck.** In Shape Up, the most valuable work is defining _what_ to build with enough clarity that a team can execute without daily direction. In AI-agent workflows, this is exactly equivalent to writing a good spec.
 
 ### AI-Era Renaissance
 
 As one analyst wrote in 2025: "With AI handling much of the 'how' to write code, our focus shifts dramatically to 'what' needs to be built and why. That's precisely what Shape Up concentrates on."
 
 **Sources:**
+
 - Full book (free): https://basecamp.com/shapeup
 - AI-era analysis: https://www.bulaev.net/p/shape-up-the-product-development
 - LogRocket overview: https://blog.logrocket.com/product-management/what-is-shape-up-methodology/
@@ -272,7 +281,7 @@ As one analyst wrote in 2025: "With AI handling much of the 'how' to write code,
 
 ## 7. Teresa Torres — Continuous Discovery Habits
 
-**Who:** Product discovery coach, author of *Continuous Discovery Habits*. Has trained product teams at companies of all sizes. In 2025–2026, has personally adopted Claude Code for her own work and product building.
+**Who:** Product discovery coach, author of _Continuous Discovery Habits_. Has trained product teams at companies of all sizes. In 2025–2026, has personally adopted Claude Code for her own work and product building.
 
 **Why it matters:** Torres' framework is the gold standard for structured product discovery. Her methods give you specific techniques for asking the right questions — which is exactly what you need when using an AI agent as a product thinking partner.
 
@@ -285,6 +294,7 @@ Discovery isn't a phase — it's a weekly habit:
 2. **Run interviews every week.** Not surveys. Not analytics. Actual conversations with real people about their real behavior.
 
 3. **Map insights into an Opportunity Solution Tree:**
+
    ```
    Desired Outcome
    ├── Opportunity A (user pain point)
@@ -308,6 +318,7 @@ Discovery isn't a phase — it's a weekly habit:
 From Rob Fitzpatrick's book, referenced by Torres and widely used in product discovery:
 
 **Three rules:**
+
 1. Talk about their life, not your idea
 2. Ask about specifics in the past, not hypotheticals about the future
 3. Talk less, listen more
@@ -318,6 +329,7 @@ From Rob Fitzpatrick's book, referenced by Torres and widely used in product dis
 ### Application to AI-Agent Product Research
 
 An AI agent can serve as a structured thinking partner using Torres' framework:
+
 - Generate interview questions using Mom Test principles
 - Help map discovered opportunities into an Opportunity Solution Tree
 - Challenge your assumptions by role-playing skeptical users
@@ -326,6 +338,7 @@ An AI agent can serve as a structured thinking partner using Torres' framework:
 Torres herself has been building AI products using Claude Code, finding that focusing deeply on one AI tool (rather than trying everything) produces better results.
 
 **Sources:**
+
 - Product Talk (Torres' site): https://www.producttalk.org/
 - Lenny's Newsletter interview: https://www.lennysnewsletter.com/p/teresa-torres-on-how-to-interview
 - Step-by-step AI product discovery guide: https://www.news.aakashg.com/p/teresa-torres-podcast
@@ -342,15 +355,15 @@ Torres herself has been building AI products using Claude Code, finding that foc
 
 ### Available Product Discovery Skills
 
-| Skill | Based On | What It Does |
-|-------|----------|--------------|
-| `jobs-to-be-done` | Clayton Christensen, *Competing Against Luck* | Discover the "job" users hire your product for |
-| `mom-test` | Rob Fitzpatrick, *The Mom Test* | Structure customer interviews that produce truthful insights |
-| `lean-startup` | Eric Ries, *The Lean Startup* | Design MVPs, run validated experiments, decide pivots |
-| `continuous-discovery` | Teresa Torres, *Continuous Discovery Habits* | Weekly discovery cadence, opportunity solution trees |
-| `design-sprint` | Jake Knapp, *Sprint* | 5-day sprint from sketch to testable prototype |
-| `inspired` | Marty Cagan, *Inspired* | Product management best practices |
-| `lean-ux` | Jeff Gothelf, *Lean UX* | UX research and validation techniques |
+| Skill                  | Based On                                      | What It Does                                                 |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| `jobs-to-be-done`      | Clayton Christensen, _Competing Against Luck_ | Discover the "job" users hire your product for               |
+| `mom-test`             | Rob Fitzpatrick, _The Mom Test_               | Structure customer interviews that produce truthful insights |
+| `lean-startup`         | Eric Ries, _The Lean Startup_                 | Design MVPs, run validated experiments, decide pivots        |
+| `continuous-discovery` | Teresa Torres, _Continuous Discovery Habits_  | Weekly discovery cadence, opportunity solution trees         |
+| `design-sprint`        | Jake Knapp, _Sprint_                          | 5-day sprint from sketch to testable prototype               |
+| `inspired`             | Marty Cagan, _Inspired_                       | Product management best practices                            |
+| `lean-ux`              | Jeff Gothelf, _Lean UX_                       | UX research and validation techniques                        |
 
 ### Installation
 
@@ -382,6 +395,7 @@ You: Build a Build-Measure-Learn experiment card and a 5-day sprint plan
 - **VoltAgent/awesome-agent-skills** — Curated directory of 380+ agent skills from official teams and the community
 
 **Sources:**
+
 - Wondel.ai Skills: https://skills.wondel.ai
 - GitHub repo: https://github.com/wondelai/skills
 - Product Manager Skills: https://github.com/deanpeters/Product-Manager-Skills
@@ -393,21 +407,22 @@ You: Build a Build-Measure-Learn experiment card and a 5-day sprint plan
 
 ### Methodology Comparison
 
-| Methodology | Strength | Best For | Limitation |
-|-------------|----------|----------|------------|
-| **BMAD** | Most complete end-to-end agent pipeline | Full product lifecycle, team-scale | Heaviest setup; overkill for early exploration |
-| **GitHub Spec Kit** | Agent-agnostic, structured checkpoints | Teams using multiple AI tools | Focused on specs, not discovery/ideation |
-| **Osmani's Spec-First** | Clearest practical writing on agent specs | Individual engineers writing specs | Guidance, not a tool — you implement it yourself |
-| **Cherny's CLAUDE.md** | Purpose-built for Claude Code | Claude Code users | Narrower than full methodology |
-| **Beck's TDD** | Safety net for agent output | Any agent-generated code | About verification, not discovery |
-| **Shape Up** | Best problem-framing discipline | Feature-level product decisions | No specific AI tooling |
-| **Torres' Continuous Discovery** | Best structured questioning framework | Ongoing product research | Assumes access to real users for interviews |
-| **Wondel.ai Skills** | Instant framework access, zero setup | Quick application of proven methods | Skills are prompts, not full workflows |
+| Methodology                      | Strength                                  | Best For                            | Limitation                                       |
+| -------------------------------- | ----------------------------------------- | ----------------------------------- | ------------------------------------------------ |
+| **BMAD**                         | Most complete end-to-end agent pipeline   | Full product lifecycle, team-scale  | Heaviest setup; overkill for early exploration   |
+| **GitHub Spec Kit**              | Agent-agnostic, structured checkpoints    | Teams using multiple AI tools       | Focused on specs, not discovery/ideation         |
+| **Osmani's Spec-First**          | Clearest practical writing on agent specs | Individual engineers writing specs  | Guidance, not a tool — you implement it yourself |
+| **Cherny's CLAUDE.md**           | Purpose-built for Claude Code             | Claude Code users                   | Narrower than full methodology                   |
+| **Beck's TDD**                   | Safety net for agent output               | Any agent-generated code            | About verification, not discovery                |
+| **Shape Up**                     | Best problem-framing discipline           | Feature-level product decisions     | No specific AI tooling                           |
+| **Torres' Continuous Discovery** | Best structured questioning framework     | Ongoing product research            | Assumes access to real users for interviews      |
+| **Wondel.ai Skills**             | Instant framework access, zero setup      | Quick application of proven methods | Skills are prompts, not full workflows           |
 
 ### Recommended Phased Approach for PomoFocus
 
 **Phase 1: Problem Discovery (do this now)**
 Use Continuous Discovery + Mom Test + JTBD techniques to deeply understand:
+
 - Who are the target users? (Not "everyone who wants to focus" — be specific)
 - What job are they hiring a Pomodoro app for?
 - What do they currently do? Where does it break down?
@@ -415,6 +430,7 @@ Use Continuous Discovery + Mom Test + JTBD techniques to deeply understand:
 
 **Phase 2: Product Definition**
 Use Shape Up "shaping" to define:
+
 - What's the appetite? (How much are you willing to invest in the first version?)
 - What's the rough solution? (Broad strokes, not wireframes)
 - What's explicitly out of scope?
@@ -422,6 +438,7 @@ Use Shape Up "shaping" to define:
 
 **Phase 3: Specification**
 Use GitHub Spec Kit or Osmani's spec-first approach to produce:
+
 - A `product-brief.md` (the "what and why")
 - A `prd.md` with measurable success criteria
 - Architecture constraints from the existing research (files `01`–`05`)
@@ -435,15 +452,15 @@ Use BMAD's story-generation approach or Spec Kit's `/tasks` to break the spec in
 
 ### The Question
 
-You've researched the methodologies. Now how do you actually *use* them day-to-day in Claude Code?
+You've researched the methodologies. Now how do you actually _use_ them day-to-day in Claude Code?
 
 ### Three Options
 
-| Approach | What It Is | Best For |
-|----------|-----------|----------|
-| **Claude Code Skill** | A `/discover` slash command defined in `.claude/skills/discover/SKILL.md` | Interactive product discovery conversations |
-| **Specialized Subagent** | An agent defined in `.claude/agents/` with a product-researcher persona | Automated research tasks (competitor analysis, market sizing) |
-| **Installed Skills (Wondel.ai etc.)** | Pre-built framework skills you install from the community | Quick access to specific frameworks (JTBD, Mom Test) |
+| Approach                              | What It Is                                                                | Best For                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Claude Code Skill**                 | A `/discover` slash command defined in `.claude/skills/discover/SKILL.md` | Interactive product discovery conversations                   |
+| **Specialized Subagent**              | An agent defined in `.claude/agents/` with a product-researcher persona   | Automated research tasks (competitor analysis, market sizing) |
+| **Installed Skills (Wondel.ai etc.)** | Pre-built framework skills you install from the community                 | Quick access to specific frameworks (JTBD, Mom Test)          |
 
 ### Recommendation: Build a `/discover` Skill + Install Framework Skills
 
@@ -458,11 +475,13 @@ You've researched the methodologies. Now how do you actually *use* them day-to-d
 4. **Skills are repeatable.** Every time you run `/discover`, you get the same structured process. No need to remember the right prompts.
 
 **Complement with installed Wondel.ai skills** for framework-specific deep dives:
+
 - `/mom-test` when preparing for user interviews
 - `/jtbd` when analyzing what job users hire the product for
 - `/lean-startup` when designing experiments
 
 **Use subagents for automated research:**
+
 - Competitor analysis (delegated to an agent that reads competitor sites)
 - Market sizing (delegated to an agent with web search)
 - Technical feasibility research (delegated to an Explore agent)

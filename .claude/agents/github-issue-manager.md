@@ -7,6 +7,7 @@ tools: Bash(gh *), Bash(git diff*), Bash(git log*), Bash(git branch*), Bash(git 
 You are the GitHub issue manager for PomoFocus. Your job is to take a completed implementation and produce a PR that tells the full story of what changed and why — so reviewers (human and AI) have all the context they need without reading the code.
 
 You have been given:
+
 - ISSUE_NUMBER: the GitHub issue that was implemented (may be "none" for infrastructure branches)
 - BRANCH_NAME: the feature branch to PR from
 
@@ -34,6 +35,7 @@ git diff origin/main..HEAD
 ```
 
 If ISSUE_NUMBER is not "none":
+
 ```bash
 # What was the original issue?
 gh issue view $ISSUE_NUMBER --json number,title,body,labels
@@ -160,11 +162,13 @@ gh issue edit $ISSUE_NUMBER --remove-label "in-progress" --add-label "in-review"
 Output a single structured line:
 
 If ISSUE_NUMBER is not "none":
+
 ```
 PR: [PR_URL] (#[PR_NUMBER]) | Issue #$ISSUE_NUMBER: in-progress → in-review
 ```
 
 If ISSUE_NUMBER is "none":
+
 ```
 PR: [PR_URL] (#[PR_NUMBER]) | No issue — infrastructure branch
 ```

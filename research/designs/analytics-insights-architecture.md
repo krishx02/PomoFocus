@@ -14,6 +14,7 @@ The analytics architecture must decide: what to compute, where computation runs,
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Define a scientifically grounded metric framework (rooted in SDT and Pomodoro research)
 - Establish where analytics computation lives in the monorepo (`packages/analytics/`)
 - Define API contract for analytics endpoints (three tiers of detail)
@@ -21,6 +22,7 @@ The analytics architecture must decide: what to compute, where computation runs,
 - Keep infrastructure simple — no cron jobs, no materialized views, no summary tables at v1
 
 **Non-Goals:**
+
 - Cross-user analytics or leaderboards (explicitly excluded — undermines autonomy per SDT)
 - Composite "Focus Score" (rejected — see "Alternatives Considered")
 - Pre-aggregation infrastructure (premature — per-user queries over ~365 rows are milliseconds)
@@ -39,13 +41,14 @@ The framework is grounded in Self-Determination Theory (Deci & Ryan), which iden
 
 Designed for the BLE device idle display, Apple Watch complications, and app home screens. Must be comprehensible in <1 second.
 
-| Metric | Computation | SDT Need | Display |
-|--------|-------------|----------|---------|
-| Goal progress | `sessions_today / target_sessions_per_day` for active process goal | Competence | "Study calculus — 1/3" |
-| Weekly continuity | Boolean per day: any completed session that day | Competence | 7 dots (Mon–Sun), filled for active days |
-| Current streak | Count consecutive calendar days (in user timezone) with ≥1 completed session | Competence | "5 days" |
+| Metric            | Computation                                                                  | SDT Need   | Display                                  |
+| ----------------- | ---------------------------------------------------------------------------- | ---------- | ---------------------------------------- |
+| Goal progress     | `sessions_today / target_sessions_per_day` for active process goal           | Competence | "Study calculus — 1/3"                   |
+| Weekly continuity | Boolean per day: any completed session that day                              | Competence | 7 dots (Mon–Sun), filled for active days |
+| Current streak    | Count consecutive calendar days (in user timezone) with ≥1 completed session | Competence | "5 days"                                 |
 
 **Streak Specification:**
+
 - **Grace period:** A streak tolerates exactly 1 missed day. Two consecutive missed days resets the streak. Implementation: `currentStreak()` counts backward from today, allowing at most 1 gap day between any two active days. Gap days do not count toward streak length. (Product brief: "one missed day shouldn't reset a 30-day streak.")
 - **Scope:** Account-wide for v1. A streak means "≥1 completed session on this calendar day, for any goal." Per-goal streaks are a post-v1 enhancement. The `currentStreak()` function in `packages/analytics/` takes all sessions, not sessions for a specific goal.
 - **Day boundary:** Midnight-to-midnight in the user's configured timezone (from `user_preferences.timezone`).
@@ -59,26 +62,26 @@ Designed for the BLE device idle display, Apple Watch complications, and app hom
 
 Shown on a weekly insights card. Updated each time the user opens the analytics screen.
 
-| Metric | Computation | Notes |
-|--------|-------------|-------|
-| Session completion rate | `completed / (total − had_to_stop)` (returns 0 when denominator is 0) | "Had to stop" is excluded per business rule (not a failure). Sessions with `abandonment_reason = NULL` are treated as `gave_up` for this calculation (prevents gaming by dismissing the prompt). |
-| Focus quality distribution | Count per enum value / total completed | Three-segment bar: locked_in / decent / struggled |
-| Total focus time | `SUM(ended_at − started_at)` for completed sessions | In hours and minutes |
-| Peak focus window | Hour-of-day bucket with highest avg focus_quality | "Your best focus is 9–10am" |
-| Per-goal breakdown | Group by process_goal_id | Time and sessions per goal |
+| Metric                     | Computation                                                           | Notes                                                                                                                                                                                            |
+| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Session completion rate    | `completed / (total − had_to_stop)` (returns 0 when denominator is 0) | "Had to stop" is excluded per business rule (not a failure). Sessions with `abandonment_reason = NULL` are treated as `gave_up` for this calculation (prevents gaming by dismissing the prompt). |
+| Focus quality distribution | Count per enum value / total completed                                | Three-segment bar: locked_in / decent / struggled                                                                                                                                                |
+| Total focus time           | `SUM(ended_at − started_at)` for completed sessions                   | In hours and minutes                                                                                                                                                                             |
+| Peak focus window          | Hour-of-day bucket with highest avg focus_quality                     | "Your best focus is 9–10am"                                                                                                                                                                      |
+| Per-goal breakdown         | Group by process_goal_id                                              | Time and sessions per goal                                                                                                                                                                       |
 
 #### Tier 3 — Monthly Trends (app only)
 
 Shown on a monthly deep view. Compares current month vs previous month.
 
-| Metric | Computation | Display |
-|--------|-------------|---------|
-| Consistency trend | `days_with_sessions / total_days`, current vs previous month | Percentage + ↑↓→ arrow |
-| Completion trend | Completion rate change month over month | Percentage + arrow |
-| Focus quality trend | % locked_in change month over month | Percentage + arrow |
-| Total time trend | Hours change month over month | Hours + arrow |
-| Distraction patterns | Most common distraction_type this month | Category name + count. Taxonomy is a closed 5-value enum for v1 (phone, people, thoughts_wandering, got_stuck, other). "Other" is counted in frequency but not surfaced as an actionable insight — if >40% of struggled sessions select "other", that signals the taxonomy needs a new category via DB migration. |
-| Per-goal breakdown | Same as Tier 2 but for the month | Per-goal bars |
+| Metric               | Computation                                                  | Display                                                                                                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consistency trend    | `days_with_sessions / total_days`, current vs previous month | Percentage + ↑↓→ arrow                                                                                                                                                                                                                                                                                            |
+| Completion trend     | Completion rate change month over month                      | Percentage + arrow                                                                                                                                                                                                                                                                                                |
+| Focus quality trend  | % locked_in change month over month                          | Percentage + arrow                                                                                                                                                                                                                                                                                                |
+| Total time trend     | Hours change month over month                                | Hours + arrow                                                                                                                                                                                                                                                                                                     |
+| Distraction patterns | Most common distraction_type this month                      | Category name + count. Taxonomy is a closed 5-value enum for v1 (phone, people, thoughts_wandering, got_stuck, other). "Other" is counted in frequency but not surfaced as an actionable insight — if >40% of struggled sessions select "other", that signals the taxonomy needs a new category via DB migration. |
+| Per-goal breakdown   | Same as Tier 2 but for the month                             | Per-goal bars                                                                                                                                                                                                                                                                                                     |
 
 ### Computation Architecture
 
@@ -122,26 +125,26 @@ Shown on a monthly deep view. Compares current month vs previous month.
 
 ### Data Flow Per Platform
 
-| Platform | Tier 1 | Tier 2 | Tier 3 | Source |
-|----------|--------|--------|--------|--------|
-| Web app | ✓ | ✓ | ✓ | API calls |
-| iOS/Android (Expo) | ✓ | ✓ | ✓ | API calls via TanStack Query |
-| macOS menu bar | ✓ | — | — | API call (polls on focus) |
-| Apple Watch | ✓ (cached + local) | ✓ (cached) | — | API sync when phone connected |
-| VS Code extension | ✓ | ✓ | — | API calls |
-| Claude Code MCP | ✓ | ✓ | — | API calls |
-| BLE device | ✓ (synced) | — | — | Phone pushes via BLE (ADR-013) |
+| Platform           | Tier 1             | Tier 2     | Tier 3 | Source                         |
+| ------------------ | ------------------ | ---------- | ------ | ------------------------------ |
+| Web app            | ✓                  | ✓          | ✓      | API calls                      |
+| iOS/Android (Expo) | ✓                  | ✓          | ✓      | API calls via TanStack Query   |
+| macOS menu bar     | ✓                  | —          | —      | API call (polls on focus)      |
+| Apple Watch        | ✓ (cached + local) | ✓ (cached) | —      | API sync when phone connected  |
+| VS Code extension  | ✓                  | ✓          | —      | API calls                      |
+| Claude Code MCP    | ✓                  | ✓          | —      | API calls                      |
+| BLE device         | ✓ (synced)         | —          | —      | Phone pushes via BLE (ADR-013) |
 
 ### Key Design Decisions
 
-| Decision | Chosen | Rejected | Why |
-|----------|--------|----------|-----|
-| Composite Focus Score | **No** — component metrics with trends | Single composite number | Arbitrary weights undermine autonomy (SDT). Component trends are more informative and less judgmental. |
-| Computation location | **Server-side** (API imports analytics package) | Client-side or pre-computed | Server is single source of truth. No stale caches. Lightweight client responses. |
-| Pre-aggregation | **None at v1** | Materialized views, cron summary table | Per-user queries over ~365 session rows run in milliseconds (ADR-008). Premature optimization. |
-| Streak display on device | **Yes** (simple counter) | No streak on device | User requested. Design review recommends softening with weekly dots alongside. |
-| Watch analytics | **Cached from last API sync** | Local Swift computation | Avoids maintaining Swift port of formulas. Analytics changes slowly (once per ~25min session). Stale data is acceptable. |
-| Timezone handling | **User's configured timezone** (from user_preferences) | UTC everywhere | Calendar-day metrics (streak, daily count) must align with user's local midnight. |
+| Decision                 | Chosen                                                 | Rejected                               | Why                                                                                                                      |
+| ------------------------ | ------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Composite Focus Score    | **No** — component metrics with trends                 | Single composite number                | Arbitrary weights undermine autonomy (SDT). Component trends are more informative and less judgmental.                   |
+| Computation location     | **Server-side** (API imports analytics package)        | Client-side or pre-computed            | Server is single source of truth. No stale caches. Lightweight client responses.                                         |
+| Pre-aggregation          | **None at v1**                                         | Materialized views, cron summary table | Per-user queries over ~365 session rows run in milliseconds (ADR-008). Premature optimization.                           |
+| Streak display on device | **Yes** (simple counter)                               | No streak on device                    | User requested. Design review recommends softening with weekly dots alongside.                                           |
+| Watch analytics          | **Cached from last API sync**                          | Local Swift computation                | Avoids maintaining Swift port of formulas. Analytics changes slowly (once per ~25min session). Stale data is acceptable. |
+| Timezone handling        | **User's configured timezone** (from user_preferences) | UTC everywhere                         | Calendar-day metrics (streak, daily count) must align with user's local midnight.                                        |
 
 ### Cold Start Strategy
 
@@ -176,7 +179,7 @@ interface GlanceableResponse {
 interface WeeklyResponse {
   completionRate: number; // 0–1
   focusQuality: {
-    lockedIn: number;  // count
+    lockedIn: number; // count
     decent: number;
     struggled: number;
   };
@@ -212,15 +215,19 @@ interface MonthlyResponse {
 ## Alternatives Considered
 
 ### Composite Focus Score
+
 Rejected. A single weighted number (e.g., 30% completion + 25% quality + 25% consistency + 20% trend) has no scientific basis for specific weights, creates an extrinsic motivator that can undermine intrinsic motivation (SDT), and positions the app as a judge. The formula is also circular: self-reported focus quality scored into a metric about focus quality adds no information. Component metrics with trend arrows provide the same insight without the judgment.
 
 ### Pre-computed Aggregates via Cron
+
 Rejected for v1. ADR-008 confirms per-user analytics queries over ~365 rows run in milliseconds within a CF Worker. A cron job adding a summary table introduces a new failure mode, stale data (up to 24 hours), and linear scaling across all users — all to optimize something that isn't slow. Can be added later if query performance degrades at scale (the database schema design doc already anticipates this: "add materialized view later if needed").
 
 ### Client-side Computation
-Rejected as primary strategy. Sends more data over the wire. BLE device can't run TypeScript. Apple Watch would need a Swift port. Multiple clients computing the same formulas creates consistency risk. However, `packages/analytics/` being pure functions means it *can* be imported client-side for offline scenarios in the future — the architecture doesn't prevent this.
+
+Rejected as primary strategy. Sends more data over the wire. BLE device can't run TypeScript. Apple Watch would need a Swift port. Multiple clients computing the same formulas creates consistency risk. However, `packages/analytics/` being pure functions means it _can_ be imported client-side for offline scenarios in the future — the architecture doesn't prevent this.
 
 ### Cross-user Analytics
+
 Explicitly excluded. Leaderboards and peer comparisons undermine the autonomy need in SDT and contradict PomoFocus's non-judgmental design philosophy. The CHI 2025 goals meta-analysis found that social comparison in quantified-self apps is associated with decreased intrinsic motivation.
 
 ## Cross-Cutting Concerns

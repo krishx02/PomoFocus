@@ -9,6 +9,7 @@
 Subagents run in their own context windows with custom prompts, tool restrictions, and permissions.
 
 **When to use:**
+
 - Isolate high-volume operations (tests, logs) — only summaries return to main context
 - Run parallel research across multiple modules simultaneously
 - Enforce tool restrictions (read-only reviewers, domain-specific agents)
@@ -23,17 +24,17 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 permissionMode: plan
 ---
-
 You are a senior code reviewer. Focus on security vulnerabilities,
 performance issues, and maintainability.
 ```
 
 **Scopes (priority order):**
+
 1. `--agents` CLI flag (session only)
 2. `.claude/agents/` (project — commit to git for team sharing)
 3. `~/.claude/agents/` (personal — all projects)
 
-**Invoke:** Just ask Claude: *"Use code-reviewer to check this PR"*
+**Invoke:** Just ask Claude: _"Use code-reviewer to check this PR"_
 
 ---
 
@@ -83,6 +84,7 @@ Summarize the changes, intent, and risks.
 Commands wrapped in `` !`...` `` execute before Claude sees the content (dynamic context injection).
 
 **Frontmatter options:**
+
 - `user-invocable: false` — only Claude loads it, not user-invoked
 - `disable-model-invocation: true` — only you can trigger, not Claude
 - `context: fork` — runs in subagent (isolates context)
@@ -92,6 +94,7 @@ Commands wrapped in `` !`...` `` execute before Claude sees the content (dynamic
 **Invoke:** `/skill-name` or `/skill-name arguments`
 
 **Bundled skills:**
+
 - `/simplify` — reviews changed files for quality/efficiency, spawns 3 parallel agents
 - `/batch` — orchestrates large-scale changes across codebase in parallel worktrees
 - `/debug` — troubleshoots current Claude Code session via debug logs
@@ -115,11 +118,13 @@ claude --worktree
 - Auto-cleaned up if no changes; prompted to keep if changes exist
 
 Add to `.gitignore`:
+
 ```
 .claude/worktrees/
 ```
 
 Subagents can run in their own worktrees:
+
 ```yaml
 ---
 name: parallel-worker
@@ -134,12 +139,14 @@ isolation: worktree
 Extended thinking gives Claude dedicated reasoning space before responding.
 
 **Best for:**
+
 - Complex architectural decisions
 - Challenging bugs requiring deep analysis
 - Multi-step implementation planning
 - Evaluating tradeoffs
 
 **Configure:**
+
 ```bash
 # In /model picker, adjust the effort slider
 # Or set globally:
@@ -207,6 +214,7 @@ claude -p "Run tests and fix failures" --max-turns 5
 ```
 
 **Strategies:**
+
 1. `/clear` between unrelated tasks
 2. Use Sonnet for most tasks, Opus only for complex architecture
 3. Use Haiku for subagents doing simple research
@@ -217,8 +225,10 @@ claude -p "Run tests and fix failures" --max-turns 5
 8. Use plan mode before implementation — prevents expensive re-work
 
 **Add compaction hints to CLAUDE.md:**
+
 ```markdown
 # Compact Instructions
+
 When you compact, focus on test output and code changes.
 ```
 
@@ -239,6 +249,7 @@ Ctrl+O             # Toggle verbose mode in session
 **Session logs:** `~/.claude/projects/{project}/{sessionId}/`
 
 **Common issues:**
+
 - Skill not triggering → description doesn't match; try `/skill-name` directly
 - Claude not seeing files → check `/context` and `/permissions`
 - High token usage → run `/context`, look for large CLAUDE.md or many MCP tools
@@ -251,29 +262,29 @@ Ctrl+O             # Toggle verbose mode in session
 
 ```markdown
 # CLAUDE.md
+
 See @docs/architecture.md for design decisions
 See @docs/api-standards.md for API conventions
 @~/.claude/my-preferences.md
 ```
 
 **Path-specific rules** via `.claude/rules/`:
+
 ```yaml
 ---
 paths:
-  - "src/api/**/*.ts"
+  - 'src/api/**/*.ts'
 ---
-
 # API Development Rules
 - Include input validation
 - Use standard error response format
 ```
 
 **Exclude irrelevant CLAUDE.md files** in settings.json:
+
 ```json
 {
-  "claudeMdExcludes": [
-    "**/other-team/CLAUDE.md"
-  ]
+  "claudeMdExcludes": ["**/other-team/CLAUDE.md"]
 }
 ```
 
@@ -291,6 +302,7 @@ claude --from-pr 123      # Start session from a PR
 ```
 
 **Session picker shortcuts:**
+
 - `P` — preview session
 - `R` — rename
 - `/` — search
@@ -307,6 +319,7 @@ Sessions stored at: `~/.claude/projects/{project}/`
 ```
 
 Or in `settings.json`:
+
 ```json
 {
   "statusLine": {
@@ -323,11 +336,13 @@ Available data: `context_usage_percent`, `tokens_used`, git status, cost, durati
 ## 12. Multi-Agent Orchestration
 
 **Claude Code as an MCP server** (use it from Claude Desktop or other tools):
+
 ```bash
 claude mcp serve
 ```
 
 **Coordination patterns:**
+
 - Sequential: `Use code-reviewer to find issues` → `Use optimizer to fix them`
 - Parallel: `Research auth, database, and API modules in parallel`
 - Teams: Spawn specialists (security, performance, test coverage) to review a PR simultaneously
@@ -346,6 +361,7 @@ Best use: IDE extension for in-editor context + CLI for complex agentic work.
 ## Power User Workflow Patterns
 
 ### Pattern 1: TDD with Claude
+
 ```bash
 claude --permission-mode plan
 > Design tests for this feature
@@ -356,6 +372,7 @@ claude --permission-mode plan
 ```
 
 ### Pattern 2: Large-Scale Refactoring
+
 ```bash
 /batch migrate src/ from old-library to new-library
 # Claude decomposes into 5–30 units, spawns parallel agents in worktrees
@@ -363,6 +380,7 @@ claude --permission-mode plan
 ```
 
 ### Pattern 3: Subagent Specialization
+
 ```
 .claude/agents/code-reviewer.md    # Read-only, plan mode
 .claude/agents/api-developer.md    # API implementation
@@ -370,6 +388,7 @@ claude --permission-mode plan
 ```
 
 ### Pattern 4: Skills as Team Workflows
+
 ```bash
 /ship-issue 123       # Fix a GitHub issue by number
 /deploy production   # Deploy with all checks

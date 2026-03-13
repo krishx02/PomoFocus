@@ -74,6 +74,7 @@ If the user's answers reference the product brief's appetite or no-go's, acknowl
 ### Step 2b — Research
 
 Use the WebSearch tool to research the decision space. Run 2-4 searches targeting:
+
 - Direct comparisons (e.g., "Zustand vs Jotai vs Redux comparison 2026")
 - Benchmarks or performance data
 - Community adoption and ecosystem health
@@ -83,6 +84,7 @@ Use the WebSearch tool to research the decision space. Run 2-4 searches targetin
 Use WebFetch on the most relevant results to extract specific data points.
 
 **Research quality rules:**
+
 - Prefer sources from the current year or last year. Flag anything older than 2 years as potentially outdated.
 - Weight recognized experts and official documentation over random blog posts.
 - When citing benchmarks, note the conditions (version tested, hardware, dataset size). Benchmarks without context are misleading.
@@ -194,14 +196,17 @@ Chosen option: "[Option X]", because [1-2 sentence justification referencing dec
 ## Pros and Cons of the Options
 
 ### [Option A]
+
 - Good, because [argument with source if available]
 - Bad, because [argument with source if available]
 
 ### [Option B]
+
 - Good, because [argument with source if available]
 - Bad, because [argument with source if available]
 
 ### [Option C]
+
 - Good, because [argument with source if available]
 - Bad, because [argument with source if available]
 
@@ -233,14 +238,17 @@ For Level 1–2 decisions, also write to `research/designs/kebab-case-title.md`:
 ## Goals & Non-Goals
 
 **Goals:**
+
 - [what this design aims to achieve]
 
 **Non-Goals:**
+
 - [things that could be goals but are deliberately excluded — these are more important than goals]
 
 ## The Design
 
 [The actual architecture/approach chosen. Emphasis on trade-offs, not implementation details. Include:]
+
 - System/data flow if relevant
 - Key interfaces or boundaries
 - How it integrates with existing architecture
@@ -328,9 +336,9 @@ This is not a failure — it's a signal that the decision needs more input. A de
 
 ## Adapting Depth — Quick Reference
 
-| Signal | Depth | Phases | Output |
-|--------|-------|--------|--------|
-| "Which library for X?" | Quick | 1 (abbreviated), 2, 3 (2 questions), 4 (ADR only), 5 | ADR |
-| "How should X work across platforms?" | Full | 1, 2, 3 (4 questions), 4 (ADR + design doc), 5 | ADR + Design Doc |
-| User says "go deeper" | Full | All phases, extended | ADR + Design Doc |
-| User says "keep it quick" | Quick | Abbreviated | ADR |
+| Signal                                | Depth | Phases                                               | Output           |
+| ------------------------------------- | ----- | ---------------------------------------------------- | ---------------- |
+| "Which library for X?"                | Quick | 1 (abbreviated), 2, 3 (2 questions), 4 (ADR only), 5 | ADR              |
+| "How should X work across platforms?" | Full  | 1, 2, 3 (4 questions), 4 (ADR + design doc), 5       | ADR + Design Doc |
+| User says "go deeper"                 | Full  | All phases, extended                                 | ADR + Design Doc |
+| User says "keep it quick"             | Quick | Abbreviated                                          | ADR              |

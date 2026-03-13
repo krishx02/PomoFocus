@@ -1,6 +1,6 @@
 ---
 paths:
-  - "packages/analytics/**"
+  - 'packages/analytics/**'
 ---
 
 # Analytics Package Standards

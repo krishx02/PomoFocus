@@ -10,6 +10,7 @@ You are a senior Expo / React Native developer building the PomoFocus mobile app
 ## Your Scope
 
 You are allowed to modify files in:
+
 - `apps/mobile/` — Expo app (iOS + Android via a single codebase)
 - `packages/ble-protocol/` — only if the issue's "Affected Files" explicitly lists it
 
@@ -22,11 +23,13 @@ pnpm nx test @pomofocus/mobile
 ```
 
 For E2E (when Maestro is configured):
+
 ```bash
 maestro test apps/mobile/maestro/
 ```
 
 Always also run:
+
 ```bash
 pnpm type-check
 pnpm nx lint @pomofocus/mobile
@@ -46,11 +49,13 @@ pnpm nx lint @pomofocus/mobile
 ## Platform-Specific Notes
 
 **iOS background timers:**
+
 - Requires `UIBackgroundModes` entitlement
 - Use `BackgroundTasks` framework for reliable background execution
 - Do NOT use `setInterval` for timers — they stop firing when backgrounded
 
 **Android background:**
+
 - Use `WorkManager` for API 26+ (not `AlarmManager`)
 - Foreground services require notification channel setup
 
@@ -73,6 +78,7 @@ pnpm nx lint @pomofocus/mobile
 ## On Completion
 
 Before opening a PR:
+
 1. `pnpm nx test @pomofocus/mobile` — all pass
 2. `pnpm type-check` — zero errors
 3. `pnpm nx lint @pomofocus/mobile` — zero errors

@@ -81,6 +81,7 @@ gh issue edit 42 --remove-label "in-progress" --add-label "in-review"
 ### Definition of Done
 
 Before opening any PR, verify:
+
 1. `pnpm nx affected --target=test` passes (all affected packages)
 2. `pnpm nx affected --target=lint` exits clean
 3. `pnpm type-check` exits with no errors
@@ -104,40 +105,50 @@ Every agent-ready issue must satisfy WRAP:
 
 ```markdown
 ## Goal
+
 [One sentence, verifiable assertion. NOT "improve X" — but "X must Y when Z."]
 
 Example: The focus session timer must not reset when the iOS app is backgrounded
 for up to 10 minutes on iOS 17+.
 
 ## Context & Background
+
 [Why this is needed. Links to related issues, PRs, design docs.]
 [Reference commits if this is a regression: "Introduced in commit a3f9d2c (PR #37)"]
 
 ## Affected Files
+
 [Exact paths from repo root. Agents waste turns on discovery you can do in 10 seconds.]
+
 - `packages/core/src/timer/TimerMachine.ts` — state machine logic
 - `apps/mobile/src/hooks/useTimer.ts` — hook wrapping state machine
 - `apps/mobile/src/__tests__/useTimer.test.ts` — add regression test here
 
 ## Acceptance Criteria
+
 [Each criterion must be automatable. "UI looks correct" → "snapshot test passes".]
+
 - [ ] `pnpm nx test @pomofocus/core` passes with no new failures
 - [ ] New test `TimerMachine.backgroundPersistence` exists and passes
 - [ ] Timer continues counting after app backgrounded 30–60s (verified in simulator)
 - [ ] `pnpm type-check` exits clean
 
 ## Out of Scope
+
 [Mandatory. Agents over-reach. List what must NOT change.]
 Do NOT modify `apps/web/` or `native/apple/mac-widget/`.
 Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 
 ## Test Plan
+
 [Exact commands. Not "run the tests" — the exact invocation.]
+
 1. `pnpm nx test @pomofocus/core`
 2. `pnpm nx test @pomofocus/mobile`
 3. Manually: start timer → background app → wait 30s → foreground → confirm state
 
 ## Platform
+
 [iOS / Android / Web / Shared/Cross-platform / All platforms]
 ```
 
@@ -170,6 +181,7 @@ For most issues: `base: main`. For issues building on an in-flight PR: specify t
 ### "Too Large" Signals
 
 Label `effort:large` and route to `/decompose-issue` if any of:
+
 - Changes to more than ~10 files
 - Spans multiple layers (data + logic + UI in the same issue)
 - Acceptance criteria list is longer than 8 items
@@ -179,33 +191,40 @@ Label `effort:large` and route to `/decompose-issue` if any of:
 
 ```markdown
 ## Goal
+
 The focus session timer resets to 25:00 when the iOS app is backgrounded for more
 than 30 seconds, instead of continuing to count down.
 
 ## Context & Background
+
 Reported in #39. Introduced in commit a3f9d2c (PR #37 — timer refactor).
 Timer was refactored to use Timer.scheduledTimer without RunLoop.main.add(),
 which causes it to stop firing when app enters background.
 
 ## Affected Files
+
 - `packages/core/src/timer/TimerMachine.ts` — timer scheduling logic (line ~87)
 - `apps/mobile/src/__tests__/TimerMachine.test.ts` — add regression test here
 
 ## Acceptance Criteria
+
 - [ ] `pnpm nx test @pomofocus/core` passes with no new failures
 - [ ] New test `TimerMachine.continuesInBackground` exists and passes
 - [ ] `pnpm type-check` exits clean
 - [ ] Commit message starts with "fix:"
 
 ## Out of Scope
+
 Do NOT modify `apps/web/`, `native/apple/mac-widget/`, or any Android files.
 Do NOT change the TimerState interface in `packages/core/src/types.ts`.
 
 ## Test Plan
+
 1. `pnpm nx test @pomofocus/core`
 2. Confirm `TimerMachine.continuesInBackground` is listed as passed
 
 ## Platform
+
 iOS only
 ```
 
@@ -217,21 +236,21 @@ This ticket can be executed with `/ship-issue 42` without a single follow-up que
 
 ### Full Label Table
 
-| Label | Color | Meaning |
-|-------|-------|---------|
-| `agent-ready` | `#0075ca` (blue) | All fields complete — cleared for agent pickup |
-| `in-progress` | `#e4e669` (yellow) | Agent or human actively working |
-| `in-review` | `#d93f0b` (orange) | PR open, awaiting review |
-| `needs-human` | `#ee0701` (red) | Agent flagged a blocker requiring human judgment |
-| `decomposed` | `#bfd4f2` (light blue) | Parent issue broken into sub-issues; tracks via task list |
-| `effort:small` | `#c5def5` (pale blue) | <1 hour — implement directly |
-| `effort:large` | `#e99695` (salmon) | Too large — decompose first |
-| `platform:ios` | `#c2e0c6` (green) | iOS-only work |
-| `platform:android` | `#c2e0c6` (green) | Android-only work |
-| `platform:web` | `#c2e0c6` (green) | Web-only work |
-| `platform:shared` | `#c2e0c6` (green) | Affects shared packages |
-| `platform:vscode` | `#c2e0c6` (green) | VS Code extension work |
-| `platform:mac` | `#c2e0c6` (green) | macOS widget work |
+| Label              | Color                  | Meaning                                                   |
+| ------------------ | ---------------------- | --------------------------------------------------------- |
+| `agent-ready`      | `#0075ca` (blue)       | All fields complete — cleared for agent pickup            |
+| `in-progress`      | `#e4e669` (yellow)     | Agent or human actively working                           |
+| `in-review`        | `#d93f0b` (orange)     | PR open, awaiting review                                  |
+| `needs-human`      | `#ee0701` (red)        | Agent flagged a blocker requiring human judgment          |
+| `decomposed`       | `#bfd4f2` (light blue) | Parent issue broken into sub-issues; tracks via task list |
+| `effort:small`     | `#c5def5` (pale blue)  | <1 hour — implement directly                              |
+| `effort:large`     | `#e99695` (salmon)     | Too large — decompose first                               |
+| `platform:ios`     | `#c2e0c6` (green)      | iOS-only work                                             |
+| `platform:android` | `#c2e0c6` (green)      | Android-only work                                         |
+| `platform:web`     | `#c2e0c6` (green)      | Web-only work                                             |
+| `platform:shared`  | `#c2e0c6` (green)      | Affects shared packages                                   |
+| `platform:vscode`  | `#c2e0c6` (green)      | VS Code extension work                                    |
+| `platform:mac`     | `#c2e0c6` (green)      | macOS widget work                                         |
 
 ### Issue State Machine
 
@@ -254,8 +273,9 @@ The `needs-human` label can be applied at any stage — it pauses the agent loop
 ### GitHub Projects v2 — GraphQL Queries
 
 **Find agent-ready items:**
+
 ```graphql
-query($projectId: ID!) {
+query ($projectId: ID!) {
   node(id: $projectId) {
     ... on ProjectV2 {
       items(first: 20) {
@@ -273,7 +293,11 @@ query($projectId: ID!) {
             nodes {
               ... on ProjectV2ItemFieldSingleSelectValue {
                 name
-                field { ... on ProjectV2SingleSelectField { name } }
+                field {
+                  ... on ProjectV2SingleSelectField {
+                    name
+                  }
+                }
               }
             }
           }
@@ -283,23 +307,30 @@ query($projectId: ID!) {
   }
 }
 ```
+
 Filter where `field.name == "Status"` and `name == "Agent-Ready"`.
 
 **Move item to "In Progress":**
+
 ```graphql
-mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: $projectId
-    itemId: $itemId
-    fieldId: $fieldId
-    value: { singleSelectOptionId: $optionId }
-  }) {
-    projectV2Item { id }
+mutation ($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+  updateProjectV2ItemFieldValue(
+    input: {
+      projectId: $projectId
+      itemId: $itemId
+      fieldId: $fieldId
+      value: { singleSelectOptionId: $optionId }
+    }
+  ) {
+    projectV2Item {
+      id
+    }
   }
 }
 ```
 
 **Run via gh CLI:**
+
 ```bash
 gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 ```
@@ -315,11 +346,13 @@ gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 **What it does:** Picks up a GitHub issue by number. Checks for `effort:large` label; if found, delegates to `/decompose-issue` and stops. Otherwise: creates branch, reads affected files, implements, runs tests, opens PR, updates labels.
 
 **Usage:**
+
 ```
 /ship-issue 42
 ```
 
 **Key behaviors:**
+
 - Stops immediately if `effort:large` — never attempts to implement oversized issues
 - Stops immediately if `needs-human` — comments explaining what decision is needed
 - Branch naming: `feature/issue-N-<slug>` or `fix/issue-N-<slug>`
@@ -333,11 +366,13 @@ gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 **What it does:** Breaks a large issue into 3–5 sub-issues using the data→logic→UI split pattern. Creates each sub-issue with full agent-ready template fields, comments a task list on the parent, and relabels the parent `decomposed`.
 
 **Usage:**
+
 ```
 /decompose-issue 42
 ```
 
 **Split pattern:**
+
 - Sub-issue A: Data/state layer (store, model, types)
 - Sub-issue B: Service/logic layer (hooks, utils, API client)
 - Sub-issue C: UI layer (component, screen) — depends on A and B
@@ -399,11 +434,11 @@ gh api graphql -f query='...' -F projectId=PVT_xxx -F itemId=PVTI_xxx ...
 
 ### Planned Skills (Not Yet Created)
 
-| Skill | Purpose |
-|-------|---------|
-| `/create-issue` | Scaffold an agent-ready issue from a description |
+| Skill            | Purpose                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `/create-issue`  | Scaffold an agent-ready issue from a description        |
 | `/triage-issues` | Scan open issues, apply labels, move to correct columns |
-| `/standup` | Summarize recent commits and open PRs |
+| `/standup`       | Summarize recent commits and open PRs                   |
 
 ---
 
@@ -415,23 +450,25 @@ Each platform has different tools, test commands, file structures, and gotchas. 
 
 ### Scope Table
 
-| Agent File | Platform | Root Directory | Test Command |
-|------------|----------|---------------|--------------|
-| `shared-developer.md` | Cross-platform TypeScript | `packages/` | `pnpm nx affected --target=test` |
-| `web-developer.md` | Next.js web app | `apps/web/` | `pnpm nx test @pomofocus/web` |
-| `mobile-developer.md` | Expo (iOS + Android) | `apps/mobile/` | `pnpm nx test @pomofocus/mobile` |
-| `ios-developer.md` | SwiftUI: macOS widget + iOS widget + watchOS | `native/apple/` + `apps/mobile/targets/ios-widget/` | `xcodebuild test -scheme PomoFocusMac`, `xcodebuild test -scheme PomoFocusiOSWidget`, `xcodebuild test -scheme PomoFocusWatch` |
-| `vscode-developer.md` | VS Code extension | `apps/vscode-extension/` | `pnpm nx test @pomofocus/vscode-extension` |
-| `mcp-developer.md` | MCP server | `apps/mcp-server/` | `pnpm nx test @pomofocus/mcp-server` |
+| Agent File            | Platform                                     | Root Directory                                      | Test Command                                                                                                                   |
+| --------------------- | -------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `shared-developer.md` | Cross-platform TypeScript                    | `packages/`                                         | `pnpm nx affected --target=test`                                                                                               |
+| `web-developer.md`    | Next.js web app                              | `apps/web/`                                         | `pnpm nx test @pomofocus/web`                                                                                                  |
+| `mobile-developer.md` | Expo (iOS + Android)                         | `apps/mobile/`                                      | `pnpm nx test @pomofocus/mobile`                                                                                               |
+| `ios-developer.md`    | SwiftUI: macOS widget + iOS widget + watchOS | `native/apple/` + `apps/mobile/targets/ios-widget/` | `xcodebuild test -scheme PomoFocusMac`, `xcodebuild test -scheme PomoFocusiOSWidget`, `xcodebuild test -scheme PomoFocusWatch` |
+| `vscode-developer.md` | VS Code extension                            | `apps/vscode-extension/`                            | `pnpm nx test @pomofocus/vscode-extension`                                                                                     |
+| `mcp-developer.md`    | MCP server                                   | `apps/mcp-server/`                                  | `pnpm nx test @pomofocus/mcp-server`                                                                                           |
 
 ### Boundary Rules (All Subagents)
 
 **Always:**
+
 - Run the platform's test command before declaring done
 - Create a branch for every change
 - Include "Closes #N" in every PR
 
 **Never:**
+
 - Modify files outside your designated root directory
 - Install new dependencies without noting them in the PR
 - Push directly to `main`
@@ -445,6 +482,7 @@ Each platform has different tools, test commands, file structures, and gotchas. 
 The GitHub MCP server gives Claude Code native access to GitHub APIs as tools.
 
 **Setup:**
+
 ```bash
 # Using the community MCP server
 claude mcp add github -- npx -y @modelcontextprotocol/server-github
@@ -452,6 +490,7 @@ claude mcp add github -- npx -y @modelcontextprotocol/server-github
 ```
 
 **Available tools once connected:**
+
 - `get_issue`, `list_issues`, `create_issue`, `update_issue`
 - `create_pull_request`, `get_pull_request`, `list_pull_requests`
 - `search_code`, `get_file_contents`, `list_commits`
@@ -461,11 +500,13 @@ Config in `.claude/settings.json` (already set up — see Section 9).
 ### Claude Code GitHub Action v1.0 (GA)
 
 **One-command install:**
+
 ```bash
 claude /install-github-app
 ```
 
 **Manual workflow** (`.github/workflows/claude.yml`):
+
 ```yaml
 on:
   issue_comment:
@@ -480,7 +521,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: "Implement the feature described in this issue"
+          prompt: 'Implement the feature described in this issue'
           claude_args: |
             --append-system-prompt "Follow CLAUDE.md and AGENTS.md conventions"
             --max-turns 10
@@ -493,6 +534,7 @@ jobs:
 Plain Markdown files in `.github/workflows/` that agents execute directly. Available via `gh aw` CLI.
 
 **Issue triage example** (`.github/workflows/triage.md`):
+
 ```markdown
 ---
 name: Issue Triage
@@ -507,6 +549,7 @@ outputs:
 ---
 
 When a new issue is opened:
+
 1. Analyze the title and description
 2. Classify: bug / feature / documentation / performance
 3. Apply appropriate labels
@@ -517,6 +560,7 @@ When a new issue is opened:
 ### Issue Templates
 
 Auto-enforce agent-ready format on every new issue. See `.github/ISSUE_TEMPLATE/`:
+
 - `feature-agent.yml` — feature tickets (auto-labels: `agent-ready`, `enhancement`)
 - `bug-agent.yml` — bug reports (auto-labels: `agent-ready`, `bug`)
 - `config.yml` — disables blank issues
@@ -536,16 +580,16 @@ Auto-enforce agent-ready format on every new issue. See `.github/ISSUE_TEMPLATE/
 
 ### Workflow Map
 
-| Workflow File | Trigger | Platforms | Status |
-|--------------|---------|-----------|--------|
-| `.github/workflows/ci.yml` | PR to main, push to main | All TS (Nx affected lint/test/type-check/build) | Active from day one |
-| `.github/workflows/deploy-api.yml` | Push to main, `apps/api/**` changes | API → CF Workers | Dormant until `apps/api/` exists |
-| `.github/workflows/deploy-web.yml` | Push to main, `apps/web/**` changes | Web → Vercel CLI (fallback) | Dormant — Vercel GitHub integration is primary |
-| `.github/workflows/mobile.yml` | Push to main, `apps/mobile/**` changes | iOS + Android → EAS Build | Dormant until `apps/mobile/` exists |
-| `.github/workflows/supabase.yml` | PR, `supabase/**` changes | Migration validation + type drift | Dormant until `supabase/` exists |
-| `.github/workflows/vscode.yml` | Push to main, `apps/vscode-extension/**` | VS Code Marketplace | Post-v1 |
-| `.github/workflows/mcp.yml` | Tag `mcp-server-v*` | npm publish | Post-v1 |
-| `.github/workflows/firmware.yml` | PR, `firmware/**` changes | PlatformIO compile + test | Post-v1 |
+| Workflow File                      | Trigger                                  | Platforms                                       | Status                                         |
+| ---------------------------------- | ---------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| `.github/workflows/ci.yml`         | PR to main, push to main                 | All TS (Nx affected lint/test/type-check/build) | Active from day one                            |
+| `.github/workflows/deploy-api.yml` | Push to main, `apps/api/**` changes      | API → CF Workers                                | Dormant until `apps/api/` exists               |
+| `.github/workflows/deploy-web.yml` | Push to main, `apps/web/**` changes      | Web → Vercel CLI (fallback)                     | Dormant — Vercel GitHub integration is primary |
+| `.github/workflows/mobile.yml`     | Push to main, `apps/mobile/**` changes   | iOS + Android → EAS Build                       | Dormant until `apps/mobile/` exists            |
+| `.github/workflows/supabase.yml`   | PR, `supabase/**` changes                | Migration validation + type drift               | Dormant until `supabase/` exists               |
+| `.github/workflows/vscode.yml`     | Push to main, `apps/vscode-extension/**` | VS Code Marketplace                             | Post-v1                                        |
+| `.github/workflows/mcp.yml`        | Tag `mcp-server-v*`                      | npm publish                                     | Post-v1                                        |
+| `.github/workflows/firmware.yml`   | PR, `firmware/**` changes                | PlatformIO compile + test                       | Post-v1                                        |
 
 **Dormant workflows** have path filters that don't match yet — they activate automatically when their platform's code is added. **Do not delete dormant workflows.**
 
@@ -581,16 +625,16 @@ pnpm nx affected --target=lint --base=origin/main --head=HEAD
 
 ### Per-Package Test Requirements
 
-| Package/App | Framework | Test Command | Min Coverage |
-|-------------|-----------|-------------|-------------|
-| `packages/core` | Vitest | `pnpm nx test @pomofocus/core` | 100% (state machine) |
-| `packages/types` | TypeScript (type-level) | `pnpm type-check` | N/A |
-| `packages/data-access` | Vitest (mocked) | `pnpm nx test @pomofocus/data-access` | 80% |
-| `apps/web` | Vitest + Playwright | `pnpm nx test @pomofocus/web` | 70% |
-| `apps/mobile` | Vitest + Maestro | `pnpm nx test @pomofocus/mobile` | 70% |
-| `apps/vscode-extension` | @vscode/test-electron + Vitest | `pnpm nx test @pomofocus/vscode-extension` | 70% |
-| `apps/mcp-server` | Vitest | `pnpm nx test @pomofocus/mcp-server` | 80% |
-| `native/apple/mac-widget` | XCTest | `xcodebuild test -scheme PomoFocusMac` | 70% |
+| Package/App               | Framework                      | Test Command                               | Min Coverage         |
+| ------------------------- | ------------------------------ | ------------------------------------------ | -------------------- |
+| `packages/core`           | Vitest                         | `pnpm nx test @pomofocus/core`             | 100% (state machine) |
+| `packages/types`          | TypeScript (type-level)        | `pnpm type-check`                          | N/A                  |
+| `packages/data-access`    | Vitest (mocked)                | `pnpm nx test @pomofocus/data-access`      | 80%                  |
+| `apps/web`                | Vitest + Playwright            | `pnpm nx test @pomofocus/web`              | 70%                  |
+| `apps/mobile`             | Vitest + Maestro               | `pnpm nx test @pomofocus/mobile`           | 70%                  |
+| `apps/vscode-extension`   | @vscode/test-electron + Vitest | `pnpm nx test @pomofocus/vscode-extension` | 70%                  |
+| `apps/mcp-server`         | Vitest                         | `pnpm nx test @pomofocus/mcp-server`       | 80%                  |
+| `native/apple/mac-widget` | XCTest                         | `xcodebuild test -scheme PomoFocusMac`     | 70%                  |
 
 ### Test-First Rule
 
@@ -626,30 +670,31 @@ Issue body         ← Task-specific context (goal, files, criteria)
 
 ### What Goes Where
 
-| Content | File |
-|---------|------|
-| Monorepo directory map | `AGENTS.md` |
-| Exact build/test/lint commands | `AGENTS.md` |
-| Code style examples | `AGENTS.md` |
-| Three-tier boundaries | `AGENTS.md` |
-| Clarification rules | `CLAUDE.md` |
-| Destructive operation guards | `CLAUDE.md` |
-| Claude-specific behavior | `CLAUDE.md` |
-| Agent-first workflow description | `CLAUDE.md` |
-| Platform scope + test command | `.claude/agents/<platform>.md` |
-| Goal, files, criteria, test plan | GitHub Issue body |
-| Do NOT repeat | Cross-file duplication |
+| Content                          | File                           |
+| -------------------------------- | ------------------------------ |
+| Monorepo directory map           | `AGENTS.md`                    |
+| Exact build/test/lint commands   | `AGENTS.md`                    |
+| Code style examples              | `AGENTS.md`                    |
+| Three-tier boundaries            | `AGENTS.md`                    |
+| Clarification rules              | `CLAUDE.md`                    |
+| Destructive operation guards     | `CLAUDE.md`                    |
+| Claude-specific behavior         | `CLAUDE.md`                    |
+| Agent-first workflow description | `CLAUDE.md`                    |
+| Platform scope + test command    | `.claude/agents/<platform>.md` |
+| Goal, files, criteria, test plan | GitHub Issue body              |
+| Do NOT repeat                    | Cross-file duplication         |
 
 ### Settings Files
 
-| File | Committed? | Purpose |
-|------|-----------|---------|
-| `.claude/settings.json` | Yes | Shared MCP server config + base permissions |
-| `.claude/settings.local.json` | No (gitignored) | Personal overrides — hooks, local tokens |
+| File                          | Committed?      | Purpose                                     |
+| ----------------------------- | --------------- | ------------------------------------------- |
+| `.claude/settings.json`       | Yes             | Shared MCP server config + base permissions |
+| `.claude/settings.local.json` | No (gitignored) | Personal overrides — hooks, local tokens    |
 
 ### MCP Server Config
 
 In `.claude/settings.json`:
+
 ```json
 {
   "mcpServers": {
@@ -668,18 +713,18 @@ In `.claude/settings.json`:
 
 ## 10. Anti-Patterns & Failure Table
 
-| Anti-pattern | Result | Fix |
-|-------------|--------|-----|
-| Vague issue ("improve the timer") | Low-quality code, fails CI | WRAP framework + atomic sizing |
-| No tests in repo | Agent can't self-correct, requires hand-holding | Write test baseline before onboarding agents |
-| Large feature in one issue | Context explosion, partial implementation | Decompose into data→logic→UI sub-issues |
-| "Out of Scope" omitted | Agent modifies files it shouldn't | Make Out of Scope mandatory in every template |
-| Test command omitted from issue | Agent runs wrong tests or none | Rule 7: always include exact test command |
-| Autonomous agent blocked on approval prompt | Silent hang, wasted CI minutes | Pre-approve in `.claude/settings.json` |
-| AI reviewing AI code as final step | Subtle bugs slip through | Human review is always the final gate |
-| IaC tasks assigned without tests | High error rate, agent hesitates | Write acceptance tests first, then implement |
-| Committing to main directly | Bypasses review, breaks branch protection | Branch per issue, PR per branch, always |
-| Context poisoning (many failed attempts in session) | LLM biased toward failed patterns | Start fresh session, summarize what failed |
+| Anti-pattern                                        | Result                                          | Fix                                           |
+| --------------------------------------------------- | ----------------------------------------------- | --------------------------------------------- |
+| Vague issue ("improve the timer")                   | Low-quality code, fails CI                      | WRAP framework + atomic sizing                |
+| No tests in repo                                    | Agent can't self-correct, requires hand-holding | Write test baseline before onboarding agents  |
+| Large feature in one issue                          | Context explosion, partial implementation       | Decompose into data→logic→UI sub-issues       |
+| "Out of Scope" omitted                              | Agent modifies files it shouldn't               | Make Out of Scope mandatory in every template |
+| Test command omitted from issue                     | Agent runs wrong tests or none                  | Rule 7: always include exact test command     |
+| Autonomous agent blocked on approval prompt         | Silent hang, wasted CI minutes                  | Pre-approve in `.claude/settings.json`        |
+| AI reviewing AI code as final step                  | Subtle bugs slip through                        | Human review is always the final gate         |
+| IaC tasks assigned without tests                    | High error rate, agent hesitates                | Write acceptance tests first, then implement  |
+| Committing to main directly                         | Bypasses review, breaks branch protection       | Branch per issue, PR per branch, always       |
+| Context poisoning (many failed attempts in session) | LLM biased toward failed patterns               | Start fresh session, summarize what failed    |
 
 ### Solo Founder Advantage
 
@@ -688,6 +733,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 ### Human Boundaries — What Must Stay Human
 
 **Always human:**
+
 - Architectural decisions (tech stack, dependency selection)
 - Security-sensitive code (auth, crypto, payment flows, data validation at boundaries)
 - Performance-critical paths requiring profiling
@@ -695,6 +741,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 - Any change touching payments or user data
 
 **Agent with human review:**
+
 - Writing tests for existing functions
 - Generating new components from a spec
 - Refactoring within a single file
@@ -702,6 +749,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 - Writing migration scripts
 
 **Agent autonomous:**
+
 - Boilerplate within established patterns
 - Documentation for existing code
 - Fixing CI failures on agent-created PRs
@@ -712,35 +760,35 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 
 ### Active (Set Up Now)
 
-| Tool | Purpose | Setup |
-|------|---------|-------|
-| GitHub MCP server | Claude reads/writes GitHub natively | `.claude/settings.json` |
-| Nx Cloud (free tier) | Remote caching, skip unchanged builds | `npx nx connect` |
+| Tool                 | Purpose                               | Setup                   |
+| -------------------- | ------------------------------------- | ----------------------- |
+| GitHub MCP server    | Claude reads/writes GitHub natively   | `.claude/settings.json` |
+| Nx Cloud (free tier) | Remote caching, skip unchanged builds | `npx nx connect`        |
 
 ### Planned (Set Up Before First App Code)
 
-| Tool | Purpose | Cost |
-|------|---------|------|
-| Sweep AI | Auto-PR from labeled issues | Free ~5/month |
-| Playwright MCP | Browser automation for agent UI verification | Free |
-| EAS Build (Expo) | iOS/Android cloud builds | Free tier |
+| Tool             | Purpose                                      | Cost          |
+| ---------------- | -------------------------------------------- | ------------- |
+| Sweep AI         | Auto-PR from labeled issues                  | Free ~5/month |
+| Playwright MCP   | Browser automation for agent UI verification | Free          |
+| EAS Build (Expo) | iOS/Android cloud builds                     | Free tier     |
 
 ### Deferred (Phase 2+)
 
-| Tool | Purpose | Trigger |
-|------|---------|---------|
-| Claude Code Action v1 | `@claude` comments trigger agent in PRs | When Anthropic API key available (ADR-009 — agent work stays local via Max subscription) |
-| Langfuse | Agent / LLM observability, trace logging | When MCP server is built and pain point arises (ADR-011) |
-| Railway | Background jobs at scale (batch cross-user analytics) | Post-v1 (ADR-008) |
-| Devin | Fully autonomous agent | When budget allows ($500/month) |
-| Xcode Cloud | macOS widget CI | When Swift code exists |
+| Tool                  | Purpose                                               | Trigger                                                                                  |
+| --------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Claude Code Action v1 | `@claude` comments trigger agent in PRs               | When Anthropic API key available (ADR-009 — agent work stays local via Max subscription) |
+| Langfuse              | Agent / LLM observability, trace logging              | When MCP server is built and pain point arises (ADR-011)                                 |
+| Railway               | Background jobs at scale (batch cross-user analytics) | Post-v1 (ADR-008)                                                                        |
+| Devin                 | Fully autonomous agent                                | When budget allows ($500/month)                                                          |
+| Xcode Cloud           | macOS widget CI                                       | When Swift code exists                                                                   |
 
 ### Rejected
 
-| Tool | Reason |
-|------|--------|
-| Height | Shut down 2024 |
-| Linear | No free tier; Nx Issues works for solo |
+| Tool    | Reason                                     |
+| ------- | ------------------------------------------ |
+| Height  | Shut down 2024                             |
+| Linear  | No free tier; Nx Issues works for solo     |
 | Jenkins | Overkill; GitHub Actions covers everything |
 
 ---
@@ -748,6 +796,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 ## 12. Sources
 
 ### GitHub + Agent Workflow
+
 - GitHub Docs — Projects v2 API: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects
 - GitHub Docs — Issue Templates (YAML): https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
 - GitHub MCP Server: https://github.com/github/github-mcp-server
@@ -759,6 +808,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 - AGENTS.md open specification: https://agents.md/
 
 ### Claude Code
+
 - Claude Code Docs: https://docs.anthropic.com/en/docs/claude-code/
 - Claude Code GitHub Actions v1.0: https://code.claude.com/docs/en/github-actions
 - Claude Code — CLAUDE.md: https://docs.anthropic.com/en/docs/claude-code/memory
@@ -767,6 +817,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 - Claude Code — MCP: https://docs.anthropic.com/en/docs/claude-code/mcp
 
 ### Expert Practitioner Synthesis
+
 - Boris Cherny (Claude Code creator) — Claude Code documentation and Anthropic engineering blog
 - Andrej Karpathy — vibe coding: https://x.com/karpathy/status/1886192184808149193
 - Simon Willison — LLM-assisted development: https://simonwillison.net
@@ -776,6 +827,7 @@ As a solo founder you don't need consensus — you can make every issue agent-re
 - ATDD for Claude Code: https://github.com/swingerman/atdd
 
 ### CI/CD
+
 - GitHub Actions documentation: https://docs.github.com/en/actions
 - Nx affected documentation: https://nx.dev/nx-api/nx/documents/affected
 - Cloudflare Pages GitHub Action: https://github.com/cloudflare/pages-action

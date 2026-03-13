@@ -4,7 +4,7 @@ description: Run an interactive product discovery session using structured frame
 user-invocable: true
 context: fork
 agent: general-purpose
-argument-hint: "[optional: rough idea or problem area to explore]"
+argument-hint: '[optional: rough idea or problem area to explore]'
 metadata:
   author: PomoFocus
   version: 1.0.0
@@ -120,42 +120,55 @@ Use this exact format:
 ---
 
 ## Problem Statement
+
 [2-3 sentences from Phase 1. Specific, human, grounded in real behavior.]
 
 ## Target User
+
 [The specific archetype from Phase 1. Not "everyone." Include context, day-in-the-life.]
 
 ## Job to Be Done
+
 > "When [situation], I want to [motivation], so I can [expected outcome]."
 
 ## Current Alternatives
+
 [What users do today. What they'd "fire" to "hire" this product.]
 
 ## Opportunity Solution Tree
+
 [The tree from Phase 3, with the chosen focus opportunity marked]
 
 ## Focused Opportunity
+
 [The #1 opportunity the user chose to pursue first]
 
 ## Riskiest Assumption
+
 [The thing that must be true for this to work, that we're least sure about]
 
 ## Appetite
+
 [From Phase 4 — how much investment for v1]
 
 ## Rough Solution
+
 [Broad strokes from Phase 4]
 
 ## Explicitly Out of Scope (v1)
+
 [The no-go's from Phase 4]
 
 ## Rabbit Holes to Avoid
+
 [From Phase 4]
 
 ## Open Questions
+
 [Anything unresolved that needs future research or user interviews]
 
 ## Next Steps
+
 - [ ] Validate riskiest assumption with [specific test]
 - [ ] Write PRD based on this brief (use `/clarify` or GitHub Spec Kit)
 - [ ] Create agent-ready issues from the PRD
@@ -164,6 +177,7 @@ Use this exact format:
 After writing the file, show the user a summary and ask: "Does this product brief capture your thinking accurately? Any corrections before I save the final version?"
 
 Make any corrections the user requests, then report:
+
 - The file path written
 - The key decisions captured
 - Recommended next action (usually: validate the riskiest assumption, then write a PRD)

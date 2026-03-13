@@ -31,22 +31,22 @@ Chosen option: **"react-native-ble-plx + deep shared abstraction"**, because ble
 
 ### Library Assignments
 
-| Platform | Library | Role | Timeline |
-|----------|---------|------|----------|
-| iOS / Android (Expo) | **react-native-ble-plx** (v3.x) | Primary BLE central | v1 |
-| Web | **Web Bluetooth API** (native browser) | Progressive enhancement (Chrome/Edge/Opera only) | v1 (degraded) |
-| macOS menu bar | **CoreBluetooth** (Apple framework) | Fallback BLE central | Post-v1 |
-| watchOS | None — WatchConnectivity relay | Data via phone | Post-v1 |
+| Platform             | Library                                | Role                                             | Timeline      |
+| -------------------- | -------------------------------------- | ------------------------------------------------ | ------------- |
+| iOS / Android (Expo) | **react-native-ble-plx** (v3.x)        | Primary BLE central                              | v1            |
+| Web                  | **Web Bluetooth API** (native browser) | Progressive enhancement (Chrome/Edge/Opera only) | v1 (degraded) |
+| macOS menu bar       | **CoreBluetooth** (Apple framework)    | Fallback BLE central                             | Post-v1       |
+| watchOS              | None — WatchConnectivity relay         | Data via phone                                   | Post-v1       |
 
 ### Key Integration Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Sync trigger | **App-open** (not background BLE) | iOS background BLE is notoriously unreliable — Apple can kill connections after 30s-3min. Android background varies wildly by manufacturer (Samsung, Xiaomi, Huawei aggressive battery optimization). App-open sync eliminates the #1 source of BLE bugs. Device stores ~10 months of sessions locally (ADR-010), so no data loss risk. Background auto-sync deferred to v2. |
-| MTU negotiation | **Automatic on iOS, requested on Android** | iOS auto-negotiates to ~187 bytes. Android requires explicit `requestMTU()` — request 512, accept whatever is granted. Since Android 14, default MTU is 517. react-native-ble-plx handles both via `requestMTU` connection option. |
-| Pairing | **OS-managed** (no app-level auth) | Passkey pairing dialog is a system-level UI on both iOS and Android. react-native-ble-plx doesn't control pairing — it initiates connection, the OS handles security. Session data (timestamps, durations, goal IDs) isn't sensitive enough for additional app-level authentication (ADR-012). |
-| Reconnection | **Scan-on-open** | When app opens, scan for known device UUID. If found, connect and drain outbox. No persistent connection maintained. Reconnection timeout: 10s scan, then stop. User can manually trigger re-scan. |
-| Shared abstraction | **Extract from working code** | Build mobile BLE end-to-end first. Once working, extract shared sync orchestration into `packages/ble-protocol/`. Don't design the abstraction upfront — let it emerge from real implementation. |
+| Decision           | Choice                                     | Why                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------ | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sync trigger       | **App-open** (not background BLE)          | iOS background BLE is notoriously unreliable — Apple can kill connections after 30s-3min. Android background varies wildly by manufacturer (Samsung, Xiaomi, Huawei aggressive battery optimization). App-open sync eliminates the #1 source of BLE bugs. Device stores ~10 months of sessions locally (ADR-010), so no data loss risk. Background auto-sync deferred to v2. |
+| MTU negotiation    | **Automatic on iOS, requested on Android** | iOS auto-negotiates to ~187 bytes. Android requires explicit `requestMTU()` — request 512, accept whatever is granted. Since Android 14, default MTU is 517. react-native-ble-plx handles both via `requestMTU` connection option.                                                                                                                                           |
+| Pairing            | **OS-managed** (no app-level auth)         | Passkey pairing dialog is a system-level UI on both iOS and Android. react-native-ble-plx doesn't control pairing — it initiates connection, the OS handles security. Session data (timestamps, durations, goal IDs) isn't sensitive enough for additional app-level authentication (ADR-012).                                                                               |
+| Reconnection       | **Scan-on-open**                           | When app opens, scan for known device UUID. If found, connect and drain outbox. No persistent connection maintained. Reconnection timeout: 10s scan, then stop. User can manually trigger re-scan.                                                                                                                                                                           |
+| Shared abstraction | **Extract from working code**              | Build mobile BLE end-to-end first. Once working, extract shared sync orchestration into `packages/ble-protocol/`. Don't design the abstraction upfront — let it emerge from real implementation.                                                                                                                                                                             |
 
 ### Shared Abstraction Architecture
 
@@ -66,6 +66,7 @@ packages/ble-protocol/
 ```
 
 The `BleTransport` interface defines 6 operations:
+
 - `connect(deviceId, options?): Promise<BleConnection>` — establish GATT connection
 - `disconnect(): Promise<void>` — clean disconnect
 - `read(serviceUuid, charUuid): Promise<Uint8Array>` — read from characteristic
@@ -117,7 +118,7 @@ Sync orchestration (chunk handling, ack logic, cursor management) lives above th
 - [Expo Blog — How to Build a BLE-Powered Expo App](https://expo.dev/blog/how-to-build-a-bluetooth-low-energy-powered-expo-app) — Expo's official guide uses react-native-ble-plx
 - [LogRocket — Comparing React Native BLE Libraries](https://blog.logrocket.com/comparing-react-native-ble-libraries/) — feature comparison of ble-plx vs ble-manager
 - [npm trends — ble-manager vs ble-plx](https://npmtrends.com/react-native-ble-manager-vs-react-native-ble-plx) — download comparison (90K vs 45K weekly)
-- [react-native-ble-plx Wiki — Background Mode (iOS)](https://github.com/dotintent/react-native-ble-plx/wiki/Background-mode-(iOS)) — state restoration documentation
+- [react-native-ble-plx Wiki — Background Mode (iOS)](<https://github.com/dotintent/react-native-ble-plx/wiki/Background-mode-(iOS)>) — state restoration documentation
 - [react-native-ble-plx Wiki — MTU Negotiation](https://github.com/dotintent/react-native-ble-plx/wiki/MTU-Negotiation) — platform-specific MTU behavior
 - [react-native-ble-plx Wiki — Expo](https://github.com/dotintent/react-native-ble-plx/wiki/Expo) — Expo config plugin setup
 - [Can I Use — Web Bluetooth](https://caniuse.com/web-bluetooth) — ~78% global support; no Safari, no Firefox

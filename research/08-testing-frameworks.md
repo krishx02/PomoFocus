@@ -12,16 +12,16 @@ Beyond the core E2E/integration layer: **Playwright screenshots** handle visual 
 
 **Summary table:**
 
-| Platform | E2E / Integration Tool | Unit Test Runner | Key Evidence |
-|----------|----------------------|------------------|--------------|
-| Next.js / React web | Playwright | Vitest | State of JS 2025: 45% adoption, 94% retention |
-| Expo / React Native | Maestro | Vitest (via Expo) | Expo official docs recommend Maestro |
-| VS Code extension | @vscode/test-electron | Vitest | Microsoft official standard |
-| macOS menu bar widget | XCUITest (via xcodebuild) | Swift Testing | Apple WWDC 2024 direction |
-| iOS home screen widget | XCUITest (via xcodebuild) | Swift Testing | Apple WWDC 2024 direction |
-| watchOS app | XCUITest (via xcodebuild) | Swift Testing | Apple WWDC 2024 direction |
-| MCP server (Node.js) | Vitest (integration) | Vitest | 4-20x faster than Jest, native ESM |
-| Shared packages | Vitest | Vitest | Consistent with all TS consumers |
+| Platform               | E2E / Integration Tool    | Unit Test Runner  | Key Evidence                                  |
+| ---------------------- | ------------------------- | ----------------- | --------------------------------------------- |
+| Next.js / React web    | Playwright                | Vitest            | State of JS 2025: 45% adoption, 94% retention |
+| Expo / React Native    | Maestro                   | Vitest (via Expo) | Expo official docs recommend Maestro          |
+| VS Code extension      | @vscode/test-electron     | Vitest            | Microsoft official standard                   |
+| macOS menu bar widget  | XCUITest (via xcodebuild) | Swift Testing     | Apple WWDC 2024 direction                     |
+| iOS home screen widget | XCUITest (via xcodebuild) | Swift Testing     | Apple WWDC 2024 direction                     |
+| watchOS app            | XCUITest (via xcodebuild) | Swift Testing     | Apple WWDC 2024 direction                     |
+| MCP server (Node.js)   | Vitest (integration)      | Vitest            | 4-20x faster than Jest, native ESM            |
+| Shared packages        | Vitest                    | Vitest            | Consistent with all TS consumers              |
 
 ---
 
@@ -71,6 +71,7 @@ Beyond the core E2E/integration layer: **Playwright screenshots** handle visual 
 **Jupiter Money Engineering (Case Study):** After evaluating both Maestro and Detox, their engineering team chose Maestro, finding that "Detox offers deep integration with React Native, its heavier setup, higher learning curve, and flakiness made it less practical for our needs." They specifically cited Maestro's minimal setup time and reliability in CI as deciding factors.
 
 **Technical Comparison:**
+
 - **Maestro:** Black-box testing (works with bundled apps like real users), YAML-based test definitions, near-instant setup, no app code changes required, cloud testing available via Maestro Cloud
 - **Detox:** Gray-box (runs inside app process), synchronizes with React Native's JavaScript thread for reduced flakiness in theory, but requires native build configuration, Metro bundler awareness, and significant setup expertise
 - **Appium:** Most flexible (cross-platform, cross-framework) but slowest execution, heaviest infrastructure, and highest maintenance burden
@@ -127,6 +128,7 @@ Beyond the core E2E/integration layer: **Playwright screenshots** handle visual 
 **Apple WWDC 2024:** Apple officially introduced Swift Testing as the modern replacement for XCTest unit tests. It ships with Xcode 16+ and is open-source. Two WWDC sessions — "Meet Swift Testing" and "Go further with Swift Testing" — establish it as Apple's forward direction.
 
 **Key advantages over XCTest:**
+
 - Modern Swift syntax using `@Suite`, `@Test`, and `#expect` macros (vs. XCTestCase inheritance and 40+ assertion methods)
 - Native concurrency support (async/await first-class)
 - Parameterized tests built-in
@@ -164,6 +166,7 @@ All three Apple targets (macOS menu bar, iOS widget, watchOS app) use `xcodebuil
 **Performance benchmarks:** Vitest is consistently measured at 4x faster than Jest on cold runs, with reports of 10-20x speedup on large codebases. Memory usage is ~30% lower. These numbers come from multiple independent benchmarks (Better Stack, Medium engineering blogs).
 
 **Architecture difference:**
+
 - **Vitest:** Built on Vite's module transformation pipeline, native ESM, TypeScript without configuration, reuses the Vite dev server's module graph for near-instant re-runs in watch mode
 - **Jest:** Isolated Node.js VM environments per test file, requires Babel or ts-jest for TypeScript transpilation, custom module resolution system that conflicts with ESM
 
@@ -271,6 +274,7 @@ All three Apple targets (macOS menu bar, iOS widget, watchOS app) use `xcodebuil
 **Modern approach (bi-directional testing):** Provider publishes OpenAPI spec to PactFlow; consumers publish Pact files. Both are validated together — no manual API test code needed in provider. PactFlow now offers AI-assisted test generation from natural language prompts.
 
 **For Supabase specifically:** No dedicated contract testing tooling exists. The recommended pattern:
+
 1. **Type generation from schema:** `npx supabase gen types typescript` regenerates TypeScript types from the database schema. Run in CI (nightly or on migration changes) to catch schema drift.
 2. **Pact contracts** for the layer between clients (iOS/web/Android) and Cloudflare Workers (the API edge).
 3. **OpenAPI + Prism** for mocking the Cloudflare Workers layer during development.

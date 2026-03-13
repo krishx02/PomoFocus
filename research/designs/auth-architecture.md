@@ -12,6 +12,7 @@ PomoFocus is a multi-platform Pomodoro app where every platform needs authentica
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Single auth provider (Supabase Auth) across all 9 platforms
 - Deferred sign-up with well-defined data merge during anonymous-to-authenticated promotion
 - Per-platform token distribution that works for browser, native app, widget, watch, VS Code, CLI, and BLE device contexts
@@ -19,6 +20,7 @@ PomoFocus is a multi-platform Pomodoro app where every platform needs authentica
 - Auth abstraction that confines Supabase Auth imports to `packages/data-access/`
 
 **Non-Goals:**
+
 - Building for a Better Auth migration now (noted as escape hatch, not planned)
 - Multi-tenancy or organizations (social features will use friend-based model, not org-based)
 - Enterprise SSO / SAML (consumer app, not B2B)
@@ -28,12 +30,12 @@ PomoFocus is a multi-platform Pomodoro app where every platform needs authentica
 
 ### OAuth Providers
 
-| Provider | Required? | Reason |
-|----------|-----------|--------|
-| Apple Sign-In | Yes | App Store requires it when any social login is offered |
-| Google | Yes | Largest OAuth provider; expected by users |
-| Email/password | Yes | Fallback for users who don't use social login |
-| Magic links | Deferred | Nice-to-have; add if email/password friction is high |
+| Provider       | Required? | Reason                                                 |
+| -------------- | --------- | ------------------------------------------------------ |
+| Apple Sign-In  | Yes       | App Store requires it when any social login is offered |
+| Google         | Yes       | Largest OAuth provider; expected by users              |
+| Email/password | Yes       | Fallback for users who don't use social login          |
+| Magic links    | Deferred  | Nice-to-have; add if email/password friction is high   |
 
 ### Per-Platform Auth Token Flow
 
@@ -42,18 +44,21 @@ PomoFocus is a multi-platform Pomodoro app where every platform needs authentica
 These platforms have a browser context for OAuth:
 
 **Web (Next.js):**
+
 - Supabase JS SDK handles OAuth redirect flow
 - Server-side: `@supabase/ssr` package for cookie-based session management
 - Client-side: `supabase.auth.getSession()` for client components
 - Token stored in HTTP-only cookies (SSR) and localStorage (CSR fallback)
 
 **Mobile (Expo / React Native):**
+
 - OAuth via `expo-web-browser` (in-app browser)
 - Deep link callback to return to app after OAuth
 - Token stored in `expo-secure-store` (encrypted on-device storage)
 - Supabase provides an official Expo quickstart for this flow
 
 **Android:**
+
 - Same as iOS mobile — Expo handles both platforms identically
 - Token stored in Android EncryptedSharedPreferences (via expo-secure-store)
 
@@ -62,16 +67,19 @@ These platforms have a browser context for OAuth:
 These platforms don't have their own login UI — they share tokens from the main app:
 
 **iOS Widget (SwiftUI + WidgetKit):**
+
 - No login flow — the widget reads the auth token from the main Expo app
 - Token shared via App Group (Keychain or UserDefaults)
 - The Expo app writes the Supabase access token and refresh token to the shared App Group on login and token refresh
 - Widget reads the token and calls the Hono API on CF Workers (ADR-007) using the generated Swift OpenAPI client
 
 **macOS Menu Bar Widget (SwiftUI):**
+
 - Same pattern as iOS widget — shares token via Keychain (App Group)
 - If the macOS app is a separate install (not bundled with the Expo app), it may need its own OAuth login flow via `ASWebAuthenticationSession`
 
 **Apple Watch (SwiftUI + WatchKit):**
+
 - Shares auth state from the companion iPhone app
 - Token transferred via `WatchConnectivity` (WCSession) or Keychain sharing
 - Watch never shows a login screen — it requires the phone to be authenticated first
@@ -81,12 +89,14 @@ These platforms don't have their own login UI — they share tokens from the mai
 These platforms authenticate once and store a long-lived token:
 
 **VS Code Extension:**
+
 - Uses VS Code's built-in authentication provider API or opens a browser for OAuth
 - Standard pattern: `vscode.authentication.getSession()` or custom `AuthenticationProvider`
 - Token stored in VS Code's `SecretStorage` (OS keychain-backed)
 - Supabase refresh token enables long-lived sessions without re-login
 
 **Claude Code MCP Server:**
+
 - User authenticates via web or mobile first
 - MCP server receives the user's Supabase refresh token via environment variable or config file
 - Server uses `supabase.auth.setSession()` with the refresh token
@@ -95,6 +105,7 @@ These platforms authenticate once and store a long-lived token:
 #### Tier 4: Device Proxy (BLE Device)
 
 **BLE Device (nRF52840):**
+
 - The device does NOT authenticate to Supabase
 - The phone app is the auth proxy — all data flows through the authenticated phone
 - Device gets a "device pairing token" — a random UUID generated during BLE pairing, stored in the `devices` table with the user's `user_id`
@@ -124,6 +135,7 @@ Scenario: User uses the app anonymously on their phone AND their laptop. Both de
 5. **Laptop's anonymous data is lost** unless we implement a merge
 
 **Design decision:** For v1, accept that cross-device anonymous data is lost when signing up on a different device. This is acceptable because:
+
 - Pre-signup anonymous usage is short-lived (minutes to hours, not weeks)
 - Session data is low-value before the user commits to the app
 - Implementing cross-device anonymous merge is complex and not worth it pre-product-market-fit
@@ -164,13 +176,13 @@ See [ADR-005: Database Schema & Data Model](../decisions/005-database-schema-dat
 
 ### GDPR Compliance
 
-| Requirement | Implementation |
-|-------------|----------------|
+| Requirement       | Implementation                                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Right to deletion | `ON DELETE CASCADE` on all `user_id` foreign keys. Deleting the `auth.users` row cascades to all user data. Expose a "Delete my account" button. |
-| Right to export | Supabase function or Edge Function that queries all tables for `user_id = auth.uid()` and returns JSON. |
-| Data residency | Select EU region when creating the Supabase project. |
-| Consent | Privacy policy page. Cookie consent banner for analytics (auth itself is "legitimate interest" under GDPR). |
-| Data minimization | Only collect what's needed: email, display name, profile photo (from OAuth). No phone number unless user opts in. |
+| Right to export   | Supabase function or Edge Function that queries all tables for `user_id = auth.uid()` and returns JSON.                                          |
+| Data residency    | Select EU region when creating the Supabase project.                                                                                             |
+| Consent           | Privacy policy page. Cookie consent banner for analytics (auth itself is "legitimate interest" under GDPR).                                      |
+| Data minimization | Only collect what's needed: email, display name, profile photo (from OAuth). No phone number unless user opts in.                                |
 
 ## Alternatives Considered
 

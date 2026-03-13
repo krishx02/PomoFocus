@@ -45,10 +45,14 @@ function parseResponse(data: unknown): string[] {
 
 ```typescript
 // Bad
-export default function TimerDisplay() { /* ... */ }
+export default function TimerDisplay() {
+  /* ... */
+}
 
 // Good
-export function TimerDisplay() { /* ... */ }
+export function TimerDisplay() {
+  /* ... */
+}
 ```
 
 **Enforced by:** `eslint-plugin-import/no-default-export` with file pattern exceptions for Next.js conventions
@@ -109,12 +113,12 @@ type TimerConfig = {
 // Bad
 export function getStreakDays(sessions: Session[]) {
   // return type is inferred — changes if implementation changes
-  return sessions.filter(s => s.completed).length;
+  return sessions.filter((s) => s.completed).length;
 }
 
 // Good
 export function getStreakDays(sessions: Session[]): number {
-  return sessions.filter(s => s.completed).length;
+  return sessions.filter((s) => s.completed).length;
 }
 ```
 
@@ -183,8 +187,10 @@ await Promise.all(sessions.map((s) => saveToOutbox(s)));
 // Bad — missing 7 of 9 canonical states (ADR-004)
 function getLabel(state: TimerState): string {
   switch (state.status) {
-    case 'idle': return 'Start';
-    case 'focusing': return 'Focus';
+    case 'idle':
+      return 'Start';
+    case 'focusing':
+      return 'Focus';
     // short_break, long_break, break_paused, reflection, paused, completed, abandoned missing!
   }
 }
@@ -192,15 +198,24 @@ function getLabel(state: TimerState): string {
 // Good — all 9 states handled exhaustively
 function getLabel(state: TimerState): string {
   switch (state.status) {
-    case 'idle': return 'Start';
-    case 'focusing': return 'Focus';
-    case 'paused': return 'Paused';
-    case 'short_break': return 'Short Break';
-    case 'long_break': return 'Long Break';
-    case 'break_paused': return 'Break Paused';
-    case 'reflection': return 'Reflect';
-    case 'completed': return 'Done';
-    case 'abandoned': return 'Stopped';
+    case 'idle':
+      return 'Start';
+    case 'focusing':
+      return 'Focus';
+    case 'paused':
+      return 'Paused';
+    case 'short_break':
+      return 'Short Break';
+    case 'long_break':
+      return 'Long Break';
+    case 'break_paused':
+      return 'Break Paused';
+    case 'reflection':
+      return 'Reflect';
+    case 'completed':
+      return 'Done';
+    case 'abandoned':
+      return 'Stopped';
     default: {
       const _exhaustive: never = state.status;
       throw new Error(`Unhandled status: ${_exhaustive}`);
@@ -343,9 +358,9 @@ first?.id; // forces you to handle undefined
 ```typescript
 // Bad — packages/core/src/index.ts
 export * from './timer';
-export * from './timer/utils';       // nested re-export
-export * from './sync/protocol';     // nested re-export
-export * from '@pomofocus/types';    // cross-package re-export
+export * from './timer/utils'; // nested re-export
+export * from './sync/protocol'; // nested re-export
+export * from '@pomofocus/types'; // cross-package re-export
 
 // Good — packages/core/src/index.ts
 export { transition, createInitialState } from './timer';
@@ -363,6 +378,7 @@ export { processQueue } from './sync';
 Rules specific to each package in the monorepo. These enforce the import direction and responsibility boundaries defined in [ADR-001](./decisions/001-monorepo-package-structure.md).
 
 **Import direction (one-way, never reversed):**
+
 ```
 types          (leaf — no dependencies)
   ↑
@@ -476,8 +492,10 @@ export async function uploadSession(session: Session): Promise<void> {
 export function processQueue(queue: SyncQueue, event: SyncEvent): SyncQueue {
   // Pure state machine — no IO, returns new state
   switch (event.type) {
-    case 'UPLOAD_SUCCESS': return { ...queue, items: queue.items.slice(1) };
-    case 'UPLOAD_FAILURE': return { ...queue, retryAt: event.retryAt };
+    case 'UPLOAD_SUCCESS':
+      return { ...queue, items: queue.items.slice(1) };
+    case 'UPLOAD_FAILURE':
+      return { ...queue, retryAt: event.retryAt };
     // ...
   }
 }
@@ -496,13 +514,17 @@ export function processQueue(queue: SyncQueue, event: SyncEvent): SyncQueue {
 ```typescript
 // Bad — packages/core/src/timer/useTimer.ts
 import { useState, useEffect } from 'react';
-export function useTimer() { /* ... */ }
+export function useTimer() {
+  /* ... */
+}
 
 // Good — this hook belongs in packages/state/
 // packages/state/src/timer/useTimer.ts
 import { useState, useEffect } from 'react';
 import { transition } from '@pomofocus/core/timer';
-export function useTimer() { /* ... */ }
+export function useTimer() {
+  /* ... */
+}
 ```
 
 **Enforced by:** Nx `bannedExternalImports` on `type:domain` tag
@@ -673,8 +695,7 @@ describe('timer transition', () => {
 // Bad — packages/analytics/src/streaks.ts
 import { createClient } from '@supabase/supabase-js';
 export async function getStreak(userId: string) {
-  const { data } = await createClient(URL, KEY)
-    .from('sessions').select().eq('user_id', userId);
+  const { data } = await createClient(URL, KEY).from('sessions').select().eq('user_id', userId);
   // ...
 }
 
@@ -698,15 +719,19 @@ export function computeStreak(sessions: Session[], timezone: string): number {
 ```typescript
 // Bad
 export function computeFocusScore(sessions: Session[]): number {
-  return (completionRate * 0.4) + (consistency * 0.3) + (quality * 0.3);
+  return completionRate * 0.4 + consistency * 0.3 + quality * 0.3;
 }
 
 // Good
 export function computeCompletionRate(sessions: Session[]): MetricWithTrend {
   return { value: completed / total, trend: compareToPrevious(/*...*/) };
 }
-export function computeConsistency(sessions: Session[]): MetricWithTrend { /* ... */ }
-export function computeStreak(sessions: Session[]): MetricWithTrend { /* ... */ }
+export function computeConsistency(sessions: Session[]): MetricWithTrend {
+  /* ... */
+}
+export function computeStreak(sessions: Session[]): MetricWithTrend {
+  /* ... */
+}
 ```
 
 **Enforced by:** Code review
@@ -838,11 +863,12 @@ const useSessionStore = create<{ sessions: Session[] }>((set) => ({
 
 // Good — TanStack Query owns server state
 const sessionQueries = {
-  all: () => queryOptions({
-    queryKey: ['sessions'],
-    queryFn: getSessions,
-    staleTime: 30_000,
-  }),
+  all: () =>
+    queryOptions({
+      queryKey: ['sessions'],
+      queryFn: getSessions,
+      staleTime: 30_000,
+    }),
 };
 // Zustand only for local/UI state (timer running, modal open, etc.)
 ```
@@ -861,13 +887,14 @@ const sessionQueries = {
 // Bad — business logic in the store
 const useTimerStore = create((set) => ({
   state: initialState,
-  tick: () => set((s) => {
-    const remaining = s.state.endTime - Date.now();
-    if (remaining <= 0) {
-      return { state: { ...s.state, status: 'completed' } };
-    }
-    return { state: { ...s.state, remaining } };
-  }),
+  tick: () =>
+    set((s) => {
+      const remaining = s.state.endTime - Date.now();
+      if (remaining <= 0) {
+        return { state: { ...s.state, status: 'completed' } };
+      }
+      return { state: { ...s.state, remaining } };
+    }),
 }));
 
 // Good — store delegates to core
@@ -875,9 +902,10 @@ import { transition } from '@pomofocus/core/timer';
 
 const useTimerStore = create((set) => ({
   state: initialState,
-  dispatch: (event: TimerEvent) => set((s) => ({
-    state: transition(s.state, event),
-  })),
+  dispatch: (event: TimerEvent) =>
+    set((s) => ({
+      state: transition(s.state, event),
+    })),
 }));
 ```
 
@@ -901,7 +929,7 @@ const timerState = useTimerStore((s) => s.timerState);
 // Good — multi-value with useShallow
 import { useShallow } from 'zustand/react/shallow';
 const { timerState, dispatch } = useTimerStore(
-  useShallow((s) => ({ timerState: s.timerState, dispatch: s.dispatch }))
+  useShallow((s) => ({ timerState: s.timerState, dispatch: s.dispatch })),
 );
 ```
 
@@ -918,20 +946,22 @@ const { timerState, dispatch } = useTimerStore(
 ```typescript
 // Bad — default staleTime: 0 causes refetch on every mount
 const sessionQueries = {
-  all: () => queryOptions({
-    queryKey: ['sessions'],
-    queryFn: getSessions,
-    // staleTime omitted! defaults to 0
-  }),
+  all: () =>
+    queryOptions({
+      queryKey: ['sessions'],
+      queryFn: getSessions,
+      // staleTime omitted! defaults to 0
+    }),
 };
 
 // Good — explicit staleTime matches polling interval
 const sessionQueries = {
-  all: () => queryOptions({
-    queryKey: ['sessions'],
-    queryFn: getSessions,
-    staleTime: 30_000, // matches our 30s polling interval
-  }),
+  all: () =>
+    queryOptions({
+      queryKey: ['sessions'],
+      queryFn: getSessions,
+      staleTime: 30_000, // matches our 30s polling interval
+    }),
 };
 ```
 
@@ -953,16 +983,18 @@ useQuery({ queryKey: ['sessions'], queryFn: getSessions });
 // Good — centralized factory
 // packages/state/src/sessions/queries.ts
 export const sessionQueries = {
-  all: () => queryOptions({
-    queryKey: ['sessions'] as const,
-    queryFn: getSessions,
-    staleTime: 30_000,
-  }),
-  detail: (id: string) => queryOptions({
-    queryKey: ['sessions', id] as const,
-    queryFn: () => getSession(id),
-    staleTime: 30_000,
-  }),
+  all: () =>
+    queryOptions({
+      queryKey: ['sessions'] as const,
+      queryFn: getSessions,
+      staleTime: 30_000,
+    }),
+  detail: (id: string) =>
+    queryOptions({
+      queryKey: ['sessions', id] as const,
+      queryFn: () => getSession(id),
+      staleTime: 30_000,
+    }),
 };
 
 // Usage
@@ -985,13 +1017,7 @@ const useStore = create(persist(devtools(immer(storeFn))));
 
 // Good — correct order
 const useStore = create(
-  devtools(
-    persist(
-      immer(storeFn),
-      { name: 'timer-store' }
-    ),
-    { name: 'TimerStore' }
-  )
+  devtools(persist(immer(storeFn), { name: 'timer-store' }), { name: 'TimerStore' }),
 );
 ```
 
@@ -1178,7 +1204,10 @@ Apply to all apps: `apps/web/`, `apps/mobile/`, `apps/api/`, `apps/vscode-extens
 ```typescript
 // Bad — apps/web/src/app/sessions/page.tsx
 import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
 const { data } = await supabase.from('sessions').select('*');
 
 // Good — apps/web/src/app/sessions/page.tsx
@@ -1228,12 +1257,12 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 **Rule:** Auth tokens must be stored using the platform's secure storage mechanism — never in localStorage, cookies without HttpOnly, or plain files.
 **Why:** Tokens in insecure storage are extractable via XSS (web) or filesystem access (mobile). ([ADR-012](./decisions/012-security-data-privacy.md))
 
-| Platform | Mechanism |
-|----------|-----------|
-| Web | HttpOnly cookie (set by API, not client JS) |
-| Mobile (Expo) | `expo-secure-store` |
-| macOS | Keychain (`Security.framework`) |
-| VS Code | `SecretStorage` API |
+| Platform      | Mechanism                                   |
+| ------------- | ------------------------------------------- |
+| Web           | HttpOnly cookie (set by API, not client JS) |
+| Mobile (Expo) | `expo-secure-store`                         |
+| macOS         | Keychain (`Security.framework`)             |
+| VS Code       | `SecretStorage` API                         |
 
 **Enforced by:** Code review
 
@@ -1247,7 +1276,8 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 
 ```typescript
 // Bad
-const channel = supabase.channel('sessions')
+const channel = supabase
+  .channel('sessions')
   .on('postgres_changes', { event: 'INSERT', schema: 'public' }, handleInsert)
   .subscribe();
 
@@ -1640,8 +1670,8 @@ const result = await fetchAndComputeStreak(userId);
 
 // Good — pure input/output
 const sessions = [
-  { completedAt: '2026-03-08T10:00:00Z', /* ... */ },
-  { completedAt: '2026-03-09T10:00:00Z', /* ... */ },
+  { completedAt: '2026-03-08T10:00:00Z' /* ... */ },
+  { completedAt: '2026-03-09T10:00:00Z' /* ... */ },
 ];
 expect(computeStreak(sessions, 'America/New_York')).toBe(2);
 ```
@@ -1903,10 +1933,7 @@ CREATE POLICY "admin_only" ON admin_settings
 const { data } = await supabase.from('sessions').select('*');
 
 // Good — explicit filter + RLS as safety net
-const { data } = await supabase
-  .from('sessions')
-  .select('*')
-  .eq('user_id', userId);
+const { data } = await supabase.from('sessions').select('*').eq('user_id', userId);
 ```
 
 **Enforced by:** Code review
@@ -1962,10 +1989,7 @@ app.openapi(getSessionsRoute, async (c) => {
 const app = new OpenAPIHono({
   defaultHook: (result, c) => {
     if (!result.success) {
-      return c.json(
-        { error: 'Validation failed', details: result.error.flatten() },
-        422
-      );
+      return c.json({ error: 'Validation failed', details: result.error.flatten() }, 422);
     }
   },
 });
@@ -1985,10 +2009,7 @@ const app = new OpenAPIHono({
 // Good — apps/api/src/app.ts
 app.onError((err, c) => {
   console.error(err);
-  return c.json(
-    { error: 'Internal server error', requestId: c.get('requestId') },
-    500
-  );
+  return c.json({ error: 'Internal server error', requestId: c.get('requestId') }, 500);
 });
 ```
 
@@ -2090,45 +2111,45 @@ Quick-reference "DO NOT" list. Each item references the detailed rule that expla
 
 ### CRITICAL — Architecture corruption or security breach
 
-| Anti-Pattern | Correct Alternative | Rule |
-|---|---|---|
-| Import `data-access` or `state` from `core/` | Core only imports from `types/` | PKG-C07 |
-| Import `@supabase/supabase-js` in any client app for data | Use generated OpenAPI client via `data-access/` | APP-001, PKG-D02 |
-| `setTimeout` / `setInterval` / `Date.now()` in `packages/core/` | Receive time as a function parameter | PKG-C04 |
-| Add Supabase Realtime WebSocket subscription | Use TanStack Query polling (30s default) | APP-005 |
-| Create a table without RLS | Always enable RLS + add `get_user_id()` policy | DB-005 |
-| Use `timestamp` without timezone | Always `timestamptz` | DB-001 |
-| `malloc` / `new` / `String` in firmware | Static buffers, fixed-size arrays | NAT-F01 |
-| Use `any` type | Use `unknown`, Zod, or proper typing | U-001 |
+| Anti-Pattern                                                    | Correct Alternative                             | Rule             |
+| --------------------------------------------------------------- | ----------------------------------------------- | ---------------- |
+| Import `data-access` or `state` from `core/`                    | Core only imports from `types/`                 | PKG-C07          |
+| Import `@supabase/supabase-js` in any client app for data       | Use generated OpenAPI client via `data-access/` | APP-001, PKG-D02 |
+| `setTimeout` / `setInterval` / `Date.now()` in `packages/core/` | Receive time as a function parameter            | PKG-C04          |
+| Add Supabase Realtime WebSocket subscription                    | Use TanStack Query polling (30s default)        | APP-005          |
+| Create a table without RLS                                      | Always enable RLS + add `get_user_id()` policy  | DB-005           |
+| Use `timestamp` without timezone                                | Always `timestamptz`                            | DB-001           |
+| `malloc` / `new` / `String` in firmware                         | Static buffers, fixed-size arrays               | NAT-F01          |
+| Use `any` type                                                  | Use `unknown`, Zod, or proper typing            | U-001            |
 
 ### HIGH — Significant bugs or design violations
 
-| Anti-Pattern | Correct Alternative | Rule |
-|---|---|---|
-| Compute analytics client-side | Call API endpoint, analytics are server-side | PKG-A01, PKG-A04 |
-| Create a composite "Focus Score" | Individual metrics with trend arrows | PKG-A02 |
-| Store server data in Zustand | TanStack Query owns all server state | PKG-S01 |
-| Business logic in Zustand store | Delegate to `core/` pure functions | PKG-S02 |
-| Edit auto-generated type files | Regenerate with `supabase gen types` or `protoc` | PKG-T01 |
-| Add a 5th notification type | Exactly 4 types allowed (ADR-019) | [ADR-019](./decisions/019-notification-strategy.md) |
-| Add background BLE sync for v1 | App-open sync only | [ADR-016](./decisions/016-ble-client-libraries-integration.md) |
-| `useEffect` to derive state | Derive during render | PKG-S08 |
-| API proxies auth flow | Clients call Supabase Auth directly | APP-006 |
-| Skip `supabase gen types` after migration | Always regenerate types | PKG-T02, DB-008 |
+| Anti-Pattern                              | Correct Alternative                              | Rule                                                           |
+| ----------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Compute analytics client-side             | Call API endpoint, analytics are server-side     | PKG-A01, PKG-A04                                               |
+| Create a composite "Focus Score"          | Individual metrics with trend arrows             | PKG-A02                                                        |
+| Store server data in Zustand              | TanStack Query owns all server state             | PKG-S01                                                        |
+| Business logic in Zustand store           | Delegate to `core/` pure functions               | PKG-S02                                                        |
+| Edit auto-generated type files            | Regenerate with `supabase gen types` or `protoc` | PKG-T01                                                        |
+| Add a 5th notification type               | Exactly 4 types allowed (ADR-019)                | [ADR-019](./decisions/019-notification-strategy.md)            |
+| Add background BLE sync for v1            | App-open sync only                               | [ADR-016](./decisions/016-ble-client-libraries-integration.md) |
+| `useEffect` to derive state               | Derive during render                             | PKG-S08                                                        |
+| API proxies auth flow                     | Clients call Supabase Auth directly              | APP-006                                                        |
+| Skip `supabase gen types` after migration | Always regenerate types                          | PKG-T02, DB-008                                                |
 
 ### MEDIUM — Quality and consistency issues
 
-| Anti-Pattern | Correct Alternative | Rule |
-|---|---|---|
-| TS `enum` keyword | `as const` objects + union types | U-010 |
-| `as` type assertion | Type guards, Zod parsing, or narrowing | U-009 |
-| Default exports | Named exports | U-002 |
-| `FlatList` in React Native | `FlashList` | PKG-U03 |
-| `staleTime` omitted on query | Always set explicit `staleTime` | PKG-S04 |
-| `#define` for typed constants in firmware | `constexpr` | NAT-F03 |
-| System OFF sleep in firmware | System ON with `sd_app_evt_wait()` | NAT-F05 |
-| `getByTestId` as first choice in tests | `getByRole` > `getByText` > `getByTestId` | TST-002 |
-| `user_metadata` in RLS policies | Server-controlled columns | DB-010 |
+| Anti-Pattern                                | Correct Alternative                       | Rule    |
+| ------------------------------------------- | ----------------------------------------- | ------- |
+| TS `enum` keyword                           | `as const` objects + union types          | U-010   |
+| `as` type assertion                         | Type guards, Zod parsing, or narrowing    | U-009   |
+| Default exports                             | Named exports                             | U-002   |
+| `FlatList` in React Native                  | `FlashList`                               | PKG-U03 |
+| `staleTime` omitted on query                | Always set explicit `staleTime`           | PKG-S04 |
+| `#define` for typed constants in firmware   | `constexpr`                               | NAT-F03 |
+| System OFF sleep in firmware                | System ON with `sd_app_evt_wait()`        | NAT-F05 |
+| `getByTestId` as first choice in tests      | `getByRole` > `getByText` > `getByTestId` | TST-002 |
+| `user_metadata` in RLS policies             | Server-controlled columns                 | DB-010  |
 | Missing Nanopb `.options` for string fields | `max_size` on every variable-length field | NAT-F02 |
 
 ---
@@ -2137,24 +2158,24 @@ Quick-reference "DO NOT" list. Each item references the detailed rule that expla
 
 Every rule traces to at least one ADR. This table shows which ADRs are referenced:
 
-| ADR | Rules |
-|-----|-------|
-| [001 — Monorepo](./decisions/001-monorepo-package-structure.md) | PKG-C01–C07, PKG-A03, PKG-D04, PKG-U01–U02, PKG-B01, U-014 |
-| [002 — Auth](./decisions/002-auth-architecture.md) | PKG-C03, PKG-C05, PKG-D01, APP-006 |
-| [003 — State](./decisions/003-client-state-management.md) | PKG-S01–S08, APP-005 |
-| [004 — Timer](./decisions/004-timer-state-machine.md) | U-008, PKG-C04, PKG-C06, PKG-C08, NAT-F04 |
-| [005 — Database](./decisions/005-database-schema-data-model.md) | PKG-T01–T02, DB-001–DB-011 |
-| [006 — Sync](./decisions/006-offline-first-sync-architecture.md) | PKG-C06, PKG-D03, DB-002 |
-| [007 — API](./decisions/007-api-architecture.md) | PKG-D02, APP-001–002, APP-006, API-001–007 |
-| [008 — Long-Lived Processes](./decisions/008-long-lived-processes.md) | API-004 (CF Workers constraints) |
-| [009 — CI/CD](./decisions/009-ci-cd-pipeline-design.md) | PKG-T02 |
-| [010 — Hardware Platform](./decisions/010-physical-device-hardware-platform.md) | NAT-F01 (nRF52840 RAM constraints) |
-| [011 — Observability](./decisions/011-monitoring-observability.md) | APP-003 |
-| [012 — Security](./decisions/012-security-data-privacy.md) | APP-002, APP-004, API-005, API-007, DB-005 |
-| [013 — BLE GATT](./decisions/013-ble-gatt-protocol-design.md) | PKG-T03, PKG-B02, NAT-F07 |
-| [014 — Analytics](./decisions/014-analytics-insights-architecture.md) | PKG-A01–A04 |
-| [015 — Firmware](./decisions/015-device-firmware-toolchain.md) | NAT-F01–F06 |
-| [016 — BLE Clients](./decisions/016-ble-client-libraries-integration.md) | PKG-B01–B03 |
-| [017 — iOS Widget](./decisions/017-ios-widget-architecture.md) | NAT-S03–S05 |
-| [018 — Social](./decisions/018-social-features-architecture.md) | API-007 |
-| [019 — Notifications](./decisions/019-notification-strategy.md) | Anti-pattern: 5th notification type |
+| ADR                                                                             | Rules                                                      |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [001 — Monorepo](./decisions/001-monorepo-package-structure.md)                 | PKG-C01–C07, PKG-A03, PKG-D04, PKG-U01–U02, PKG-B01, U-014 |
+| [002 — Auth](./decisions/002-auth-architecture.md)                              | PKG-C03, PKG-C05, PKG-D01, APP-006                         |
+| [003 — State](./decisions/003-client-state-management.md)                       | PKG-S01–S08, APP-005                                       |
+| [004 — Timer](./decisions/004-timer-state-machine.md)                           | U-008, PKG-C04, PKG-C06, PKG-C08, NAT-F04                  |
+| [005 — Database](./decisions/005-database-schema-data-model.md)                 | PKG-T01–T02, DB-001–DB-011                                 |
+| [006 — Sync](./decisions/006-offline-first-sync-architecture.md)                | PKG-C06, PKG-D03, DB-002                                   |
+| [007 — API](./decisions/007-api-architecture.md)                                | PKG-D02, APP-001–002, APP-006, API-001–007                 |
+| [008 — Long-Lived Processes](./decisions/008-long-lived-processes.md)           | API-004 (CF Workers constraints)                           |
+| [009 — CI/CD](./decisions/009-ci-cd-pipeline-design.md)                         | PKG-T02                                                    |
+| [010 — Hardware Platform](./decisions/010-physical-device-hardware-platform.md) | NAT-F01 (nRF52840 RAM constraints)                         |
+| [011 — Observability](./decisions/011-monitoring-observability.md)              | APP-003                                                    |
+| [012 — Security](./decisions/012-security-data-privacy.md)                      | APP-002, APP-004, API-005, API-007, DB-005                 |
+| [013 — BLE GATT](./decisions/013-ble-gatt-protocol-design.md)                   | PKG-T03, PKG-B02, NAT-F07                                  |
+| [014 — Analytics](./decisions/014-analytics-insights-architecture.md)           | PKG-A01–A04                                                |
+| [015 — Firmware](./decisions/015-device-firmware-toolchain.md)                  | NAT-F01–F06                                                |
+| [016 — BLE Clients](./decisions/016-ble-client-libraries-integration.md)        | PKG-B01–B03                                                |
+| [017 — iOS Widget](./decisions/017-ios-widget-architecture.md)                  | NAT-S03–S05                                                |
+| [018 — Social](./decisions/018-social-features-architecture.md)                 | API-007                                                    |
+| [019 — Notifications](./decisions/019-notification-strategy.md)                 | Anti-pattern: 5th notification type                        |

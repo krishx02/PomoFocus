@@ -1,6 +1,6 @@
 name: Bug (Agent-Ready)
 description: A bug report structured for autonomous Claude Code execution. Paste exact error messages — agents work best with exact strings to search for.
-labels: ["agent-ready", "bug"]
+labels: ['agent-ready', 'bug']
 body:
   - type: markdown
     attributes:
@@ -13,7 +13,7 @@ body:
     attributes:
       label: Goal
       description: One sentence. What must be true when this bug is fixed?
-      placeholder: "The focus session timer must not reset to 25:00 when the iOS app is backgrounded for more than 30 seconds."
+      placeholder: 'The focus session timer must not reset to 25:00 when the iOS app is backgrounded for more than 30 seconds.'
     validations:
       required: true
 
@@ -140,7 +140,7 @@ body:
     attributes:
       label: Effort Estimate
       options:
-        - "effort:small (< 1 hour, < 10 files, implement directly)"
-        - "effort:large (decompose into sub-issues first)"
+        - 'effort:small (< 1 hour, < 10 files, implement directly)'
+        - 'effort:large (decompose into sub-issues first)'
     validations:
       required: true

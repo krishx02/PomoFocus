@@ -1,4 +1,5 @@
 # GitHub Issues & Projects for AI Agent Workflows
+
 ## Optimizing Ticket Structures for Claude Code Autonomous Execution
 
 > Research compiled: March 2026
@@ -96,7 +97,7 @@ Create `.github/ISSUE_TEMPLATE/` with at minimum two templates: one for features
 ```yaml
 name: Feature (Agent-Ready)
 description: A feature ticket structured for autonomous Claude Code execution
-labels: ["agent-ready", "enhancement"]
+labels: ['agent-ready', 'enhancement']
 body:
   - type: markdown
     attributes:
@@ -108,7 +109,7 @@ body:
     attributes:
       label: Goal
       description: One sentence. What should be true when this is done?
-      placeholder: "The iOS app should persist timer state across app backgrounding using UserDefaults."
+      placeholder: 'The iOS app should persist timer state across app backgrounding using UserDefaults.'
     validations:
       required: true
 
@@ -151,7 +152,7 @@ body:
     attributes:
       label: Out of Scope
       description: Explicitly state what NOT to change. Prevents agents from over-reaching.
-      placeholder: "Do not modify the Android timer implementation. Do not change the shared timer state model."
+      placeholder: 'Do not modify the Android timer implementation. Do not change the shared timer state model.'
     validations:
       required: false
 
@@ -191,6 +192,7 @@ Create a `CLAUDE.md` at the repo root (committed to git). Keep it under 200 line
 # PomoFocus — Agent Context
 
 ## Project Structure
+
 - `ios/` — native iOS app (Swift, SwiftUI)
 - `android/` — native Android app (Kotlin, Jetpack Compose)
 - `web/` — web app (React, TypeScript, Vite)
@@ -198,35 +200,43 @@ Create a `CLAUDE.md` at the repo root (committed to git). Keep it under 200 line
 - `docs/` — architecture decisions and design specs
 
 ## Build & Test Commands
+
 - Web: `npm test` (Vitest), `npm run build`, `tsc --noEmit`
 - iOS: `xcodebuild test -scheme PomoFocus -destination "platform=iOS Simulator,name=iPhone 15"`
 - Android: `./gradlew test`, `./gradlew connectedAndroidTest`
 - All: `npm run test:all` (runs all three)
 
 ## Conventions
+
 - Branch naming: `feature/issue-{number}-short-description` or `fix/issue-{number}-short-description`
 - Commit format: `feat: description` / `fix: description` / `refactor: description`
 - PR title must reference the issue: "feat: description (#42)"
 - Every PR must close its linked issue: include "Closes #42" in PR body
 
 ## Definition of Done
+
 Before opening a PR, verify:
+
 1. `npm run test:all` passes
 2. `tsc --noEmit` exits clean
 3. No new lint errors (`npm run lint`)
 4. PR body contains "Closes #N" for the issue being resolved
 
 ## Platform-Specific Notes
+
 - iOS background timer: requires `UIBackgroundModes` entitlement and `BackgroundTasks` framework
 - Android background: WorkManager for API 26+, not AlarmManager
 - Web: use Web Workers for off-main-thread timer; do NOT use setInterval on main thread
 
 ## Architecture Docs
+
 @docs/architecture.md
 @docs/timer-state-model.md
 
 ## Agent Workflow
+
 When picking up a GitHub Issue:
+
 1. Read the full issue with `gh issue view {number}`
 2. Enter Plan Mode, explore affected files, draft a plan
 3. Implement in a feature branch: `git checkout -b feature/issue-{number}-...`
@@ -333,35 +343,44 @@ Break the work into 3-5 sub-issues following these rules:
 ### Step 4 — Create Sub-Issues
 For each sub-issue, run:
 ```
+
 gh issue create \
-  --title "{short title}" \
-  --body "## Goal
+ --title "{short title}" \
+ --body "## Goal
 {one-sentence verifiable goal}
 
 ## Context
+
 Part {N} of #{parent_number} — {parent title}.
 {depends on: #{sibling} if applicable}
 
 ## Affected Files
+
 {specific files}
 
 ## Acceptance Criteria
+
 - [ ] {automatable criterion}
 
 ## Out of Scope
+
 Do not implement other parts of #{parent_number} in this issue.
 
 ## Test Plan
+
 {exact command}
 
 ## Platform
+
 {platform}" \
-  --label "agent-ready,effort:small,{platform-label}"
+ --label "agent-ready,effort:small,{platform-label}"
+
 ```
 
 ### Step 5 — Update the Parent Issue
 Add a task list to the parent issue body that tracks the sub-issues:
 ```
+
 gh issue comment $ARGUMENTS --body "## Decomposed into sub-issues
 
 This issue has been broken into smaller pieces:
@@ -371,13 +390,16 @@ This issue has been broken into smaller pieces:
 - [ ] #{sub3} — {title}
 
 Implement these in order. This issue will close automatically when all sub-issues are merged."
+
 ```
 
 Then relabel the parent:
 ```
+
 gh issue edit $ARGUMENTS \
-  --remove-label "effort:large,agent-ready" \
-  --add-label "decomposed"
+ --remove-label "effort:large,agent-ready" \
+ --add-label "decomposed"
+
 ```
 
 ### Step 6 — Report
@@ -391,6 +413,7 @@ Output a summary:
 **Usage:** `/decompose-issue 42` — or triggered automatically by `/ship-issue 42` when `effort:large` is detected.
 
 **What "too large" means in practice:**
+
 - The issue requires changes to more than ~10 files
 - The issue spans multiple layers (data + logic + UI together)
 - The acceptance criteria list is longer than 8 items
@@ -439,20 +462,20 @@ With the MCP server active, Claude can call `list_issues`, `get_issue`, `update_
 
 Create a GitHub Project with these status columns:
 
-| Column | Meaning |
-|--------|---------|
-| **Backlog** | Not yet picked up |
+| Column          | Meaning                                           |
+| --------------- | ------------------------------------------------- |
+| **Backlog**     | Not yet picked up                                 |
 | **Agent-Ready** | Has all required fields, cleared for agent pickup |
-| **In Progress** | Agent or human actively working |
-| **In Review** | PR opened, awaiting review |
-| **Done** | Merged and closed |
+| **In Progress** | Agent or human actively working                   |
+| **In Review**   | PR opened, awaiting review                        |
+| **Done**        | Merged and closed                                 |
 
 The "Agent-Ready" column is the key gate. Only issues that have all template fields filled, all acceptance criteria written, and all file paths specified move to "Agent-Ready." The agent queries this column for work.
 
 **GraphQL query to find agent-ready items** (run via `gh api graphql`):
 
 ```graphql
-query($projectId: ID!) {
+query ($projectId: ID!) {
   node(id: $projectId) {
     ... on ProjectV2 {
       items(first: 20) {
@@ -470,7 +493,11 @@ query($projectId: ID!) {
             nodes {
               ... on ProjectV2ItemFieldSingleSelectValue {
                 name
-                field { ... on ProjectV2SingleSelectField { name } }
+                field {
+                  ... on ProjectV2SingleSelectField {
+                    name
+                  }
+                }
               }
             }
           }
@@ -486,14 +513,18 @@ Filter results where `field.name == "Status"` and `name == "Agent-Ready"`.
 **Update item status to "In Progress"** (mutation):
 
 ```graphql
-mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: $projectId
-    itemId: $itemId
-    fieldId: $fieldId
-    value: { singleSelectOptionId: $optionId }
-  }) {
-    projectV2Item { id }
+mutation ($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+  updateProjectV2ItemFieldValue(
+    input: {
+      projectId: $projectId
+      itemId: $itemId
+      fieldId: $fieldId
+      value: { singleSelectOptionId: $optionId }
+    }
+  ) {
+    projectV2Item {
+      id
+    }
   }
 }
 ```
@@ -504,18 +535,18 @@ Wrap this in a shell script that Claude can call via Bash, or expose it as a ski
 
 Use labels to signal issue readiness and route to the right agent:
 
-| Label | Meaning |
-|-------|---------|
-| `agent-ready` | Issue is complete, all fields filled |
-| `in-progress` | Agent or human has picked this up |
-| `in-review` | PR is open |
-| `needs-human` | Agent flagged a decision point requiring human judgment |
-| `ios-only` | Only the iOS platform subagent should handle |
-| `android-only` | Only the Android platform subagent should handle |
-| `cross-platform` | Affects shared/ or all platforms |
-| `effort:small` | < 1 hour estimated — agent implements directly |
-| `effort:large` | Too big for a single session — agent **decomposes into sub-issues** instead of implementing |
-| `decomposed` | Parent issue that has been broken up; tracks progress via task list |
+| Label            | Meaning                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| `agent-ready`    | Issue is complete, all fields filled                                                        |
+| `in-progress`    | Agent or human has picked this up                                                           |
+| `in-review`      | PR is open                                                                                  |
+| `needs-human`    | Agent flagged a decision point requiring human judgment                                     |
+| `ios-only`       | Only the iOS platform subagent should handle                                                |
+| `android-only`   | Only the Android platform subagent should handle                                            |
+| `cross-platform` | Affects shared/ or all platforms                                                            |
+| `effort:small`   | < 1 hour estimated — agent implements directly                                              |
+| `effort:large`   | Too big for a single session — agent **decomposes into sub-issues** instead of implementing |
+| `decomposed`     | Parent issue that has been broken up; tracks progress via task list                         |
 
 The `needs-human` label is critical: it lets agents signal blockers without stalling silently.
 
@@ -534,7 +565,6 @@ description: Swift/SwiftUI developer for the PomoFocus iOS app. Use for issues l
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 ---
-
 You are a senior iOS developer specializing in Swift and SwiftUI.
 Focus exclusively on the `ios/` directory.
 Always check `ios/PomoFocus.xcodeproj` for build configuration context.
@@ -551,7 +581,6 @@ description: Kotlin/Jetpack Compose developer for the PomoFocus Android app. Use
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 ---
-
 You are a senior Android developer specializing in Kotlin and Jetpack Compose.
 Focus exclusively on the `android/` directory.
 Run `./gradlew test` to verify your changes before declaring done.
@@ -567,7 +596,6 @@ description: TypeScript developer for cross-platform shared code in PomoFocus. U
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 ---
-
 You are a senior TypeScript developer maintaining the shared cross-platform layer.
 Changes in `shared/` affect all three platforms (iOS, Android, Web).
 Run `tsc --noEmit` and `npm test` after every change.
@@ -581,28 +609,36 @@ If a change requires platform-specific adaptations, note them clearly in PR comm
 These rules apply to every issue intended for agent pickup:
 
 ### Rule 1: The Goal is a Verifiable Assertion
+
 Bad: "Improve the timer"
 Good: "The timer must not drift more than 1 second over a 25-minute session when the app is backgrounded on iOS 17+"
 
 ### Rule 2: Every Acceptance Criterion Must Be Automatable
+
 If an acceptance criterion requires a human to "look at it," it does not belong on an agent-ready ticket. Rewrite it as a test. "The UI looks correct" becomes "The snapshot test `TimerView.1` passes."
 
 ### Rule 3: File Paths are Absolute from Repo Root
+
 Don't say "the timer file." Say `ios/PomoFocus/TimerManager.swift`. Agents waste turns doing discovery that you can do in 10 seconds.
 
 ### Rule 4: Out-of-Scope is Mandatory
+
 Agents over-reach. If you don't say "do not touch X," they will touch X. List the files they must not modify.
 
 ### Rule 5: Include the Exact Error Message or Test ID
+
 For bugs: paste the full stack trace. For test failures: paste the test name. Agents work best with exact strings to search for.
 
 ### Rule 6: Link All Related Context
+
 Related issues, the PR that introduced the bug, the design doc, the API schema. Use GitHub's "Linked issues" feature and also paste URLs directly in the body.
 
 ### Rule 7: Include the Test Command
+
 Do not say "make sure tests pass." Say `npm run test -- --testPathPattern=TimerManager`. The agent must know the exact command to run.
 
 ### Rule 8: Specify the Branch Base
+
 For most issues: `base: main`. For issues building on another in-flight PR: `base: feature/issue-38-timer-refactor`. This prevents merging into the wrong branch.
 
 ---
@@ -611,10 +647,12 @@ For most issues: `base: main`. For issues building on another in-flight PR: `bas
 
 ```markdown
 ## Goal
+
 The focus session timer resets to 25:00 when the iOS app is backgrounded for more than 30 seconds,
 instead of continuing to count down.
 
 ## Context
+
 Reported in #39. Introduced in commit `a3f9d2c` (PR #37 — timer refactor).
 The timer was refactored to use `Timer.scheduledTimer` without `RunLoop.main.add()`,
 which causes it to stop firing when the app enters background.
@@ -622,27 +660,33 @@ which causes it to stop firing when the app enters background.
 Related: Apple docs on background execution — https://developer.apple.com/documentation/backgroundtasks
 
 ## Affected Files
+
 - `ios/PomoFocus/TimerManager.swift` — the timer scheduling logic (line ~87)
 - `ios/PomoFocusTests/TimerManagerTests.swift` — add a regression test here
 
 ## Acceptance Criteria
+
 - [ ] `xcodebuild test -scheme PomoFocusiOSWidget` passes with no new failures
 - [ ] New test `TimerManagerTests.testTimerContinuesInBackground` exists and passes
 - [ ] Timer does not reset when app is backgrounded for 30–60 seconds (verified in simulator)
 - [ ] `git log --oneline -1` shows a commit message starting with "fix:"
 
 ## Out of Scope
+
 Do NOT modify `ios/PomoFocus/AppDelegate.swift` or any file in `android/` or `web/`.
 Do NOT change the shared `TimerState` model in `shared/`.
 
 ## Test Plan
+
 1. `xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16,OS=latest"`
 2. Confirm `testTimerContinuesInBackground` is listed as passed in the output
 
 ## Platform
+
 iOS only
 
 ## Branch Base
+
 `main`
 ```
 
@@ -670,29 +714,36 @@ AGENTS.md is a simple Markdown file at the repo root that serves as "a README fo
 
 ```markdown
 # Commands
+
 npm test
 npm run build
 npm run lint
 
 # Project Structure
-- src/     → Application code
-- tests/   → Test files
+
+- src/ → Application code
+- tests/ → Test files
 - .github/ → Actions and automation
 
 # Code Style
+
 // ✅ Use const for immutable values
 // ❌ Avoid var
 
 # Boundaries
+
 **Always do:**
+
 - ✅ Run tests before opening PRs
 - ✅ Update CHANGELOG when shipping features
 
 **Ask first:**
+
 - ❓ Before modifying package.json
 - ❓ Before touching authentication code
 
 **Never do:**
+
 - ❌ Commit secrets or API keys
 - ❌ Modify production database migrations
 ```
@@ -727,6 +778,7 @@ outputs:
 ---
 
 When a new issue is opened:
+
 1. Analyze the issue title and description
 2. Research related issues in the repository
 3. Classify into categories: bug, feature, documentation, performance
@@ -735,6 +787,7 @@ When a new issue is opened:
 ```
 
 **Patterns working now:**
+
 - **Issue triage** — Auto-label and route based on content
 - **Documentation updates** — Keep READMEs aligned with code
 - **Test enhancement** — Assess coverage gaps, add tests
@@ -768,6 +821,7 @@ GitHub's own engineers use this four-step checklist for structuring agent work:
 **Status:** Production GA. Breaking changes from beta.
 
 **One-command setup:**
+
 ```bash
 claude /install-github-app
 ```
@@ -775,6 +829,7 @@ claude /install-github-app
 **Usage in issues/PRs:** Comment `@claude implement this feature` or `@claude review for security`.
 
 **v1.0 syntax (replaces beta):**
+
 ```yaml
 # .github/workflows/claude.yml
 on:
@@ -790,7 +845,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: "Implement the feature described in this issue"
+          prompt: 'Implement the feature described in this issue'
           claude_args: |
             --append-system-prompt "Follow CLAUDE.md conventions"
             --max-turns 10
@@ -805,6 +860,7 @@ jobs:
 ### Copilot Coding Agent: 2026 Features
 
 **New capabilities (Feb 2026):**
+
 - **Model picker** — Choose faster models for routine work, robust models for hard tasks
 - **Self-review** — Agent reviews its own changes before opening PR
 - **Integrated scanning** — Code scanning, secret detection, dependency checks (free with coding agent)
@@ -812,6 +868,7 @@ jobs:
 - **Mission Control** — Dashboard for assigning and tracking multiple concurrent agent tasks
 
 **Model cost multipliers per request:**
+
 - 0x: gpt-5-mini, gpt-4.1, gpt-4o (essentially free)
 - 0.33x: claude-haiku-4.5, gemini-3-flash (cheap)
 - 1x: claude-sonnet-4, claude-sonnet-4.5 (standard)
@@ -843,6 +900,7 @@ Agents now support multiple instruction formats. Precedence order:
 Agents can open browsers, interact with UI, verify changes, and generate E2E tests — without needing to read source code.
 
 **Pattern:**
+
 ```
 Agent task: "Implement signup form"
     ↓
@@ -865,25 +923,27 @@ Agent implements the feature to make tests pass
 
 From practitioner reports and filed issues:
 
-| Anti-pattern | Result | Fix |
-|-------------|--------|-----|
-| Vague issues | Low-quality code that fails CI | WRAP framework + atomic sizing |
-| No tests in repo | Agent can't self-correct, requires hand-holding | Write test baseline before onboarding agents |
-| Large features assigned to agent | Context explosion, hallucination, partial work | Decompose into 1–3 file sub-issues |
-| Autonomous agents blocked on approval prompts | Network domain prompts cause hangs | Pre-approve domains in agent config |
-| AI reviewing AI code | Inconsistent, misses subtle bugs | Use as first-pass filter, not final arbiter |
-| Infrastructure-as-Code tasks | Agents hesitant, high error rate | Write acceptance tests first, then let agents implement |
+| Anti-pattern                                  | Result                                          | Fix                                                     |
+| --------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------- |
+| Vague issues                                  | Low-quality code that fails CI                  | WRAP framework + atomic sizing                          |
+| No tests in repo                              | Agent can't self-correct, requires hand-holding | Write test baseline before onboarding agents            |
+| Large features assigned to agent              | Context explosion, hallucination, partial work  | Decompose into 1–3 file sub-issues                      |
+| Autonomous agents blocked on approval prompts | Network domain prompts cause hangs              | Pre-approve domains in agent config                     |
+| AI reviewing AI code                          | Inconsistent, misses subtle bugs                | Use as first-pass filter, not final arbiter             |
+| Infrastructure-as-Code tasks                  | Agents hesitant, high error rate                | Write acceptance tests first, then let agents implement |
 
 ---
 
 ## Implementation Checklist
 
 ### Agent Context Files
+
 - [ ] Create `AGENTS.md` at repo root (cross-agent, open standard)
 - [ ] Create nested `AGENTS.md` in each package (core, mobile, ios-widget, android, web, vs-code-ext)
 - [x] Create `CLAUDE.md` at repo root (Claude-specific rules — done)
 
 ### Issue Templates & Labels
+
 - [ ] Create `.github/ISSUE_TEMPLATE/feature-agent.yml`
 - [ ] Create `.github/ISSUE_TEMPLATE/bug-agent.yml`
 - [ ] Add label set: `agent-ready`, `in-progress`, `in-review`, `needs-human`, `ios-only`, `android-only`, `cross-platform`, `effort:small`, `effort:large`, `decomposed`
@@ -891,6 +951,7 @@ From practitioner reports and filed issues:
 - [ ] Write a shell script wrapping the Projects v2 GraphQL mutation for status updates
 
 ### Skills & Agents
+
 - [ ] Create `.claude/skills/ship-issue/SKILL.md`
 - [ ] Create `.claude/skills/decompose-issue/SKILL.md`
 - [ ] Create `.claude/agents/ios-developer.md`
@@ -898,12 +959,14 @@ From practitioner reports and filed issues:
 - [ ] Create `.claude/agents/shared-developer.md`
 
 ### GitHub Integrations
+
 - [ ] Configure `.claude/settings.json` with GitHub MCP server and allowed Bash commands
 - [ ] Install Claude Code GitHub Action (`claude /install-github-app` or manual `.github/workflows/claude.yml`)
 - [ ] Set up GitHub Agentic Workflow for issue triage (`.github/workflows/triage.md`) — requires `gh aw` CLI (tech preview)
 - [ ] Add Playwright MCP for web UI verification (optional, useful for web platform)
 
 ### Test Baseline (Before Onboarding Agents)
+
 - [ ] Set up test framework for `@pomofocus/core` (Vitest or Jest)
 - [ ] Set up Playwright for web E2E
 - [ ] Set up Detox or Maestro for React Native
@@ -915,6 +978,7 @@ From practitioner reports and filed issues:
 ## Sources
 
 ### Original (Aug 2025 knowledge base)
+
 - GitHub Docs — Projects v2 API: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects
 - GitHub Docs — Issue Templates (YAML): https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
 - GitHub MCP Server: https://github.com/github/github-mcp-server
@@ -928,6 +992,7 @@ From practitioner reports and filed issues:
 - GitHub Projects GraphQL API reference: https://docs.github.com/en/graphql/reference/objects#projectv2
 
 ### March 2026 Update (web research)
+
 - GitHub Blog — How to write a great agents.md (2,500+ repo analysis): https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/
 - GitHub Blog — WRAP framework for coding agent: https://github.blog/ai-and-ml/github-copilot/wrap-up-your-backlog-with-github-copilot-coding-agent/
 - GitHub Blog — Agentic Workflows (tech preview, Feb 2026): https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/

@@ -10,6 +10,7 @@ You are a senior developer building the PomoFocus VS Code extension.
 ## Your Scope
 
 You are allowed to modify files in:
+
 - `apps/vscode-extension/` — the entire VS Code extension
 - `packages/ui/` — only if the issue's "Affected Files" explicitly lists it and the change is scoped to VS Code needs
 
@@ -20,6 +21,7 @@ pnpm nx test @pomofocus/vscode-extension
 ```
 
 Always also run:
+
 ```bash
 pnpm type-check
 pnpm nx lint @pomofocus/vscode-extension
@@ -77,6 +79,7 @@ apps/vscode-extension/
 ## On Completion
 
 Before opening a PR:
+
 1. `pnpm nx test @pomofocus/vscode-extension` — all pass
 2. `pnpm type-check` — zero errors
 3. `pnpm nx lint @pomofocus/vscode-extension` — zero errors

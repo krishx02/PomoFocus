@@ -31,29 +31,29 @@ Chosen option: **"Local + Expo Push for mobile social"** (Option 2), because it 
 
 ### Notification Types
 
-| Notification | Mechanism | Trigger | Frequency | Platform |
-|-------------|-----------|---------|-----------|----------|
-| Timer end | Local scheduled | User starts focus session | Per session | Mobile: `expo-notifications`. Web: Notification API (backgrounded tab). BLE: vibration + LED. |
-| Encouragement tap | Push (Expo Push Service) + in-app fallback | Friend sends tap | Max 3/day/friend (ADR-018) | Mobile: push when backgrounded, in-app toast when foregrounded. Web: in-app toast on next visit. |
-| Weekly summary | Local scheduled | User-configured day/time (default: Sunday 7pm) | 1/week | Mobile: `expo-notifications`. Web: banner on next visit. |
-| Goal nudge | Local scheduled | User's preferred focus time, skipped if session already started today | Max 1/day | Mobile: `expo-notifications`. Web: not applicable (no local scheduling). |
+| Notification      | Mechanism                                  | Trigger                                                               | Frequency                  | Platform                                                                                         |
+| ----------------- | ------------------------------------------ | --------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------ |
+| Timer end         | Local scheduled                            | User starts focus session                                             | Per session                | Mobile: `expo-notifications`. Web: Notification API (backgrounded tab). BLE: vibration + LED.    |
+| Encouragement tap | Push (Expo Push Service) + in-app fallback | Friend sends tap                                                      | Max 3/day/friend (ADR-018) | Mobile: push when backgrounded, in-app toast when foregrounded. Web: in-app toast on next visit. |
+| Weekly summary    | Local scheduled                            | User-configured day/time (default: Sunday 7pm)                        | 1/week                     | Mobile: `expo-notifications`. Web: banner on next visit.                                         |
+| Goal nudge        | Local scheduled                            | User's preferred focus time, skipped if session already started today | Max 1/day                  | Mobile: `expo-notifications`. Web: not applicable (no local scheduling).                         |
 
 ### Key Architecture Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Push provider | **Expo Push Service** (free) | Wraps APNs + FCM with one unified API. Cross-platform. No vendor lock-in — APNs/FCM are the real transport. |
-| Push scope | **Mobile only** | Web push has ~6% opt-in rates, requires service worker, two code paths. Not worth the complexity. |
-| Push token storage | **`expo_push_token` column on `devices` table** (ADR-005) | Natural extension of existing schema. One token per device. |
-| Push sending | **Hono API endpoint** (`apps/api/`) | When `POST /v1/taps` creates a tap, look up recipient's push token, call Expo Push API. ~10 lines of server code. |
-| Permission timing | **Request at first timer creation** | High-value moment — "PomoFocus needs notifications to alert you when your focus session ends." Timer apps have high opt-in rates. Not at app launch. |
-| During active session | **Silent delivery** | Encouragement taps received during `focusing` state arrive silently (no sound, no vibration). Surfaced in reflection screen after session ends or in notification center. |
-| In-app fallback | **Always show in-app toast/banner** | Works even if push permission denied. Badge count for unread taps. |
-| Goal nudge content | **Goal-aware** | "You planned to study calculus today. Ready?" — not "We miss you!" Backed by 2024 CHI research showing 4x engagement for goal-relevant notifications. |
-| Goal nudge self-cancellation | **Skip if session started today** | If user already focused today, no nudge fires. Avoids nagging. |
-| Web notifications | **Notification API for timer (backgrounded tab) + in-app for everything else** | No service worker, no Web Push API. Minimal web notification surface. |
-| BLE device | **Firmware-controlled vibration + LED for timer end only** | Encouragement tap vibration via BLE command is a post-v1 enhancement. |
-| Notification philosophy | **"3+1 rule"** | Timer end (your action), encouragement tap (friend's action), weekly summary (your schedule), goal nudge (your commitment). Nothing else. No marketing, no "come back," no streaks-at-risk. |
+| Decision                     | Choice                                                                         | Why                                                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Push provider                | **Expo Push Service** (free)                                                   | Wraps APNs + FCM with one unified API. Cross-platform. No vendor lock-in — APNs/FCM are the real transport.                                                                                 |
+| Push scope                   | **Mobile only**                                                                | Web push has ~6% opt-in rates, requires service worker, two code paths. Not worth the complexity.                                                                                           |
+| Push token storage           | **`expo_push_token` column on `devices` table** (ADR-005)                      | Natural extension of existing schema. One token per device.                                                                                                                                 |
+| Push sending                 | **Hono API endpoint** (`apps/api/`)                                            | When `POST /v1/taps` creates a tap, look up recipient's push token, call Expo Push API. ~10 lines of server code.                                                                           |
+| Permission timing            | **Request at first timer creation**                                            | High-value moment — "PomoFocus needs notifications to alert you when your focus session ends." Timer apps have high opt-in rates. Not at app launch.                                        |
+| During active session        | **Silent delivery**                                                            | Encouragement taps received during `focusing` state arrive silently (no sound, no vibration). Surfaced in reflection screen after session ends or in notification center.                   |
+| In-app fallback              | **Always show in-app toast/banner**                                            | Works even if push permission denied. Badge count for unread taps.                                                                                                                          |
+| Goal nudge content           | **Goal-aware**                                                                 | "You planned to study calculus today. Ready?" — not "We miss you!" Backed by 2024 CHI research showing 4x engagement for goal-relevant notifications.                                       |
+| Goal nudge self-cancellation | **Skip if session started today**                                              | If user already focused today, no nudge fires. Avoids nagging.                                                                                                                              |
+| Web notifications            | **Notification API for timer (backgrounded tab) + in-app for everything else** | No service worker, no Web Push API. Minimal web notification surface.                                                                                                                       |
+| BLE device                   | **Firmware-controlled vibration + LED for timer end only**                     | Encouragement tap vibration via BLE command is a post-v1 enhancement.                                                                                                                       |
+| Notification philosophy      | **"3+1 rule"**                                                                 | Timer end (your action), encouragement tap (friend's action), weekly summary (your schedule), goal nudge (your commitment). Nothing else. No marketing, no "come back," no streaks-at-risk. |
 
 ### Server-Side Components
 

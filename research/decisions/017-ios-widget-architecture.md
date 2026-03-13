@@ -38,6 +38,7 @@ Chosen option: **"`@bacons/apple-targets` + App Group UserDefaults"**, because i
 ### Configurable Stats (via AppIntentConfiguration)
 
 Users choose which metric to display per widget instance via the Edit Widget sheet — Tier 1 stats (ADR-014) plus selected Tier 2 metrics like completion rate:
+
 - Today's goal progress (e.g., "3/5 sessions")
 - Weekly dots (7-day completion visualization)
 - Current streak (consecutive days)

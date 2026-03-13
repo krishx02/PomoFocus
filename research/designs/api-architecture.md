@@ -16,6 +16,7 @@ The project lead requires a proper API middle layer that hides Supabase entirely
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Hide Supabase from all clients — no anon key, no project URL, no raw table structures exposed
 - Serve both TypeScript and Swift consumers from one API contract (OpenAPI 3.1)
 - Auto-generate type-safe clients for TypeScript (`openapi-fetch`) and Swift (`swift-openapi-generator`)
@@ -25,6 +26,7 @@ The project lead requires a proper API middle layer that hides Supabase entirely
 - Keep cost at $0 for MVP, scaling predictably
 
 **Non-Goals:**
+
 - Replacing Supabase Auth — auth remains Supabase Auth (ADR-002), the API forwards JWTs
 - Real-time push — the API serves REST requests; polling-first strategy (ADR-003) is preserved
 - Designing the OpenAPI contract itself (routes, schemas, endpoints) — that's a follow-up implementation task
@@ -83,11 +85,13 @@ The project lead requires a proper API middle layer that hides Supabase entirely
 Clients manage JWT refresh via shared auth interceptors:
 
 **TypeScript (web, mobile, VS Code, MCP):**
+
 - Auth middleware in `packages/data-access/` wrapping the generated `openapi-fetch` client
 - Intercepts 401 responses, calls `/auth/refresh` endpoint, retries original request
 - Stores tokens in platform-appropriate secure storage (SecureStore on Expo, Keychain equivalent on web, VS Code SecretStorage)
 
 **Swift (macOS menu bar, possibly watchOS):**
+
 - `ClientMiddleware` from `swift-openapi-runtime`
 - Same refresh flow: intercept 401, call `/auth/refresh`, retry
 - Stores tokens in Keychain
@@ -116,16 +120,16 @@ TS client types     Swift client code
 
 ### API Layer Responsibilities
 
-| Responsibility | Implemented via | Notes |
-|---|---|---|
-| Auth validation | Hono middleware (JWT verify) | Checks signature using `SUPABASE_JWT_SECRET` env var |
-| Input validation | `@hono/zod-openapi` route schemas | Zod schemas define request body, params, query; auto-reject invalid requests |
-| Rate limiting | Cloudflare rate limiting or custom Hono middleware | Per-endpoint, per-user configurable |
-| Business logic | `packages/core/` function calls | API is a thin orchestration layer; domain logic stays in `core/` |
-| Data access | Supabase SDK with user's JWT | RLS applies; `get_user_id()` and all ADR-005 policies work unchanged |
-| Response shaping | Zod response schemas in route definitions | Clients see a clean API contract, not raw table structures |
-| Error handling | Hono error middleware | Consistent error format across all endpoints; no Supabase errors leak to clients |
-| CORS | Hono CORS middleware | Configure allowed origins per environment |
+| Responsibility   | Implemented via                                    | Notes                                                                            |
+| ---------------- | -------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Auth validation  | Hono middleware (JWT verify)                       | Checks signature using `SUPABASE_JWT_SECRET` env var                             |
+| Input validation | `@hono/zod-openapi` route schemas                  | Zod schemas define request body, params, query; auto-reject invalid requests     |
+| Rate limiting    | Cloudflare rate limiting or custom Hono middleware | Per-endpoint, per-user configurable                                              |
+| Business logic   | `packages/core/` function calls                    | API is a thin orchestration layer; domain logic stays in `core/`                 |
+| Data access      | Supabase SDK with user's JWT                       | RLS applies; `get_user_id()` and all ADR-005 policies work unchanged             |
+| Response shaping | Zod response schemas in route definitions          | Clients see a clean API contract, not raw table structures                       |
+| Error handling   | Hono error middleware                              | Consistent error format across all endpoints; no Supabase errors leak to clients |
+| CORS             | Hono CORS middleware                               | Configure allowed origins per environment                                        |
 
 ### Monorepo Integration
 
@@ -157,22 +161,22 @@ packages/
 
 The outbox sync pattern is transport-agnostic. The sync protocol in `core/sync/` is unchanged. Only the sync drivers in `data-access/` change their target:
 
-| Component | Before | After |
-|---|---|---|
-| Outbox upload (TS) | `data-access/` → Supabase SDK | `data-access/` → OpenAPI client → CF Workers API → Supabase |
-| Polling pull (TS) | TanStack Query → Supabase SDK | TanStack Query → OpenAPI client → CF Workers API → Supabase |
+| Component             | Before                         | After                                                          |
+| --------------------- | ------------------------------ | -------------------------------------------------------------- |
+| Outbox upload (TS)    | `data-access/` → Supabase SDK  | `data-access/` → OpenAPI client → CF Workers API → Supabase    |
+| Polling pull (TS)     | TanStack Query → Supabase SDK  | TanStack Query → OpenAPI client → CF Workers API → Supabase    |
 | Outbox upload (Swift) | `native/` → Supabase Swift SDK | `native/` → Generated Swift client → CF Workers API → Supabase |
-| Watch sync | Watch → iPhone → Supabase | Watch → iPhone → CF Workers API → Supabase |
-| BLE sync | Device → Phone → Supabase | Device → Phone → CF Workers API → Supabase |
-| MCP sync | Direct Supabase REST | MCP → CF Workers API → Supabase |
+| Watch sync            | Watch → iPhone → Supabase      | Watch → iPhone → CF Workers API → Supabase                     |
+| BLE sync              | Device → Phone → Supabase      | Device → Phone → CF Workers API → Supabase                     |
+| MCP sync              | Direct Supabase REST           | MCP → CF Workers API → Supabase                                |
 
 ### Cost Projection
 
-| Scale | Requests/month | CF Workers cost | Supabase cost | Total API cost |
-|---|---|---|---|---|
-| MVP (0-1K users) | ~1.5M | $0 (free tier) | $0 (free tier) | **$0** |
-| Growth (1K-10K) | ~15M | ~$6.50 | $25 (Pro) | **~$31.50** |
-| Scale (100K) | ~150M | ~$47 | $25+ (Pro) | **~$72+** |
+| Scale            | Requests/month | CF Workers cost | Supabase cost  | Total API cost |
+| ---------------- | -------------- | --------------- | -------------- | -------------- |
+| MVP (0-1K users) | ~1.5M          | $0 (free tier)  | $0 (free tier) | **$0**         |
+| Growth (1K-10K)  | ~15M           | ~$6.50          | $25 (Pro)      | **~$31.50**    |
+| Scale (100K)     | ~150M          | ~$47            | $25+ (Pro)     | **~$72+**      |
 
 ## Alternatives Considered
 

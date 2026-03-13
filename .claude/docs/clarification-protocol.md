@@ -40,12 +40,14 @@ On every prompt submission, the hook script:
 ### Ambiguity Classifier Criteria
 
 Haiku flags a prompt as ambiguous if:
+
 - Uses broad scope terms without named targets: "everywhere", "all", "refactor", "clean up", "update", "fix"
 - Would require >3 files but doesn't name them
 - Doesn't specify what existing behavior to preserve
 - Two developers would implement it differently
 
 Haiku always clears:
+
 - Short conversational messages and questions
 - "explain X", "what does Y do" — meta-requests
 - Prompts that name specific files/functions
@@ -75,6 +77,7 @@ Haiku response time: ~300–800ms. This adds a small delay on every prompt. If t
 ### What It Does
 
 Runs a 5-question structured interview (one question at a time):
+
 1. Goal — end state description
 2. Scope — specific files/components in scope
 3. Constraints — technical requirements and restrictions
@@ -86,6 +89,7 @@ Writes a spec to `.claude/specs/YYYY-MM-DD-<goal>.md`, asks for user confirmatio
 ### Spec Files
 
 Specs are persisted in `.claude/specs/` and committed to git. They serve as:
+
 - Implementation contracts for agent sessions
 - Audit trail for what was intended vs. what was built
 - Input for future `/ship-issue` skill sessions
@@ -97,6 +101,7 @@ Specs are persisted in `.claude/specs/` and committed to git. They serve as:
 **Config:** `permissions.ask` array in `.claude/settings.local.json`
 
 These operations always trigger a confirmation dialog, regardless of context:
+
 - `git reset*`
 - `git push --force*` / `git push --force-with-lease*`
 - `rm -rf*`
@@ -139,11 +144,11 @@ Use this test set to measure mechanism effectiveness. Run with and without the h
 
 ### Metrics to Track
 
-| Metric | Target |
-|--------|--------|
-| Clarification rate on vague prompts | 80%+ |
-| False positive rate on clear prompts | <10% |
-| Hook latency (p95) | <1s |
+| Metric                                    | Target                                       |
+| ----------------------------------------- | -------------------------------------------- |
+| Clarification rate on vague prompts       | 80%+                                         |
+| False positive rate on clear prompts      | <10%                                         |
+| Hook latency (p95)                        | <1s                                          |
 | User bypass rate (skipping clarification) | Track — if >30%, threshold is too aggressive |
 
 ---
@@ -151,10 +156,12 @@ Use this test set to measure mechanism effectiveness. Run with and without the h
 ## Tuning the Hook
 
 If false positives are too high (clear prompts flagged):
+
 - Tighten the classifier system prompt — add more "always clear" examples
 - Raise the threshold (add a `confidence` field and only inject if confidence > 0.8)
 
 If ambiguous prompts still slip through:
+
 - Add more trigger patterns to the CLAUDE.md `YOU MUST ask` rule
 - Use the `/clarify` skill proactively at the start of each session
 

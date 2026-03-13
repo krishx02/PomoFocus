@@ -1,8 +1,8 @@
 ---
 paths:
-  - "apps/**"
-  - "packages/ui/**"
-  - "packages/data-access/**"
+  - 'apps/**'
+  - 'packages/ui/**'
+  - 'packages/data-access/**'
 ---
 
 # App-Level Standards

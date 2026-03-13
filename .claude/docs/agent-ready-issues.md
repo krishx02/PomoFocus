@@ -14,32 +14,41 @@
 
 Every agent-ready issue must have these sections:
 
-```markdown
+````markdown
 ## Goal
+
 [One sentence. What should be true when done?]
 
 ## Context
+
 [Why this matters. Links to related issues/PRs/docs.]
 
 ## Acceptance Criteria
+
 - [ ] [Testable assertion 1]
 - [ ] [Testable assertion 2]
 - [ ] All tests pass: `[exact test command]`
 - [ ] No lint/type errors: `[exact lint command]`
 
 ## Files in Scope
+
 - `/exact/path/from/repo/root.ts` — what changes here
 
 ## Out of Scope
+
 - Do NOT modify [specific files/systems]
 
 ## Success Test Command
+
 ```bash
 [exact copy-pasteable command that must pass]
 ```
+````
 
 ## Branch Base
+
 `main` (or `feature/other-branch` if building on a PR)
+
 ```
 
 ### Why Each Section Matters
@@ -82,36 +91,44 @@ Every agent-ready issue must have these sections:
 
 **API Endpoint:**
 ```
+
 - [ ] POST /api/sessions accepts { duration, type }
 - [ ] Returns 201 with { id, duration, type, created_at }
 - [ ] Returns 400 if duration < 1 or > 60
 - [ ] Returns 401 if no auth header
 - [ ] Test passes: pnpm test -- sessions
+
 ```
 
 **UI Component:**
 ```
+
 - [ ] Component renders timer in MM:SS format
 - [ ] Start button begins countdown
 - [ ] Timer auto-stops at 0:00
 - [ ] Accessible: has aria-label on interactive elements
 - [ ] Test passes: pnpm test -- TimerDisplay
+
 ```
 
 **Data Layer / Schema:**
 ```
+
 - [ ] Table `sessions` has columns: id (uuid), user_id (uuid), duration (int), type (text)
 - [ ] RLS policy: users can only read/write their own sessions
 - [ ] Migration runs cleanly: pnpm db:migrate
 - [ ] Test passes: pnpm test -- session-model
+
 ```
 
 **Bug Fix:**
 ```
+
 - [ ] [Exact error message] no longer occurs
 - [ ] Regression test `testTimerDoesNotResetOnBackground` exists and passes
 - [ ] Original behavior preserved: [specific existing test] still passes
 - [ ] Test passes: pnpm test -- timer
+
 ```
 
 ### Anti-Patterns (Vague Criteria That Break Agents)
@@ -132,18 +149,20 @@ Every agent-ready issue must have these sections:
 The proven autonomous agent pattern:
 
 ```
+
 Agent reads issue + acceptance criteria
-         ↓
+↓
 Writes code + runs test command
-         ↓
+↓
 Test fails? → Reads error → Fixes code → Re-runs test
-         ↓
+↓
 Test passes? → Checks each acceptance criterion
-         ↓
+↓
 All criteria met? → Opens PR → Done
-         ↓
+↓
 Criteria not met? → Picks next failing one → Loop back
-```
+
+````
 
 **Key insight:** The test command is the loop's feedback signal. Make it:
 - **Fast** (<30 seconds) — agents run it repeatedly
@@ -168,7 +187,7 @@ npm test
 
 # Bad: requires manual setup
 npm test  # (assumes Postgres is running on port 5432)
-```
+````
 
 ---
 
@@ -239,6 +258,7 @@ Submit the issue URL or paste the acceptance criteria directly.
 ## How This Relates to Existing Research
 
 This doc builds on `research/02-github-for-agents.md` which defines:
+
 - Issue template YAML files (feature-agent.yml, bug-agent.yml)
 - 8 writing rules for agent-ready tickets
 - Label strategy (agent-ready, needs-human, effort:small/large, etc.)
@@ -246,6 +266,7 @@ This doc builds on `research/02-github-for-agents.md` which defines:
 - Platform subagent configurations
 
 What this doc adds:
+
 - **Ralph Loop pattern** for agent self-verification loops
 - **ATDD Given/When/Then** format for complex acceptance criteria
 - **Anti-pattern table** with specific rewrites

@@ -1,4 +1,5 @@
 # GitHub Actions CI/CD Patterns for Multi-Platform App Development
+
 ### PomoFocus — Web + iOS + Android + VS Code Extension + Mac Widgets (Supabase + Cloudflare)
 
 > Research compiled: March 2026
@@ -123,7 +124,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # Full history needed for Nx affected diff
+          fetch-depth: 0 # Full history needed for Nx affected diff
 
       - uses: pnpm/action-setup@v3
         with:
@@ -154,20 +155,20 @@ jobs:
 **List affected projects as JSON** (useful for conditional matrix jobs):
 
 ```yaml
-      - name: Get affected projects
-        id: affected
-        run: |
-          AFFECTED=$(pnpm nx show projects --affected --base=origin/main --head=HEAD --json)
-          echo "projects=$AFFECTED" >> $GITHUB_OUTPUT
+- name: Get affected projects
+  id: affected
+  run: |
+    AFFECTED=$(pnpm nx show projects --affected --base=origin/main --head=HEAD --json)
+    echo "projects=$AFFECTED" >> $GITHUB_OUTPUT
 ```
 
 **Nx Cloud Remote Cache** (free for solo developers — eliminates the need for the local cache action above):
 
 ```yaml
-      - name: Lint affected (with Nx Cloud cache)
-        run: pnpm nx affected --target=lint --base=origin/main --head=HEAD
-        env:
-          NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
+- name: Lint affected (with Nx Cloud cache)
+  run: pnpm nx affected --target=lint --base=origin/main --head=HEAD
+  env:
+    NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
 ```
 
 Set up Nx Cloud once with `npx nx connect` — it configures `nx.json` automatically. The free tier covers solo developers generously.
@@ -195,7 +196,7 @@ jobs:
     permissions:
       contents: read
       deployments: write
-      pull-requests: write    # To post preview URL as PR comment
+      pull-requests: write # To post preview URL as PR comment
 
     steps:
       - uses: actions/checkout@v4
@@ -223,23 +224,24 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           projectName: pomofocus
-          directory: apps/web/.next          # Or 'out' for static export
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}  # Posts preview URL to PR
+          directory: apps/web/.next # Or 'out' for static export
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }} # Posts preview URL to PR
           # branch left unset → auto-detects main vs PR
 ```
 
 **Cloudflare Workers** (for Supabase Edge Functions proxy, API routes):
 
 ```yaml
-      - name: Deploy Cloudflare Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/web
-          command: deploy --env ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+- name: Deploy Cloudflare Worker
+  uses: cloudflare/wrangler-action@v3
+  with:
+    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    workingDirectory: apps/web
+    command: deploy --env ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
 ```
 
 **Required secrets:**
+
 - `CLOUDFLARE_API_TOKEN` — scoped to Pages/Workers edit
 - `CLOUDFLARE_ACCOUNT_ID` — from Cloudflare dashboard
 
@@ -312,7 +314,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest             # Must be macOS for Xcode
+    runs-on: macos-latest # Must be macOS for Xcode
     defaults:
       run:
         working-directory: apps/mobile/ios
@@ -324,7 +326,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
-          bundler-cache: true          # Caches gems
+          bundler-cache: true # Caches gems
           working-directory: apps/mobile/ios
 
       - name: Cache Derived Data
@@ -349,6 +351,7 @@ jobs:
 ```
 
 **Required secrets:**
+
 - `MATCH_GIT_BASIC_AUTHORIZATION` — base64-encoded `user:token` for Match repo access
 - `MATCH_PASSWORD` — passphrase to decrypt Match certificates
 - `APP_STORE_CONNECT_API_KEY_ID`, `APP_STORE_CONNECT_API_ISSUER_ID`, `APP_STORE_CONNECT_API_KEY_CONTENT` — App Store Connect API key (p8 file content)
@@ -466,6 +469,7 @@ jobs:
 ```
 
 **Required secrets:**
+
 - `ANDROID_KEYSTORE_BASE64` — base64-encoded `.jks` signing keystore
 - `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
 - `GOOGLE_PLAY_JSON_KEY` — service account JSON from Google Cloud Console
@@ -485,7 +489,7 @@ on:
     branches: [main]
     paths: ['apps/vscode-extension/**']
   release:
-    types: [published]              # Also trigger on GitHub Release creation
+    types: [published] # Also trigger on GitHub Release creation
   workflow_dispatch:
     inputs:
       pre_release:
@@ -510,7 +514,7 @@ jobs:
       - run: npm ci
 
       - name: Run Extension Tests
-        uses: coactions/setup-xvfb@v1  # Required for headless VS Code tests
+        uses: coactions/setup-xvfb@v1 # Required for headless VS Code tests
         with:
           run: npm test
 
@@ -534,6 +538,7 @@ jobs:
 ```
 
 **Key notes:**
+
 - VS Code tests require a display; use `coactions/setup-xvfb` on Linux runners
 - The `VSCE_PAT` must have "Marketplace > Manage" scope in Azure DevOps
 - Version in `package.json` must be bumped before publishing; use `npm version patch` in a pre-publish step or manage via Git tags
@@ -552,15 +557,17 @@ name: Deploy — Vercel
 on:
   push:
     branches: [main]
-    paths: ['apps/web/**', 'packages/core/**', 'packages/api-client/**', 'packages/ui-components/**']
+    paths:
+      ['apps/web/**', 'packages/core/**', 'packages/api-client/**', 'packages/ui-components/**']
   pull_request:
-    paths: ['apps/web/**', 'packages/core/**', 'packages/api-client/**', 'packages/ui-components/**']
+    paths:
+      ['apps/web/**', 'packages/core/**', 'packages/api-client/**', 'packages/ui-components/**']
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write    # To post preview URL as PR comment
+      pull-requests: write # To post preview URL as PR comment
 
     steps:
       - uses: actions/checkout@v4
@@ -616,6 +623,7 @@ jobs:
 ```
 
 **Required secrets:**
+
 - `VERCEL_TOKEN` — from Vercel dashboard → Account Settings → Tokens
 - `VERCEL_ORG_ID` — from `.vercel/project.json` after running `vercel link` locally (use as a secret)
 - `VERCEL_PROJECT_ID` — from `.vercel/project.json` after `vercel link` (use as a secret)
@@ -635,7 +643,7 @@ name: MCP Server — Publish to npm
 on:
   push:
     tags:
-      - 'mcp-server-v*'        # Trigger on tags like mcp-server-v1.2.3
+      - 'mcp-server-v*' # Trigger on tags like mcp-server-v1.2.3
   pull_request:
     paths: ['apps/mcp-server/**', 'packages/core/**', 'packages/api-client/**']
 
@@ -679,6 +687,7 @@ jobs:
 ```
 
 **Required secrets:**
+
 - `NPM_TOKEN` — npm access token with publish scope (create at npmjs.com → Access Tokens)
 
 **Tagging convention:** `git tag mcp-server-v1.0.0 && git push --tags` triggers the publish. Keeps MCP server versioned independently from the rest of the monorepo.
@@ -742,6 +751,7 @@ jobs:
 ```
 
 **Distribution notes:**
+
 - Mac App Store requires a separate App Store Connect app entry (different bundle ID from iOS)
 - Mac widgets use the same App Store Connect API key as iOS — no extra setup
 - If distributing outside the Mac App Store (direct download), use `Developer ID Application` cert instead of `Apple Distribution` and export a notarized `.dmg`
@@ -889,17 +899,17 @@ jobs:
 If you want finer control, call the `claude` CLI directly:
 
 ```yaml
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
+- name: Install Claude Code CLI
+  run: npm install -g @anthropic-ai/claude-code
 
-      - name: Run Claude headless
-        run: |
-          cat build-errors.txt | claude -p "Fix the build errors shown" \
-            --allowedTools "Read,Edit,Bash(npm run build)" \
-            --max-turns 10 \
-            --output-format json > claude-output.json
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+- name: Run Claude headless
+  run: |
+    cat build-errors.txt | claude -p "Fix the build errors shown" \
+      --allowedTools "Read,Edit,Bash(npm run build)" \
+      --max-turns 10 \
+      --output-format json > claude-output.json
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ---
@@ -929,14 +939,14 @@ Claude Code Action authenticates as the GitHub Actions bot (`github-actions[bot]
 For Claude to push fixes to PR branches:
 
 ```yaml
-      - uses: actions/checkout@v4
-        with:
-          # Must use GITHUB_TOKEN (or PAT) that has write access
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # Check out the PR's head branch so Claude pushes there
-          ref: ${{ github.head_ref }}
-          # Ensure we can push back
-          fetch-depth: 0
+- uses: actions/checkout@v4
+  with:
+    # Must use GITHUB_TOKEN (or PAT) that has write access
+    token: ${{ secrets.GITHUB_TOKEN }}
+    # Check out the PR's head branch so Claude pushes there
+    ref: ${{ github.head_ref }}
+    # Ensure we can push back
+    fetch-depth: 0
 ```
 
 ### Conditional Required Checks with Paths
@@ -945,19 +955,19 @@ GitHub does not natively support path-conditional required checks (a known limit
 
 ```yaml
 # Every platform workflow ends with this job:
-  ci-success:
-    name: CI Success Gate
-    needs: [lint-and-test]    # The real jobs
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check all required jobs passed
-        run: |
-          if [[ "${{ needs.lint-and-test.result }}" != "success" && \
-                "${{ needs.lint-and-test.result }}" != "skipped" ]]; then
-            echo "Required job failed"
-            exit 1
-          fi
+ci-success:
+  name: CI Success Gate
+  needs: [lint-and-test] # The real jobs
+  if: always()
+  runs-on: ubuntu-latest
+  steps:
+    - name: Check all required jobs passed
+      run: |
+        if [[ "${{ needs.lint-and-test.result }}" != "success" && \
+              "${{ needs.lint-and-test.result }}" != "skipped" ]]; then
+          echo "Required job failed"
+          exit 1
+        fi
 ```
 
 Then set "CI Success Gate" as the required check. Skipped = passing (path filter didn't match), success = real pass.
@@ -1166,28 +1176,28 @@ jobs:
 
 ## 14. Recommended Secrets Strategy
 
-| Secret Name | Scope | Used In |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Repo | Claude Code Action |
-| `CLOUDFLARE_API_TOKEN` | Repo | Pages/Workers deploy |
-| `CLOUDFLARE_ACCOUNT_ID` | Repo var (not secret) | Pages/Workers deploy |
-| `SUPABASE_ANON_KEY` | Repo / Environment | Web build |
-| `SUPABASE_SERVICE_ROLE_KEY` | Prod environment only | Server-side only |
-| `MATCH_GIT_BASIC_AUTHORIZATION` | Repo | iOS signing |
-| `MATCH_PASSWORD` | Repo | iOS signing |
-| `APP_STORE_CONNECT_API_KEY_*` | Repo | iOS release |
-| `ANDROID_KEYSTORE_BASE64` | Repo | Android signing |
-| `ANDROID_KEYSTORE_PASSWORD` | Repo | Android signing |
-| `ANDROID_KEY_ALIAS` | Repo | Android signing |
-| `ANDROID_KEY_PASSWORD` | Repo | Android signing |
-| `GOOGLE_PLAY_JSON_KEY` | Repo | Android release |
-| `VSCE_PAT` | Repo | VS Code marketplace |
-| `OPEN_VSX_TOKEN` | Repo | Open VSX Registry |
-| `NPM_TOKEN` | Repo | MCP server npm publish |
-| `VERCEL_TOKEN` | Repo | Vercel web deployment |
-| `VERCEL_ORG_ID` | Repo | Vercel web deployment |
-| `VERCEL_PROJECT_ID` | Repo | Vercel web deployment |
-| `NX_CLOUD_AUTH_TOKEN` | Repo | Nx Cloud remote cache (free tier) |
+| Secret Name                     | Scope                 | Used In                           |
+| ------------------------------- | --------------------- | --------------------------------- |
+| `ANTHROPIC_API_KEY`             | Repo                  | Claude Code Action                |
+| `CLOUDFLARE_API_TOKEN`          | Repo                  | Pages/Workers deploy              |
+| `CLOUDFLARE_ACCOUNT_ID`         | Repo var (not secret) | Pages/Workers deploy              |
+| `SUPABASE_ANON_KEY`             | Repo / Environment    | Web build                         |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Prod environment only | Server-side only                  |
+| `MATCH_GIT_BASIC_AUTHORIZATION` | Repo                  | iOS signing                       |
+| `MATCH_PASSWORD`                | Repo                  | iOS signing                       |
+| `APP_STORE_CONNECT_API_KEY_*`   | Repo                  | iOS release                       |
+| `ANDROID_KEYSTORE_BASE64`       | Repo                  | Android signing                   |
+| `ANDROID_KEYSTORE_PASSWORD`     | Repo                  | Android signing                   |
+| `ANDROID_KEY_ALIAS`             | Repo                  | Android signing                   |
+| `ANDROID_KEY_PASSWORD`          | Repo                  | Android signing                   |
+| `GOOGLE_PLAY_JSON_KEY`          | Repo                  | Android release                   |
+| `VSCE_PAT`                      | Repo                  | VS Code marketplace               |
+| `OPEN_VSX_TOKEN`                | Repo                  | Open VSX Registry                 |
+| `NPM_TOKEN`                     | Repo                  | MCP server npm publish            |
+| `VERCEL_TOKEN`                  | Repo                  | Vercel web deployment             |
+| `VERCEL_ORG_ID`                 | Repo                  | Vercel web deployment             |
+| `VERCEL_PROJECT_ID`             | Repo                  | Vercel web deployment             |
+| `NX_CLOUD_AUTH_TOKEN`           | Repo                  | Nx Cloud remote cache (free tier) |
 
 Use **GitHub Environments** (`production`, `staging`) with environment-level secrets and required reviewers for App Store and Play Store releases. This creates a manual approval gate before production deployment.
 
@@ -1196,22 +1206,26 @@ Use **GitHub Environments** (`production`, `staging`) with environment-level sec
 ## 15. Actionable CI/CD Recommendations for PomoFocus
 
 ### Priority 1 — Foundation (Set up first)
+
 1. **Adopt pnpm workspaces + Nx** as the monorepo orchestrator. Add `nx.json` with target defaults for `build`, `test`, `lint` tasks and `project.json` in each app/package.
 2. **Create `.github/workflows/detect-changes.yml`** using `dorny/paths-filter@v3` as a reusable step that all other workflows depend on via `needs:`.
 3. **Set up Vercel deployment** first — run `vercel link` in `apps/web/`, add three secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`), and you get automatic preview URLs on every PR.
 4. **Add the `ci-complete` success gate job** to every workflow and configure it as the single required check in branch protection.
 
 ### Priority 2 — Mobile (After web CI is solid)
+
 5. **Set up Fastlane Match** for iOS code signing. Store certificates in a private repo. Match eliminates the biggest iOS CI pain point (cert management).
 6. **Use GitHub Environments** with required reviewers for App Store and Play Store production deploys — never deploy to stores automatically without a human in the loop.
 7. **Use `workflow_dispatch`** for store releases, not automatic triggers. Add a `release_track` input (internal/beta/production) so you choose the target.
 
 ### Priority 3 — VS Code + Claude Agent
+
 8. **Publish VS Code extension** on every push to `main` that changes `apps/vscode-extension/`. Use pre-release flag for non-tagged pushes.
 9. **Add `claude-agent.yml`** to respond to `@claude` mentions. This is a force multiplier: mention Claude in a PR comment and it self-heals lint errors, writes tests, or refactors code.
 10. **Add auto-lint-fix** as a `workflow_run` trigger so failing lint checks on PRs automatically trigger Claude to fix and re-push.
 
 ### Priority 4 — Optimization
+
 11. **Connect Nx Cloud** via `npx nx connect` (free for solo developers). JS build times drop dramatically once remote cache warms — `NX_CLOUD_AUTH_TOKEN` in repo secrets is all that's needed.
 12. **Add Supabase migration validation** to catch type drift between schema and generated TypeScript types before it reaches `main`.
 13. **Create `CLAUDE.md`** at monorepo root with build commands for each platform. Claude Code needs this to understand how to run tasks in each app subdirectory during agentic CI runs.

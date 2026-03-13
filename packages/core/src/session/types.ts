@@ -1,8 +1,4 @@
-import type {
-  AbandonmentReason,
-  DistractionType,
-  FocusQuality,
-} from '@pomofocus/types';
+import type { AbandonmentReason, DistractionType, FocusQuality } from '@pomofocus/types';
 
 /** Pre-persistence session shape (domain layer, camelCase). */
 export type SessionData = {

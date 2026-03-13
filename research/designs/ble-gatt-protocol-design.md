@@ -10,12 +10,14 @@
 The PomoFocus BLE device (nRF52840, ADR-010) communicates exclusively via BLE with phone, Mac, or web as the central. The device runs a timer, displays goals, stores sessions offline, and syncs when connected. This design specifies the complete GATT protocol: service/characteristic definitions, Protobuf message schemas, MTU-adaptive chunking for bulk transfer, and the connection sync state machine.
 
 The protocol must handle two distinct patterns:
+
 1. **Real-time control** — timer state changes, goal selection (tiny payloads, instant delivery, while user interacts)
 2. **Bulk sync** — outbox drain of 0-2,500 buffered sessions (~100 bytes each) when BLE reconnects after hours/days offline
 
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Define complete GATT service and characteristic specifications implementable in firmware
 - Specify Protobuf message schemas for all BLE data transfer
 - Design a reliable bulk-transfer protocol for session sync with adaptive MTU
@@ -23,6 +25,7 @@ The protocol must handle two distinct patterns:
 - Ensure protocol works across iOS, Android, macOS, and Web Bluetooth with their different MTU behaviors
 
 **Non-Goals:**
+
 - BLE client library choices (react-native-ble-plx, CoreBluetooth, Web Bluetooth API selection — separate ADR)
 - DFU protocol details (Nordic's standard DFU is used as-is)
 - Firmware implementation details (build toolchain, memory layout — separate ADR)
@@ -45,20 +48,20 @@ And {XXXX} is the service/characteristic identifier
 
 **Actual UUIDs (128-bit):**
 
-| Entity | UUID |
-|--------|------|
-| **Timer Service** | `504D4643-0001-CAFE-FACE-DEAD00000000` |
-| Timer State characteristic | `504D4643-0101-CAFE-FACE-DEAD00000000` |
-| Timer Command characteristic | `504D4643-0102-CAFE-FACE-DEAD00000000` |
-| **Goal Service** | `504D4643-0002-CAFE-FACE-DEAD00000000` |
-| Goal List characteristic | `504D4643-0201-CAFE-FACE-DEAD00000000` |
-| Selected Goal characteristic | `504D4643-0202-CAFE-FACE-DEAD00000000` |
-| **Session Sync Service** | `504D4643-0003-CAFE-FACE-DEAD00000000` |
-| Sync Status characteristic | `504D4643-0301-CAFE-FACE-DEAD00000000` |
+| Entity                                | UUID                                   |
+| ------------------------------------- | -------------------------------------- |
+| **Timer Service**                     | `504D4643-0001-CAFE-FACE-DEAD00000000` |
+| Timer State characteristic            | `504D4643-0101-CAFE-FACE-DEAD00000000` |
+| Timer Command characteristic          | `504D4643-0102-CAFE-FACE-DEAD00000000` |
+| **Goal Service**                      | `504D4643-0002-CAFE-FACE-DEAD00000000` |
+| Goal List characteristic              | `504D4643-0201-CAFE-FACE-DEAD00000000` |
+| Selected Goal characteristic          | `504D4643-0202-CAFE-FACE-DEAD00000000` |
+| **Session Sync Service**              | `504D4643-0003-CAFE-FACE-DEAD00000000` |
+| Sync Status characteristic            | `504D4643-0301-CAFE-FACE-DEAD00000000` |
 | Session Data characteristic (bulk TX) | `504D4643-0302-CAFE-FACE-DEAD00000000` |
 | Sync Control characteristic (bulk RX) | `504D4643-0303-CAFE-FACE-DEAD00000000` |
-| **Device Info Service** | `0x180A` (BLE SIG standard) |
-| **DFU Service** | Nordic standard UUID |
+| **Device Info Service**               | `0x180A` (BLE SIG standard)            |
+| **DFU Service**                       | Nordic standard UUID                   |
 
 **UUID naming convention:** First two hex digits of the characteristic suffix match the service (`01xx` for Timer, `02xx` for Goal, `03xx` for Session Sync). This makes debugging with nRF Connect easy — you can tell which service a characteristic belongs to by its UUID.
 
@@ -70,12 +73,12 @@ Controls the timer state machine (ADR-004) in real-time over BLE.
 
 #### Timer State Characteristic (`0101`)
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0101-CAFE-FACE-DEAD00000000` |
-| Properties | Read, Notify |
-| Security | Encrypted (requires bonding) |
-| Max size | ~30 bytes |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| UUID       | `504D4643-0101-CAFE-FACE-DEAD00000000` |
+| Properties | Read, Notify                           |
+| Security   | Encrypted (requires bonding)           |
+| Max size   | ~30 bytes                              |
 
 **Protobuf message:**
 
@@ -102,18 +105,19 @@ enum TimerPhase {
 ```
 
 **Behavior:**
+
 - Device sends notification on every state transition (start, pause, resume, break, complete, abandon)
 - Device does NOT send per-second countdown notifications (wasteful; phone calculates from `remaining_seconds` + local clock)
 - Phone reads on connection to get current state
 
 #### Timer Command Characteristic (`0102`)
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0102-CAFE-FACE-DEAD00000000` |
-| Properties | Write |
-| Security | Encrypted (requires bonding) |
-| Max size | ~20 bytes |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| UUID       | `504D4643-0102-CAFE-FACE-DEAD00000000` |
+| Properties | Write                                  |
+| Security   | Encrypted (requires bonding)           |
+| Max size   | ~20 bytes                              |
 
 **Protobuf message:**
 
@@ -135,6 +139,7 @@ enum TimerAction {
 ```
 
 **Behavior:**
+
 - Phone writes a command; device processes via `transition(state, event) → newState`
 - Device responds with a Timer State notification (confirmation)
 - Invalid commands (e.g., PAUSE when idle) are silently ignored (device state machine rejects them)
@@ -147,12 +152,12 @@ Manages the goal list displayed on the device's e-ink screen.
 
 #### Goal List Characteristic (`0201`)
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0201-CAFE-FACE-DEAD00000000` |
-| Properties | Write |
-| Security | Encrypted (requires bonding) |
-| Max size | up to MTU × N chunks (uses same chunking as Session Sync for large goal lists) |
+| Property   | Value                                                                          |
+| ---------- | ------------------------------------------------------------------------------ |
+| UUID       | `504D4643-0201-CAFE-FACE-DEAD00000000`                                         |
+| Properties | Write                                                                          |
+| Security   | Encrypted (requires bonding)                                                   |
+| Max size   | up to MTU × N chunks (uses same chunking as Session Sync for large goal lists) |
 
 **Protobuf message:**
 
@@ -176,6 +181,7 @@ enum GoalType {
 ```
 
 **Behavior:**
+
 - Phone writes the full goal list on every sync (replace, not delta)
 - If the goal list exceeds MTU, use the chunked transfer protocol (same as Session Sync but phone→device direction)
 - Device caches in flash; survives power cycles
@@ -183,12 +189,12 @@ enum GoalType {
 
 #### Selected Goal Characteristic (`0202`)
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0202-CAFE-FACE-DEAD00000000` |
-| Properties | Read, Notify |
-| Security | Encrypted (requires bonding) |
-| Max size | 16 bytes |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| UUID       | `504D4643-0202-CAFE-FACE-DEAD00000000` |
+| Properties | Read, Notify                           |
+| Security   | Encrypted (requires bonding)           |
+| Max size   | 16 bytes                               |
 
 **Protobuf message:**
 
@@ -199,6 +205,7 @@ message SelectedGoal {
 ```
 
 **Behavior:**
+
 - Device notifies when user selects a goal via rotary encoder
 - Phone reads on connection to check current selection
 
@@ -210,12 +217,12 @@ Handles bulk transfer of buffered sessions from device to phone (outbox drain pe
 
 #### Sync Status Characteristic (`0301`)
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0301-CAFE-FACE-DEAD00000000` |
-| Properties | Read, Notify |
-| Security | Encrypted (requires bonding) |
-| Max size | ~20 bytes |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| UUID       | `504D4643-0301-CAFE-FACE-DEAD00000000` |
+| Properties | Read, Notify                           |
+| Security   | Encrypted (requires bonding)           |
+| Max size   | ~20 bytes                              |
 
 **Protobuf message:**
 
@@ -237,18 +244,19 @@ enum SyncState {
 ```
 
 **Behavior:**
+
 - Phone reads on connection to determine if sync is needed
 - Device notifies on state changes during sync process
 - `pending_sessions` lets the phone show a progress indicator
 
 #### Session Data Characteristic (`0302`) — Bulk TX
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0302-CAFE-FACE-DEAD00000000` |
-| Properties | Notify |
-| Security | Encrypted (requires bonding) |
-| Max size | MTU - 3 bytes per notification |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| UUID       | `504D4643-0302-CAFE-FACE-DEAD00000000` |
+| Properties | Notify                                 |
+| Security   | Encrypted (requires bonding)           |
+| Max size   | MTU - 3 bytes per notification         |
 
 **Protobuf message (per session):**
 
@@ -321,6 +329,7 @@ Device                              Phone
 ```
 
 **Reliability:**
+
 - Phone tracks received sequence numbers per session
 - If a chunk is missing (gap in sequence), phone writes `NACK(session_index)` to Sync Control — device retransmits from that session
 - If connection drops mid-transfer, phone writes `START` again on reconnect — device resumes from the last ACK'd session
@@ -328,12 +337,12 @@ Device                              Phone
 
 #### Sync Control Characteristic (`0303`) — Bulk RX
 
-| Property | Value |
-|----------|-------|
-| UUID | `504D4643-0303-CAFE-FACE-DEAD00000000` |
-| Properties | Write |
-| Security | Encrypted (requires bonding) |
-| Max size | ~20 bytes |
+| Property   | Value                                  |
+| ---------- | -------------------------------------- |
+| UUID       | `504D4643-0303-CAFE-FACE-DEAD00000000` |
+| Properties | Write                                  |
+| Security   | Encrypted (requires bonding)           |
+| Max size   | ~20 bytes                              |
 
 **Protobuf message:**
 
@@ -354,6 +363,7 @@ enum SyncCommand {
 ```
 
 **Behavior:**
+
 - `START`: device begins sending sessions from oldest un-synced
 - `ACK(N)`: phone confirms N sessions received; device can mark them for overwrite
 - `NACK(N)`: phone requests retransmit starting from session N
@@ -366,12 +376,12 @@ enum SyncCommand {
 
 Standard BLE SIG service. No custom implementation needed.
 
-| Characteristic | UUID (SIG) | Properties | Value |
-|----------------|------------|------------|-------|
-| Manufacturer Name | `0x2A29` | Read | "PomoFocus" |
-| Model Number | `0x2A24` | Read | "PF-001" |
-| Firmware Revision | `0x2A26` | Read | Semantic version (e.g., "1.0.0") |
-| Battery Level | `0x2A19` (Battery Service `0x180F`) | Read, Notify | 0-100 (percentage) |
+| Characteristic    | UUID (SIG)                          | Properties   | Value                            |
+| ----------------- | ----------------------------------- | ------------ | -------------------------------- |
+| Manufacturer Name | `0x2A29`                            | Read         | "PomoFocus"                      |
+| Model Number      | `0x2A24`                            | Read         | "PF-001"                         |
+| Firmware Revision | `0x2A26`                            | Read         | Semantic version (e.g., "1.0.0") |
+| Battery Level     | `0x2A19` (Battery Service `0x180F`) | Read, Notify | 0-100 (percentage)               |
 
 **Note:** Battery Level is technically its own service (`0x180F`) per BLE SIG. Both Device Info and Battery are standard services with built-in support in most BLE stacks.
 
@@ -483,6 +493,7 @@ When a central (phone/Mac/web) connects to the device, this handshake runs:
 ```
 
 **Reconnection behavior:**
+
 - After disconnection, device resumes BLE advertising
 - On reconnect, the full handshake runs again (Steps 1-6)
 - Session sync resumes from the last ACK'd position (not from the beginning)
@@ -619,6 +630,7 @@ message SyncControl {
 ```
 
 **Code generation targets:**
+
 - TypeScript: `npx protoc --ts_out` → `packages/ble-protocol/generated/ts/`
 - Swift: `protoc --swift_out` → `native/apple/shared/Generated/`
 - C++: Nanopb `nanopb_generator` → `firmware/device/generated/` (ADR-015; full `protoc --cpp_out` rejected — too large for nRF52840 flash)
@@ -628,9 +640,11 @@ message SyncControl {
 ## Alternatives Considered
 
 ### Multi-Service Custom GATT (without bulk transfer)
+
 Rejected because session sync (50+ records × ~100 bytes) doesn't fit naturally into a simple notify characteristic. You'd end up inventing the chunking protocol anyway — bolted onto a structure that wasn't designed for it. Simpler on paper but harder in practice.
 
 ### NUS-Style Stream
+
 Rejected because timer commands could be queued behind session data in a FIFO byte stream. The PomoFocus device needs instant timer control (user pauses from phone) independent of bulk sync. Nordic explicitly states NUS is not meant for production use. The opaque byte stream loses the semantic clarity that makes debugging with nRF Connect easy.
 
 ## Cross-Cutting Concerns

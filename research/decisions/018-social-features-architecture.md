@@ -29,35 +29,35 @@ Chosen option: **"Resource-oriented REST endpoints with screen-scoped polling"**
 
 ### API Endpoints
 
-| Method | Endpoint | Purpose | Polling |
-|--------|----------|---------|---------|
-| `GET` | `/v1/friends` | Friend list with display info | None — pull-to-refresh |
-| `GET` | `/v1/friends/focusing` | Library Mode: who's in an active session | Adaptive: 30s → 60s after 2 min on screen |
-| `GET` | `/v1/feed/today` | Quiet Feed: who completed a session today | None — pull-to-refresh, `staleTime: 5min` |
-| `GET` | `/v1/friend-requests` | Pending incoming friend requests | On app open, then pull-to-refresh |
-| `POST` | `/v1/friend-requests` | Send friend request (by username) | N/A |
-| `POST` | `/v1/friend-requests/:id/accept` | Accept a friend request | N/A |
-| `DELETE` | `/v1/friend-requests/:id` | Decline a friend request | N/A |
-| `DELETE` | `/v1/friends/:id` | Unfriend | N/A |
-| `GET` | `/v1/taps` | Received encouragement taps (last 24h) | On app open, then pull-to-refresh |
-| `POST` | `/v1/taps` | Send encouragement tap | N/A |
-| `DELETE` | `/v1/taps/:id` | Remove (un-tap) encouragement | N/A |
-| `GET` | `/v1/invite/:username` | Resolve invite link to profile | N/A |
+| Method   | Endpoint                         | Purpose                                   | Polling                                   |
+| -------- | -------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| `GET`    | `/v1/friends`                    | Friend list with display info             | None — pull-to-refresh                    |
+| `GET`    | `/v1/friends/focusing`           | Library Mode: who's in an active session  | Adaptive: 30s → 60s after 2 min on screen |
+| `GET`    | `/v1/feed/today`                 | Quiet Feed: who completed a session today | None — pull-to-refresh, `staleTime: 5min` |
+| `GET`    | `/v1/friend-requests`            | Pending incoming friend requests          | On app open, then pull-to-refresh         |
+| `POST`   | `/v1/friend-requests`            | Send friend request (by username)         | N/A                                       |
+| `POST`   | `/v1/friend-requests/:id/accept` | Accept a friend request                   | N/A                                       |
+| `DELETE` | `/v1/friend-requests/:id`        | Decline a friend request                  | N/A                                       |
+| `DELETE` | `/v1/friends/:id`                | Unfriend                                  | N/A                                       |
+| `GET`    | `/v1/taps`                       | Received encouragement taps (last 24h)    | On app open, then pull-to-refresh         |
+| `POST`   | `/v1/taps`                       | Send encouragement tap                    | N/A                                       |
+| `DELETE` | `/v1/taps/:id`                   | Remove (un-tap) encouragement             | N/A                                       |
+| `GET`    | `/v1/invite/:username`           | Resolve invite link to profile            | N/A                                       |
 
 ### Key Architecture Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Polling model | **Screen-scoped** (not global) | Only Library Mode polls, only while user is on that screen. All other social data fetched on navigate + pull-to-refresh. Eliminates background DB load concern. |
-| Library Mode polling | **Adaptive: 30s → 60s** | 30s for first 2 minutes on screen, then 60s. A 25-minute session tolerates 60s staleness easily. Halves request volume for sustained viewing. |
-| Presence mechanism | **Sessions table** (`ended_at IS NULL`) | No separate presence system. An active session IS the presence indicator. Client computes time remaining from `started_at + work_duration`. |
-| Time remaining | **Client-computed** | Server returns `started_at` and `work_duration`. Client does `remaining = work_duration - (now - started_at)`. Updates locally every 60s. No server call per tick. Pauses ignored for v1 (simple approach). |
-| Session expiry | **Fixed 4-hour safety net** | If app crashes, `ended_at` stays NULL. Queries add `started_at > NOW() - INTERVAL '4 hours'` to filter stale sessions (accommodates sessions up to 2 hours with 2x margin). Application code in `core/` expires sessions after 2x configured duration. |
-| Privacy enforcement | **Direct JOINs in API** | API queries include friendship JOINs. DB functions (`is_friend_focusing`, `did_friend_focus_today`) repurposed as integration test helpers to verify friendship checks. |
-| Encouragement taps | **Toggle-style, max 3/day/pair** | Click to send, click again to un-send. Max 3 state changes per sender per recipient per day. Prevents spam while allowing authentic encouragement. |
-| Invite links | **Stateless URL** (`pomofocus.app/invite/USERNAME`) | No tokens, no expiry, no DB storage for the link. Resolving = username lookup. Deep link to app or web profile page. |
-| Quiet Feed | **Fetch-once + pull-to-refresh** | Data changes at most every 25 minutes (session length). No polling needed. 5-minute staleTime in TanStack Query. |
-| Friend limit | **100 max** | PomoFocus is not a social network. 100 friends is generous for a productivity app. Enforced at API level on friend request acceptance. |
+| Decision             | Choice                                              | Why                                                                                                                                                                                                                                                    |
+| -------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Polling model        | **Screen-scoped** (not global)                      | Only Library Mode polls, only while user is on that screen. All other social data fetched on navigate + pull-to-refresh. Eliminates background DB load concern.                                                                                        |
+| Library Mode polling | **Adaptive: 30s → 60s**                             | 30s for first 2 minutes on screen, then 60s. A 25-minute session tolerates 60s staleness easily. Halves request volume for sustained viewing.                                                                                                          |
+| Presence mechanism   | **Sessions table** (`ended_at IS NULL`)             | No separate presence system. An active session IS the presence indicator. Client computes time remaining from `started_at + work_duration`.                                                                                                            |
+| Time remaining       | **Client-computed**                                 | Server returns `started_at` and `work_duration`. Client does `remaining = work_duration - (now - started_at)`. Updates locally every 60s. No server call per tick. Pauses ignored for v1 (simple approach).                                            |
+| Session expiry       | **Fixed 4-hour safety net**                         | If app crashes, `ended_at` stays NULL. Queries add `started_at > NOW() - INTERVAL '4 hours'` to filter stale sessions (accommodates sessions up to 2 hours with 2x margin). Application code in `core/` expires sessions after 2x configured duration. |
+| Privacy enforcement  | **Direct JOINs in API**                             | API queries include friendship JOINs. DB functions (`is_friend_focusing`, `did_friend_focus_today`) repurposed as integration test helpers to verify friendship checks.                                                                                |
+| Encouragement taps   | **Toggle-style, max 3/day/pair**                    | Click to send, click again to un-send. Max 3 state changes per sender per recipient per day. Prevents spam while allowing authentic encouragement.                                                                                                     |
+| Invite links         | **Stateless URL** (`pomofocus.app/invite/USERNAME`) | No tokens, no expiry, no DB storage for the link. Resolving = username lookup. Deep link to app or web profile page.                                                                                                                                   |
+| Quiet Feed           | **Fetch-once + pull-to-refresh**                    | Data changes at most every 25 minutes (session length). No polling needed. 5-minute staleTime in TanStack Query.                                                                                                                                       |
+| Friend limit         | **100 max**                                         | PomoFocus is not a social network. 100 friends is generous for a productivity app. Enforced at API level on friend request acceptance.                                                                                                                 |
 
 ### Consequences
 

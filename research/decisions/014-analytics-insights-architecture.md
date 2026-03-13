@@ -34,11 +34,13 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 **No composite Focus Score.** Instead, individual component metrics with trend arrows. Research basis: composite scores with arbitrary weights undermine autonomy (SDT) and create extrinsic motivation that erodes when novelty wears off. Component metrics let users decide what matters to them.
 
 **Tier 1 — Glanceable (device + app home screen):**
+
 - Today's goal progress — "Study calculus — 1/3" (competence)
 - Weekly continuity — dots for each day this week with sessions (competence)
 - Current streak — consecutive days with sessions (competence)
 
 **Tier 2 — Weekly insights (app only):**
+
 - Session completion rate — finished / (total − had_to_stop); returns 0 when denominator is 0
 - Focus quality distribution — % locked_in vs decent vs struggled
 - Total focus time — sum of session durations
@@ -46,6 +48,7 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 - Per-goal breakdown — time and sessions per process goal
 
 **Tier 3 — Monthly trends (app only):**
+
 - Consistency trend — % of days with sessions, this month vs last
 - Completion trend — rate change month over month
 - Focus quality trend — % locked_in change month over month
@@ -69,18 +72,21 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 ## Pros and Cons of the Options
 
 ### Compute on demand in CF Worker (inline)
+
 - Good, because simplest possible architecture — zero packages, zero infrastructure
 - Good, because always up-to-date, no stale caches
 - Bad, because formulas are locked inside API route handlers, not reusable or independently testable
 - Bad, because duplicating formulas for offline mobile analytics would require extraction later anyway
 
 ### Pre-compute via CF Cron Trigger
+
 - Good, because analytics reads are instant (pre-computed values in a table)
 - Good, because BLE device sync payload can pull from pre-computed table
 - Bad, because new table + cron job + failure mode for v1 when per-user queries are already milliseconds
 - Bad, because data is stale up to 24 hours (Source: ADR-008 confirms per-user queries over ~365 rows run in milliseconds — pre-computation is premature optimization)
 
 ### Compute client-side in packages/analytics/
+
 - Good, because formulas are maximally portable — same code runs in tests, browser, potentially firmware
 - Good, because reduces API surface area (one "get sessions" endpoint)
 - Bad, because sends more data over the wire (all sessions vs pre-computed results)
@@ -88,6 +94,7 @@ Chosen option: **"Hybrid — formulas in `packages/analytics/`, executed server-
 - Bad, because battery impact on mobile and Watch from local computation
 
 ### Hybrid — formulas in packages/analytics/, executed server-side
+
 - Good, because single source of truth for formulas with unit tests
 - Good, because server-side execution means lightweight client responses
 - Good, because aligns with ADR-001 monorepo structure (packages/analytics/ already defined)

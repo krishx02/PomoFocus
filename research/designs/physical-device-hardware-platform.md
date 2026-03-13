@@ -14,6 +14,7 @@ The project lead has zero hardware experience. The design must be buildable by a
 ## Goals & Non-Goals
 
 **Goals:**
+
 - Define the complete hardware platform: MCU, display, input, feedback, battery, connectivity
 - Achieve weeks-to-months of battery life on a single charge
 - Create a device that aligns with the PomoFocus design philosophy (10 principles)
@@ -23,6 +24,7 @@ The project lead has zero hardware experience. The design must be buildable by a
 - Support offline operation with outbox sync when BLE reconnects
 
 **Non-Goals:**
+
 - Custom PCB design (deferred to post-prototype)
 - Manufacturing feasibility, certifications (FCC/CE), or cost-at-scale analysis
 - WiFi connectivity (device syncs through phone; WiFi is unused)
@@ -81,16 +83,16 @@ The project lead has zero hardware experience. The design must be buildable by a
 
 The EN04 board handles display SPI internally via its 24-pin FPC connector (using D0, D1, D2, D3, D8, D10). This frees the remaining user-accessible GPIOs for peripherals:
 
-| Pin | Function | Notes |
-|-----|----------|-------|
-| D0-D3, D8, D10 | E-ink display (via EN04 FPC) | Managed by EN04 board — not user-wired |
-| D4 | Rotary encoder CLK | Interrupt-capable |
-| D5 | Rotary encoder DT | Interrupt-capable |
-| D6 | Rotary encoder SW (button) | Active low — enable internal pull-up (KY-040 SW pin has no on-module pull-up) |
-| D7 | Vibration motor | Output via 2N2222 NPN transistor + 1K base resistor + 1N4148 flyback diode |
-| D9 | LED | Output, PWM-capable for pulsing effect |
-| — | Battery voltage | Built-in ADC on VBAT pin (no GPIO needed) |
-| SMD pads | 9 extra GPIOs | Via 1.27mm castellations on nRF52840 Plus bottom — available for future expansion |
+| Pin            | Function                     | Notes                                                                             |
+| -------------- | ---------------------------- | --------------------------------------------------------------------------------- |
+| D0-D3, D8, D10 | E-ink display (via EN04 FPC) | Managed by EN04 board — not user-wired                                            |
+| D4             | Rotary encoder CLK           | Interrupt-capable                                                                 |
+| D5             | Rotary encoder DT            | Interrupt-capable                                                                 |
+| D6             | Rotary encoder SW (button)   | Active low — enable internal pull-up (KY-040 SW pin has no on-module pull-up)     |
+| D7             | Vibration motor              | Output via 2N2222 NPN transistor + 1K base resistor + 1N4148 flyback diode        |
+| D9             | LED                          | Output, PWM-capable for pulsing effect                                            |
+| —              | Battery voltage              | Built-in ADC on VBAT pin (no GPIO needed)                                         |
+| SMD pads       | 9 extra GPIOs                | Via 1.27mm castellations on nRF52840 Plus bottom — available for future expansion |
 
 **5 user GPIOs used out of 5 available through-hole pins** (after EN04 claims 6 for display). 9 additional GPIOs accessible via SMD soldering if needed. The EN04 also provides 3 built-in user buttons (GPIO2, GPIO3, GPIO5) for prototype input before the rotary encoder is wired.
 
@@ -98,11 +100,11 @@ The EN04 board handles display SPI internally via its 24-pin FPC connector (usin
 
 The 4.26" e-ink display (GDEQ0426T82, SSD1677 driver, 800x480, 219 PPI) supports three refresh modes:
 
-| Mode | Speed | Visual Effect | Power |
-|------|-------|---------------|-------|
-| Full refresh | ~1.6-3.5s | Black-white-black flash, clears all ghosting | Highest |
-| Fast refresh | ~1.5s | Single flash, minor ghosting | Medium |
-| Partial refresh | ~0.42-0.6s | No flash, no flicker, ghosting accumulates | Lowest |
+| Mode            | Speed      | Visual Effect                                | Power   |
+| --------------- | ---------- | -------------------------------------------- | ------- |
+| Full refresh    | ~1.6-3.5s  | Black-white-black flash, clears all ghosting | Highest |
+| Fast refresh    | ~1.5s      | Single flash, minor ghosting                 | Medium  |
+| Partial refresh | ~0.42-0.6s | No flash, no flicker, ghosting accumulates   | Lowest  |
 
 **Hybrid refresh strategy (design-philosophy-aligned):**
 
@@ -137,6 +139,7 @@ Ghosting management:
 **Pairing:** Passkey display. Device shows 6-digit code on e-ink during pairing. User enters on phone. One-time setup. BLE bonding stores the key — subsequent connections are automatic.
 
 **GATT profile** (detailed in [ADR-013](../decisions/013-ble-gatt-protocol-design.md) and [Design: BLE GATT Protocol](./ble-gatt-protocol-design.md)):
+
 - Timer Service: read timer state, write timer commands (start/pause/skip/abandon)
 - Goal Service: write goal list (phone → device), read selected goal
 - Session Service: notify completed sessions (device → phone), read session log
@@ -162,6 +165,7 @@ nRF52840 Internal Flash (1MB total)
 ```
 
 **Sync protocol:**
+
 1. Phone connects via BLE
 2. Phone sends current goal list → device caches in flash
 3. Phone sends timer config (durations, reflection preference) → device caches
@@ -170,6 +174,7 @@ nRF52840 Internal Flash (1MB total)
 6. Sessions marked as uploaded are eligible for overwrite in circular buffer
 
 **Offline behavior:** When phone is not connected, the device operates fully standalone:
+
 - Timer runs using `millis()` (ADR-004 timer driver pattern)
 - Sessions are stored in the outbox
 - Goals are displayed from the local cache
@@ -177,16 +182,16 @@ nRF52840 Internal Flash (1MB total)
 
 ### Power Budget
 
-| State | Current Draw | Duration/Day | Energy/Day |
-|-------|-------------|--------------|------------|
-| Deep sleep (idle, screen static) | ~5 μA | 20 hours | 0.1 mAh |
-| BLE advertising (not connected) | ~22 μA | 2 hours | 0.044 mAh |
-| Active Pomodoro (BLE connected, processing) | ~5 mA | 1.5 hours | 7.5 mAh |
-| E-ink partial refresh (~1/min during active) | ~10 mA for 0.5s | 36 refreshes | 0.05 mAh |
-| E-ink full refresh (~1/5min during active) | ~25 mA for 3s | 18 refreshes | 0.375 mAh |
-| Vibration motor (session completion) | ~100 mA for 1s | 6 sessions | 0.17 mAh |
-| LED pulse (session completion) | ~5 mA for 5s | 6 sessions | 0.008 mAh |
-| **Total** | | | **~8.1 mAh/day** |
+| State                                        | Current Draw    | Duration/Day | Energy/Day       |
+| -------------------------------------------- | --------------- | ------------ | ---------------- |
+| Deep sleep (idle, screen static)             | ~5 μA           | 20 hours     | 0.1 mAh          |
+| BLE advertising (not connected)              | ~22 μA          | 2 hours      | 0.044 mAh        |
+| Active Pomodoro (BLE connected, processing)  | ~5 mA           | 1.5 hours    | 7.5 mAh          |
+| E-ink partial refresh (~1/min during active) | ~10 mA for 0.5s | 36 refreshes | 0.05 mAh         |
+| E-ink full refresh (~1/5min during active)   | ~25 mA for 3s   | 18 refreshes | 0.375 mAh        |
+| Vibration motor (session completion)         | ~100 mA for 1s  | 6 sessions   | 0.17 mAh         |
+| LED pulse (session completion)               | ~5 mA for 5s    | 6 sessions   | 0.008 mAh        |
+| **Total**                                    |                 |              | **~8.1 mAh/day** |
 
 **Estimated battery life:** 1200mAh ÷ 8.1 mAh/day ≈ **148 days** (theoretical). With real-world overhead (self-discharge, inefficiencies, temperature variation): **~8-10 weeks** conservatively.
 
@@ -239,6 +244,7 @@ Device States (firmware state machine):
 ```
 
 **Design philosophy alignment:**
+
 - **Without Thought (Fukasawa):** Rotate knob to browse goals, click to start. Your hand already knows.
 - **Emptiness (Hara):** The idle screen shows only the last goal and "click to start." Near-blank.
 - **Calm Technology:** During focus, the display updates once per minute. Peripheral. Glanceable.
@@ -284,6 +290,7 @@ firmware/device/
 ```
 
 **Key firmware patterns:**
+
 - Timer state machine is a direct C++ port of `packages/core/timer/` (ADR-004). Same states, same transitions, same types. Verified by comparing TypeScript and C++ outputs for the same input sequence.
 - Encoder input uses hardware interrupts for responsive rotation detection. Debouncing is handled in software with a 5ms threshold.
 - BLE server runs in the background. Connection/disconnection events trigger sync.
@@ -292,28 +299,28 @@ firmware/device/
 
 ### Prototyping Phases
 
-| Phase | Goal | Hardware | Deliverable |
-|-------|------|----------|-------------|
-| 1 | Blink + Hello | XIAO nRF52840 Plus + EN04 board | LED blinks, serial output works, Arduino IDE confirmed |
-| 2 | Display | + 4.26" e-ink via EN04 FPC | GxEPD2 renders text and timer mockup (800x480) |
-| 3 | Input | + rotary encoder | Navigate a goal list, select with click |
-| 4 | Timer | Software only | Full timer state machine running on device |
-| 5 | BLE | + phone app connection | Timer state synced to phone in real-time |
-| 6 | Feedback | + vibration motor + LED | Session completion notification |
-| 7 | Storage | Flash outbox | Offline session storage + sync on reconnect |
-| 8 | Power | Deep sleep optimization | Battery life measurement, sleep/wake tuning |
-| 9 | Enclosure | 3D-printed case | Physical form factor for desk use |
+| Phase | Goal          | Hardware                        | Deliverable                                            |
+| ----- | ------------- | ------------------------------- | ------------------------------------------------------ |
+| 1     | Blink + Hello | XIAO nRF52840 Plus + EN04 board | LED blinks, serial output works, Arduino IDE confirmed |
+| 2     | Display       | + 4.26" e-ink via EN04 FPC      | GxEPD2 renders text and timer mockup (800x480)         |
+| 3     | Input         | + rotary encoder                | Navigate a goal list, select with click                |
+| 4     | Timer         | Software only                   | Full timer state machine running on device             |
+| 5     | BLE           | + phone app connection          | Timer state synced to phone in real-time               |
+| 6     | Feedback      | + vibration motor + LED         | Session completion notification                        |
+| 7     | Storage       | Flash outbox                    | Offline session storage + sync on reconnect            |
+| 8     | Power         | Deep sleep optimization         | Battery life measurement, sleep/wake tuning            |
+| 9     | Enclosure     | 3D-printed case                 | Physical form factor for desk use                      |
 
 ### Prototype Shopping List (Verified)
 
-| # | Component | Source | Link | Price |
-|---|-----------|--------|------|-------|
-| 1 | EN04 Board (nRF52840 Plus built in) | Seeed Studio | [EN04 board only](https://www.seeedstudio.com/XIAO-ePaper-Display-Board-nRF52840-EN04-p-6589.html) | ~$10 |
-| 2 | 4.26" Mono ePaper Display (800x480, 24-pin FPC) | Seeed Studio | [4.26" Display](https://www.seeedstudio.com/4-26-Monochrome-SPI-ePaper-Display-p-6398.html) | ~$16 |
-| 3 | KY-040 Rotary Encoder (5-pack) | Amazon | [Cylewet 5-pack](https://www.amazon.com/Cylewet-Encoder-15%C3%9716-5-Arduino-CYT1062/dp/B06XQTHDRR) | ~$7 |
-| 4 | Coin Vibration Motor (20-pack) | Amazon | [tatoko 20-pack](https://www.amazon.com/tatoko-Vibration-Button-Type-Vibrating-Appliances/dp/B07Q1ZV4MJ) | ~$7 |
-| 5 | 1200mAh LiPo Battery (JST PH 2.0mm) | Amazon | [AKZYTUE 903048 1200mAh](https://www.amazon.com/AKZYTUE-1200mAh-Battery-Rechargeable-Connector/dp/B07TWHHCNK) | ~$7 |
-| 6 | Components Kit (breadboard, jumpers, LEDs, resistors, capacitors, transistors, diodes) | Amazon | [REXQualis Fun Kit](https://www.amazon.com/REXQualis-Electronics-tie-Points-Breadboard-Potentiometer/dp/B073ZC68QG) | ~$14 |
+| #   | Component                                                                              | Source       | Link                                                                                                                | Price |
+| --- | -------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------- | ----- |
+| 1   | EN04 Board (nRF52840 Plus built in)                                                    | Seeed Studio | [EN04 board only](https://www.seeedstudio.com/XIAO-ePaper-Display-Board-nRF52840-EN04-p-6589.html)                  | ~$10  |
+| 2   | 4.26" Mono ePaper Display (800x480, 24-pin FPC)                                        | Seeed Studio | [4.26" Display](https://www.seeedstudio.com/4-26-Monochrome-SPI-ePaper-Display-p-6398.html)                         | ~$16  |
+| 3   | KY-040 Rotary Encoder (5-pack)                                                         | Amazon       | [Cylewet 5-pack](https://www.amazon.com/Cylewet-Encoder-15%C3%9716-5-Arduino-CYT1062/dp/B06XQTHDRR)                 | ~$7   |
+| 4   | Coin Vibration Motor (20-pack)                                                         | Amazon       | [tatoko 20-pack](https://www.amazon.com/tatoko-Vibration-Button-Type-Vibrating-Appliances/dp/B07Q1ZV4MJ)            | ~$7   |
+| 5   | 1200mAh LiPo Battery (JST PH 2.0mm)                                                    | Amazon       | [AKZYTUE 903048 1200mAh](https://www.amazon.com/AKZYTUE-1200mAh-Battery-Rechargeable-Connector/dp/B07TWHHCNK)       | ~$7   |
+| 6   | Components Kit (breadboard, jumpers, LEDs, resistors, capacitors, transistors, diodes) | Amazon       | [REXQualis Fun Kit](https://www.amazon.com/REXQualis-Electronics-tie-Points-Breadboard-Potentiometer/dp/B073ZC68QG) | ~$14  |
 
 **Total: ~$61** (per-unit device cost: ~$38; rest is multi-packs and prototyping supplies). **All parts ordered 2026-03-08.**
 
@@ -326,9 +333,11 @@ firmware/device/
 ## Alternatives Considered
 
 ### ESP32-S3 (LILYGO T5 E-Paper)
+
 Rejected because BLE power consumption is 6-16x higher than nRF52840, WiFi capability is unused (all sync goes through phone), and the larger form factor conflicts with the compact desk companion vision. The LILYGO T5's pre-integrated display and larger community were attractive, but the power penalty directly contradicts the #1 design criterion (battery life). Reference: [Seeed Studio BLE advertising benchmark](https://forum.seeedstudio.com/t/ble-advertising-current-comparison-esp32c3-c6-s3-mg24-nrf52840/287847).
 
 ### ESP32-C6 (Seeed XIAO)
+
 Rejected because, while its deep sleep current (~9.5 μA) approaches the nRF52840, its active BLE still draws significantly more. The ESP32-C6 is the newest chip of the three — fewer tutorials than either ESP32-S3 or nRF52840. Its WiFi 6 and Thread support add unused complexity. It occupies a middle ground that doesn't win on any of the stated criteria.
 
 ## Cross-Cutting Concerns

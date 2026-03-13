@@ -25,7 +25,12 @@ export type QueueItemState =
 
 /** Discriminated union for outbox queue state machine events. */
 export type SyncEvent =
-  | { readonly type: 'ENQUEUE'; readonly entryId: string; readonly entityType: SyncableEntityType; readonly entityId: string }
+  | {
+      readonly type: 'ENQUEUE';
+      readonly entryId: string;
+      readonly entityType: SyncableEntityType;
+      readonly entityId: string;
+    }
   | { readonly type: 'UPLOAD_START'; readonly entryId: string }
   | { readonly type: 'UPLOAD_SUCCESS'; readonly entryId: string }
   | { readonly type: 'UPLOAD_FAILURE'; readonly entryId: string; readonly errorMessage: string }

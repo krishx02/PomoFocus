@@ -33,20 +33,20 @@ Chosen option: **"Hono on Cloudflare Workers (REST + OpenAPI)"**, because it pro
 
 ### Key Architecture Decisions
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Runtime | Cloudflare Workers | Best cold starts (<10ms), cheapest at scale ($0.30/M requests, zero egress), 300+ edge locations |
-| Framework | Hono | Web Standards-based, runs on any JS runtime, first-class OpenAPI support, officially recommended by both Cloudflare and Supabase |
-| API style | REST + OpenAPI 3.1 | Language-agnostic (serves TypeScript + Swift clients), generates SDKs, caching-friendly, universally understood |
-| Schema validation | Zod via `@hono/zod-openapi` | Single source of truth: Zod schemas validate requests AND generate OpenAPI spec |
-| TypeScript client generation | `openapi-typescript` + `openapi-fetch` | Type-safe fetch client generated from OpenAPI spec; used by web, mobile, VS Code, MCP |
-| Swift client generation | Apple `swift-openapi-generator` | Async/await Swift client generated from same OpenAPI spec; used by macOS menu bar, possibly watchOS |
-| Auth flow (login/signup) | Direct Supabase Auth SDK | Clients call Supabase Auth directly for login/signup/OAuth. API is not involved in the auth flow — it only validates and forwards the resulting JWT on data requests. |
-| Auth forwarding | Forward user's Supabase JWT | API validates JWT signature, then creates Supabase client with user's token — RLS applies as if client talked directly to Supabase |
-| Auth for admin ops | `service_role` key (server-side only) | Used only for admin/system operations (analytics aggregation, cleanup); never for user-scoped queries |
-| Rate limiting | Cloudflare built-in or custom middleware | Protects Supabase from abuse; configurable per-endpoint |
-| App location in monorepo | `apps/api/` | Hono API lives alongside other apps; consumes `packages/core/` for business logic |
-| Auth token management (clients) | Shared auth interceptors (TS + Swift) | TypeScript: middleware in `data-access/` wrapping `openapi-fetch` client. Swift: `ClientMiddleware` from `swift-openapi-runtime`. Two modules total, not per-platform. |
+| Decision                        | Choice                                   | Why                                                                                                                                                                    |
+| ------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime                         | Cloudflare Workers                       | Best cold starts (<10ms), cheapest at scale ($0.30/M requests, zero egress), 300+ edge locations                                                                       |
+| Framework                       | Hono                                     | Web Standards-based, runs on any JS runtime, first-class OpenAPI support, officially recommended by both Cloudflare and Supabase                                       |
+| API style                       | REST + OpenAPI 3.1                       | Language-agnostic (serves TypeScript + Swift clients), generates SDKs, caching-friendly, universally understood                                                        |
+| Schema validation               | Zod via `@hono/zod-openapi`              | Single source of truth: Zod schemas validate requests AND generate OpenAPI spec                                                                                        |
+| TypeScript client generation    | `openapi-typescript` + `openapi-fetch`   | Type-safe fetch client generated from OpenAPI spec; used by web, mobile, VS Code, MCP                                                                                  |
+| Swift client generation         | Apple `swift-openapi-generator`          | Async/await Swift client generated from same OpenAPI spec; used by macOS menu bar, possibly watchOS                                                                    |
+| Auth flow (login/signup)        | Direct Supabase Auth SDK                 | Clients call Supabase Auth directly for login/signup/OAuth. API is not involved in the auth flow — it only validates and forwards the resulting JWT on data requests.  |
+| Auth forwarding                 | Forward user's Supabase JWT              | API validates JWT signature, then creates Supabase client with user's token — RLS applies as if client talked directly to Supabase                                     |
+| Auth for admin ops              | `service_role` key (server-side only)    | Used only for admin/system operations (analytics aggregation, cleanup); never for user-scoped queries                                                                  |
+| Rate limiting                   | Cloudflare built-in or custom middleware | Protects Supabase from abuse; configurable per-endpoint                                                                                                                |
+| App location in monorepo        | `apps/api/`                              | Hono API lives alongside other apps; consumes `packages/core/` for business logic                                                                                      |
+| Auth token management (clients) | Shared auth interceptors (TS + Swift)    | TypeScript: middleware in `data-access/` wrapping `openapi-fetch` client. Swift: `ClientMiddleware` from `swift-openapi-runtime`. Two modules total, not per-platform. |
 
 ### Consequences
 

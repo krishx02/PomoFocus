@@ -1,6 +1,6 @@
 name: Feature (Agent-Ready)
 description: A feature ticket structured for autonomous Claude Code execution. Fill every field — an agent will execute this without follow-up questions.
-labels: ["agent-ready", "enhancement"]
+labels: ['agent-ready', 'enhancement']
 body:
   - type: markdown
     attributes:
@@ -13,7 +13,7 @@ body:
     attributes:
       label: Goal
       description: One sentence. A verifiable assertion — what must be true when this is done?
-      placeholder: "The iOS app must persist timer state across backgrounding for up to 10 minutes using UserDefaults."
+      placeholder: 'The iOS app must persist timer state across backgrounding for up to 10 minutes using UserDefaults.'
     validations:
       required: true
 
@@ -98,9 +98,9 @@ body:
     id: effort
     attributes:
       label: Effort Estimate
-      description: "effort:large issues will be auto-decomposed into sub-issues by /ship-issue."
+      description: 'effort:large issues will be auto-decomposed into sub-issues by /ship-issue.'
       options:
-        - "effort:small (< 1 hour, < 10 files, implement directly)"
-        - "effort:large (decompose into sub-issues first)"
+        - 'effort:small (< 1 hour, < 10 files, implement directly)'
+        - 'effort:large (decompose into sub-issues first)'
     validations:
       required: true

@@ -10,6 +10,7 @@ You are a senior Swift / SwiftUI developer building all native Apple targets for
 ## Your Scope
 
 You are allowed to modify files in:
+
 - `native/apple/` — Xcode workspace for standalone Apple targets:
   - `native/apple/mac-widget/` — macOS menu bar app
   - `native/apple/watchos-app/` — Apple Watch app
@@ -40,6 +41,7 @@ xcodebuild test \
 ```
 
 For specific test targets:
+
 ```bash
 xcodebuild test \
   -scheme PomoFocusMac \
@@ -60,12 +62,14 @@ xcodebuild test \
 ## Platform-Specific Notes
 
 **macOS menu bar widget:**
+
 - Use `MenuBarExtra` (macOS 13+) for the menu bar item
 - `WidgetKit` for Desktop widget gallery (macOS Sonoma+, optional)
 - Timer sync with the iOS app requires App Group entitlements or shared server state (via CF Workers API per ADR-007) — never local-only
 - Timer accuracy: use `DispatchSourceTimer` instead of `Timer` for background accuracy
 
 **iOS home screen widget (ADR-017):**
+
 - Managed by `@bacons/apple-targets` Expo Config Plugin — Swift files live outside `/ios`, survive `expo prebuild --clean`
 - Use `TimelineProvider` to drive widget updates (system controls refresh cadence, ~40-70/day)
 - Data sharing: read widget stats (Tier 1 + selected Tier 2) from App Group shared `UserDefaults(suiteName: "group.com.pomofocus.shared")`
@@ -77,6 +81,7 @@ xcodebuild test \
 - Widget extension lives in `apps/mobile/targets/ios-widget/`
 
 **Apple Watch app:**
+
 - SwiftUI app lifecycle (`@main` struct conforming to `App`)
 - `WKExtendedRuntimeSession` for background timer continuation (duration limits vary by session type — see Apple's [WKExtendedRuntimeSession docs](https://developer.apple.com/documentation/watchkit/wkextendedruntimesession))
 - Complications via WidgetKit on watchOS 10+ (Smart Stack, watch face)
@@ -87,6 +92,7 @@ xcodebuild test \
 - Watch app lives in `native/apple/watchos-app/`
 
 **Entitlements:**
+
 - Check `native/apple/**/*.entitlements` before adding new capabilities
 - App Group entitlement (`group.com.pomofocus.shared`) required for sharing state between macOS/iOS targets
 - `WatchConnectivity` does not require a special entitlement but must be enabled in capabilities
@@ -110,6 +116,7 @@ xcodebuild test \
 ## On Completion
 
 Before opening a PR:
+
 1. macOS: `xcodebuild test -scheme PomoFocusMac -destination "platform=macOS"` — all tests pass
 2. iOS widget (if changed): `xcodebuild test -scheme PomoFocusiOSWidget -destination "platform=iOS Simulator,name=iPhone 16,OS=latest"` — all tests pass
 3. Watch (if changed): `xcodebuild test -scheme PomoFocusWatch -destination "platform=watchOS Simulator,name=Apple Watch Series 10 - 46mm,OS=latest"` — all tests pass

@@ -31,16 +31,16 @@ Chosen option: **"nRF52840 (Seeed XIAO)"**, because it is the most power-efficie
 
 ### Hardware Bill of Materials (Prototype)
 
-| Component | Part | Est. Cost | GPIO Pins |
-|-----------|------|-----------|-----------|
-| MCU + Driver Board | Seeed XIAO ePaper Driver Board EN04 (nRF52840 Plus built in, battery charging, USB-C, 3 user buttons, NFC, 24-pin + 50-pin FPC) | $10 | — |
-| Display | 4.26" e-ink (B/W), 800x480, GDEQ0426T82 (SSD1677), 219 PPI, 24-pin FPC | $16 | 6 (SPI via EN04 board) |
-| Input | KY-040 rotary encoder with push button | $2 | 3 (CLK, DT, SW) |
-| Feedback (primary) | Coin vibration motor (+ NPN transistor + flyback diode) | $2 | 1 |
-| Feedback (secondary) | Small LED (warm white or amber) | $0.50 | 1 |
-| Battery | AKZYTUE 903048 1200mAh LiPo (JST PH 2.0mm) — check polarity before connecting | $7 | 0 (battery sense via built-in ADC) |
-| Charging | USB-C (built into EN04 board) | $0 | 0 |
-| **Total** | | **~$38** | **11 GPIO used (EN04 handles display SPI internally)** |
+| Component            | Part                                                                                                                            | Est. Cost | GPIO Pins                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------ |
+| MCU + Driver Board   | Seeed XIAO ePaper Driver Board EN04 (nRF52840 Plus built in, battery charging, USB-C, 3 user buttons, NFC, 24-pin + 50-pin FPC) | $10       | —                                                      |
+| Display              | 4.26" e-ink (B/W), 800x480, GDEQ0426T82 (SSD1677), 219 PPI, 24-pin FPC                                                          | $16       | 6 (SPI via EN04 board)                                 |
+| Input                | KY-040 rotary encoder with push button                                                                                          | $2        | 3 (CLK, DT, SW)                                        |
+| Feedback (primary)   | Coin vibration motor (+ NPN transistor + flyback diode)                                                                         | $2        | 1                                                      |
+| Feedback (secondary) | Small LED (warm white or amber)                                                                                                 | $0.50     | 1                                                      |
+| Battery              | AKZYTUE 903048 1200mAh LiPo (JST PH 2.0mm) — check polarity before connecting                                                   | $7        | 0 (battery sense via built-in ADC)                     |
+| Charging             | USB-C (built into EN04 board)                                                                                                   | $0        | 0                                                      |
+| **Total**            |                                                                                                                                 | **~$38**  | **11 GPIO used (EN04 handles display SPI internally)** |
 
 **Note:** The EN04 board integrates the XIAO nRF52840 Plus SoC — it is NOT a separate pluggable XIAO module. The EN04 handles display SPI via its FPC connector, freeing user-accessible GPIO for encoder, motor, and LED. The XIAO nRF52840 Plus provides 20 GPIOs (11 through-hole + 9 SMD castellations), giving headroom beyond the 11 needed.
 

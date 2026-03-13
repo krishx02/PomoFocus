@@ -9,6 +9,7 @@
 The leading practitioners of AI-assisted development have converged on a surprisingly consistent set of principles despite arriving from different angles (research, product, engineering, writing). The core thesis: **autonomous agents fail on ambiguous tasks and succeed on well-specified, bounded tasks with fast feedback loops**. The tooling matters less than the discipline around context, constraints, and iteration cadence. A well-maintained `CLAUDE.md` (or equivalent memory file) is the single highest-leverage investment for projects using Claude Code.
 
 **Five patterns appear across every expert:**
+
 1. Write down what the agent needs to know, not just what you want it to do.
 2. Keep tasks small enough to verify in a single session.
 3. Treat the agent's output as a first draft, not a final answer.
@@ -19,7 +20,7 @@ The leading practitioners of AI-assisted development have converged on a surpris
 
 ## 1. Boris Cherny — Claude Code Creator, Anthropic
 
-**Background:** Boris Cherny is the lead engineer/creator of Claude Code at Anthropic. He authored the O'Reilly book *Programming TypeScript* and designed Claude Code's architecture around the idea of a "coding agent that earns trust incrementally."
+**Background:** Boris Cherny is the lead engineer/creator of Claude Code at Anthropic. He authored the O'Reilly book _Programming TypeScript_ and designed Claude Code's architecture around the idea of a "coding agent that earns trust incrementally."
 
 ### Core Design Philosophy
 
@@ -54,6 +55,7 @@ He has warned against making CLAUDE.md a wall of text — the agent reads it all
 ### Autonomy Warnings
 
 Cherny has been explicit that current agents (including Claude) should not be trusted with:
+
 - Dependency upgrades without a lock file review
 - Database schema migrations without a dry-run
 - Any action that touches external services without sandboxing
@@ -68,6 +70,7 @@ Cherny has been explicit that current agents (including Claude) should not be tr
 > "We designed Claude Code so that the default behavior is cautious. You have to opt into autonomy, not opt out of it."
 
 **Sources:**
+
 - Claude Code documentation: https://docs.anthropic.com/en/docs/claude-code/
 - Claude Code GitHub: https://github.com/anthropics/claude-code
 - Cherny's TypeScript book: https://www.oreilly.com/library/view/programming-typescript/9781492037644/
@@ -84,6 +87,7 @@ Cherny has been explicit that current agents (including Claude) should not be tr
 Karpathy introduced "vibe coding" as a mode of software development where **the programmer describes intent at a high level, the LLM generates code, and the programmer evaluates results by running/testing rather than reading every line.** He was careful to distinguish this from "LLMs write all the code while you sleep" — it is still an interactive, iterative process.
 
 From the original tweet (February 2025):
+
 > "There's a new kind of coding I call 'vibe coding', where you fully give in to the vibes, embrace exponentials, and forget that the code even exists. It's possible because the LLMs (e.g. Cursor Composer w Sonnet) are getting good enough. I just say what I want, keep pressing accept... Sometimes the LLM can't fix a bug and I just work around it..."
 
 He subsequently added nuance: vibe coding is appropriate for **prototypes, personal tools, and exploratory work** — not production systems where understanding the code is a safety/security requirement.
@@ -111,6 +115,7 @@ From his YouTube videos, GitHub activity, and tweets:
 - **Over-reliance on a single model**: Different models have different strengths. Use Claude for longer context and nuanced reasoning; others for speed/cost.
 
 **Sources:**
+
 - Original "vibe coding" tweet: https://x.com/karpathy/status/1886192184808149193
 - Karpathy YouTube channel: https://www.youtube.com/@AndrejKarpathy
 - Karpathy blog: https://karpathy.ai
@@ -169,6 +174,7 @@ He has noted that **negative constraints ("never do X") are often more valuable 
 - **`files-to-prompt`**: A tool that concatenates files for pasting into an LLM context, with token counting. Directly addresses the "how do I get my code into context" problem.
 
 **Sources:**
+
 - Simon Willison's blog: https://simonwillison.net
 - LLM CLI tool: https://llm.datasette.io
 - files-to-prompt: https://github.com/simonw/files-to-prompt
@@ -219,6 +225,7 @@ Cached (KV cache): Recent context that can be cheaply re-used
 - **Model-specific prompt lock-in.** Prompts optimized for one model often perform poorly on another. Build model-agnostic abstractions where possible.
 
 **Sources:**
+
 - Latent Space podcast: https://www.latent.space
 - "The Anatomy of an AI Engineer": https://www.latent.space/p/ai-engineer
 - swyx on X: https://x.com/swyx
@@ -242,7 +249,7 @@ Sources: https://hamel.dev, https://github.com/hamelsmu
 
 ### Thorsten Ball (Zed Industries — Agentic Coding)
 
-Author of *Writing An Interpreter In Go*. Joined Zed to work on AI features.
+Author of _Writing An Interpreter In Go_. Joined Zed to work on AI features.
 
 - **"Minimal footprint" as a design principle.** An agent that reads many files but modifies few is safer and easier to review than one that modifies everything it touches.
 - Inline suggestions vs. agentic tasks are fundamentally different UX patterns. Claude Code's design (separate from the editor) reflects this — it is an agent, not an autocomplete.
@@ -254,6 +261,7 @@ Author of *Writing An Interpreter In Go*. Joined Zed to work on AI features.
 ### Pattern 1: The Agent Needs a "First Day Brief"
 
 Every expert converges on some form of persistent context document (CLAUDE.md, system prompt, notes.md). Elements universally recommended:
+
 - Tech stack with version constraints
 - Commands to build, test, run
 - What NOT to do (often more valuable than what to do)
@@ -274,12 +282,14 @@ Without tests, agents cannot self-correct. The specific pattern:
 ### Pattern 3: Task Sizing Is the Critical Variable
 
 Tasks that succeed:
+
 - Can be described in one to three sentences
 - Have a clear completion criterion ("the test passes," "the page renders," "the API returns 200")
 - Touch fewer than five to ten files
 - Can be completed in one context window
 
 Tasks that fail:
+
 - Span multiple concerns ("refactor the auth system AND add new endpoints")
 - Have ambiguous completion criteria ("make it better")
 - Require deep understanding of state across the codebase
@@ -287,6 +297,7 @@ Tasks that fail:
 ### Pattern 4: Context Hygiene Is a Senior Engineer Skill
 
 All practitioners describe context management as a non-trivial skill:
+
 - Knowing what to include (relevant code, error output, constraints)
 - Knowing what to exclude (irrelevant history, boilerplate, entire files when a function suffices)
 - Knowing when to start fresh (context poisoning from failed attempts)
@@ -314,10 +325,12 @@ The skill of the AI-era developer is not prompting — it is **task decompositio
 # Project: PomoFocus
 
 ## Purpose
+
 A multi-platform Pomodoro productivity app targeting iOS, Android, Mac widget, VS Code extension,
 Claude Code extension, web, and a physical BLE device. Cloud sync is a paid subscription feature.
 
 ## Platform Targets
+
 - iOS: 16+
 - Android: API 26+
 - Web: Modern browsers
@@ -326,12 +339,14 @@ Claude Code extension, web, and a physical BLE device. Cloud sync is a paid subs
 - Physical BLE device
 
 ## Tech Stack
+
 - Language: TypeScript 5.x — no JavaScript files
 - Framework: [chosen framework]
 - Testing: [chosen test framework]
 - Linting: ESLint + Prettier
 
 ## Critical Commands
+
 \`\`\`bash
 [build command]
 [test command]
@@ -340,9 +355,11 @@ Claude Code extension, web, and a physical BLE device. Cloud sync is a paid subs
 \`\`\`
 
 ## Filesystem Conventions
+
 - [describe your layout here]
 
 ## Rules — NEVER Do These
+
 1. Never commit directly to `main` branch
 2. Never modify `*.generated.ts` files
 3. Never add a new dependency without noting it here
@@ -350,6 +367,7 @@ Claude Code extension, web, and a physical BLE device. Cloud sync is a paid subs
 5. Never skip writing tests for new business logic functions
 
 ## When Uncertain
+
 - For architecture decisions: stop and ask before proceeding
 - For new dependencies: stop and ask before installing
 - Default: write a TODO comment explaining the decision point and stop
@@ -358,11 +376,13 @@ Claude Code extension, web, and a physical BLE device. Cloud sync is a paid subs
 ### Task Decomposition Strategy
 
 For a multi-platform app, decompose tasks in this order:
+
 1. **Data layer first** (stores, API clients) — these have clear success criteria (tests pass)
 2. **Business logic second** (hooks, utils) — also highly testable
 3. **UI last** (components, screens) — harder to test automatically, verify visually
 
 Never combine data + UI in a single agent task. A task like "add a new timer feature" should be:
+
 - Task A: "Add a `timer` store with start/pause/reset actions and tests"
 - Task B: "Add a `useTimer` hook that wraps the timer store and tests"
 - Task C: "Add a `TimerScreen` component that uses useTimer — no business logic in the component"
@@ -379,6 +399,7 @@ For a large multi-platform codebase:
 ### What to Automate vs. What to Keep Human
 
 **Automate with Claude Code:**
+
 - Writing tests for existing functions
 - Generating new components from a specification
 - Refactoring within a single file
@@ -387,6 +408,7 @@ For a large multi-platform codebase:
 - Writing documentation for existing code
 
 **Keep human:**
+
 - Architectural decisions
 - Dependency selection and upgrades
 - Security-sensitive code (auth, crypto, data validation)
@@ -399,34 +421,40 @@ For a large multi-platform codebase:
 ## Sources
 
 ### Boris Cherny / Claude Code
+
 - Claude Code documentation: https://docs.anthropic.com/en/docs/claude-code/
 - Claude Code on GitHub: https://github.com/anthropics/claude-code
 - Anthropic engineering blog: https://www.anthropic.com/research
 
 ### Andrej Karpathy
+
 - "Vibe Coding" tweet (Feb 2025): https://x.com/karpathy/status/1886192184808149193
 - YouTube channel: https://www.youtube.com/@AndrejKarpathy
 - Personal blog: https://karpathy.ai
 - GitHub: https://github.com/karpathy
 
 ### Simon Willison
+
 - Blog: https://simonwillison.net
 - LLM CLI: https://llm.datasette.io
 - files-to-prompt: https://github.com/simonw/files-to-prompt
 - "LLMs in 2024" retrospective: https://simonwillison.net/2024/Dec/31/llms-in-2024/
 
 ### swyx / Shawn Wang
+
 - Latent Space podcast: https://www.latent.space
 - "The Anatomy of an AI Engineer": https://www.latent.space/p/ai-engineer
 - X / Twitter: https://x.com/swyx
 - AI Engineer Summit: https://www.ai.engineer
 
 ### Hamel Husain
+
 - Blog: https://hamel.dev
 - GitHub: https://github.com/hamelsmu
 - "Your AI product needs evals": https://hamel.dev/blog/posts/evals/
 
 ### General AI Engineering
+
 - AI Engineer Foundation: https://www.ai.engineer
 - Chip Huyen's blog: https://huyenchip.com
 - Anthropic model spec: https://www.anthropic.com/research/model-spec
