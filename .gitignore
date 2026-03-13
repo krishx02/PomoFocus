@@ -17,5 +17,8 @@ out/
 .env.local
 .env.*.local
 
+# Test coverage
+coverage/
+
 # Supabase
 supabase/.temp/
