@@ -174,6 +174,7 @@ export default tseslint.config(
   // ===== Framework file exceptions for U-002 (default exports) =====
   {
     files: [
+      // Next.js App Router conventions
       "**/page.tsx",
       "**/layout.tsx",
       "**/loading.tsx",
@@ -181,6 +182,11 @@ export default tseslint.config(
       "**/not-found.tsx",
       "**/route.ts",
       "**/middleware.ts",
+      // Expo Router conventions (uses index.tsx for routes)
+      "**/app/**/index.tsx",
+      // Hono / Cloudflare Workers entry point (export default app)
+      "apps/api/src/index.ts",
+      // Config files
       "**/next.config.*",
       "**/vitest.config.*",
       "**/eslint.config.*",
