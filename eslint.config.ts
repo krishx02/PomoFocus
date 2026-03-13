@@ -167,6 +167,233 @@ export default tseslint.config(
     },
   },
 
+  // ===== Per-package overrides (ADR-001 boundary enforcement) =====
+
+  // 3a. packages/core/ — No IO, No React, No Supabase, No Timers (PKG-C01–C04)
+  {
+    files: ["packages/core/**/*.ts"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        {
+          name: "setTimeout",
+          message:
+            "No side effects in core. Receive time as a parameter. See PKG-C04.",
+        },
+        {
+          name: "setInterval",
+          message:
+            "No side effects in core. Timer drivers belong in apps. See PKG-C04.",
+        },
+        {
+          name: "Date",
+          message:
+            "No Date in core. Receive timestamps as number parameters. See PKG-C04.",
+        },
+        {
+          name: "performance",
+          message: "No performance API in core. See PKG-C04.",
+        },
+        {
+          name: "fetch",
+          message:
+            "No IO in core. Network calls belong in data-access. See PKG-C01.",
+        },
+        {
+          name: "XMLHttpRequest",
+          message: "No IO in core. See PKG-C01.",
+        },
+        {
+          name: "navigator",
+          message: "No browser APIs in core. See PKG-C01.",
+        },
+        {
+          name: "window",
+          message: "No browser APIs in core. See PKG-C01.",
+        },
+        {
+          name: "document",
+          message: "No browser APIs in core. See PKG-C01.",
+        },
+        {
+          name: "process",
+          message: "No Node.js APIs in core. See PKG-C01.",
+        },
+      ],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["react", "react-dom", "react-native", "react-native-*"],
+              message:
+                "No React in core. React hooks belong in packages/state/. See PKG-C02.",
+            },
+            {
+              group: ["@supabase/*"],
+              message:
+                "No Supabase in core. Server access belongs in packages/data-access/. See PKG-C03.",
+            },
+            {
+              group: ["@tanstack/*"],
+              message:
+                "No TanStack Query in core. Query hooks belong in packages/state/.",
+            },
+            {
+              group: ["zustand", "zustand/*"],
+              message:
+                "No Zustand in core. Stores belong in packages/state/.",
+            },
+            {
+              group: [
+                "node:*",
+                "fs",
+                "path",
+                "http",
+                "https",
+                "net",
+                "child_process",
+              ],
+              message:
+                "No Node.js built-ins in core. IO belongs in data-access. See PKG-C01.",
+            },
+            {
+              group: ["expo-*"],
+              message:
+                "No Expo packages in core. Platform code belongs in apps/. See PKG-C01.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // 3b. packages/analytics/ — Same IO/React bans as core (PKG-A01)
+  {
+    files: ["packages/analytics/**/*.ts"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        {
+          name: "fetch",
+          message: "No IO in analytics. See PKG-A01.",
+        },
+        {
+          name: "setTimeout",
+          message: "No side effects in analytics. See PKG-A01.",
+        },
+        {
+          name: "setInterval",
+          message: "No side effects in analytics. See PKG-A01.",
+        },
+      ],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["react", "react-dom", "react-native"],
+              message: "No React in analytics.",
+            },
+            {
+              group: ["@supabase/*"],
+              message: "No Supabase in analytics. See PKG-A01.",
+            },
+            {
+              group: ["@tanstack/*", "zustand", "zustand/*"],
+              message: "No state management in analytics.",
+            },
+            {
+              group: ["node:*", "fs", "path", "http", "https", "net"],
+              message: "No Node.js built-ins in analytics. See PKG-A01.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // 3c. packages/data-access/ — No React (PKG-D04)
+  {
+    files: ["packages/data-access/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["react", "react-dom", "react-native"],
+              message:
+                "No React in data-access. Hooks belong in packages/state/. See PKG-D04.",
+            },
+            {
+              group: ["@tanstack/*"],
+              message:
+                "No TanStack Query in data-access. Query wrappers belong in packages/state/.",
+            },
+            {
+              group: ["zustand", "zustand/*"],
+              message:
+                "No Zustand in data-access. Stores belong in packages/state/.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // 3d. packages/ui/ — No business logic, no state management (PKG-U01, PKG-U02, PKG-U03)
+  {
+    files: ["packages/ui/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@supabase/*"],
+              message:
+                "No Supabase in UI. UI is pure presentation. See PKG-U01.",
+            },
+            {
+              group: ["zustand", "zustand/*"],
+              message:
+                "No Zustand in UI. State wiring belongs in app components. See PKG-U02.",
+            },
+            {
+              group: ["@tanstack/*"],
+              message:
+                "No TanStack Query in UI. Data fetching belongs in app components. See PKG-U02.",
+            },
+            {
+              group: ["@pomofocus/core", "@pomofocus/core/*"],
+              message:
+                "UI depends on types only, not core. See PKG-U01.",
+            },
+            {
+              group: ["@pomofocus/data-access", "@pomofocus/data-access/*"],
+              message:
+                "UI depends on types only, not data-access. See PKG-U01.",
+            },
+            {
+              group: ["@pomofocus/state", "@pomofocus/state/*"],
+              message:
+                "UI depends on types only, not state. See PKG-U01.",
+            },
+          ],
+          paths: [
+            {
+              name: "react-native",
+              importNames: ["FlatList"],
+              message:
+                "Use FlashList from @shopify/flash-list instead. See PKG-U03.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // ===== Framework file exceptions for U-002 (default exports) =====
   {
     files: [
