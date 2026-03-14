@@ -22,6 +22,12 @@
       "options": {
         "cwd": "apps/api"
       }
+    },
+    "dev": {
+      "command": "wrangler dev src/index.ts",
+      "options": {
+        "cwd": "apps/api"
+      }
     }
   }
 }
