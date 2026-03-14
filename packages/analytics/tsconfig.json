@@ -4,7 +4,7 @@
     "outDir": "./dist"
   },
   "files": [],
-  "include": [],
+  "include": ["vitest.config.ts"],
   "references": [
     {
       "path": "./tsconfig.lib.json"
