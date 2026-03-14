@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/.next/**',
       '**/coverage/**',
+      '**/vitest.config.ts',
     ],
   },
 
