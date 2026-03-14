@@ -7,6 +7,6 @@
     "rootDir": ".",
     "paths": {}
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx", "vitest.config.ts"],
+  "include": ["app/**/*.ts", "app/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }
