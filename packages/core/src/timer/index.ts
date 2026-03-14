@@ -7,3 +7,4 @@ export type {
   TimerState,
   TimerEvent,
 } from './types.js';
+export { createInitialState, isRunning, getTimeRemaining } from './utils.js';
