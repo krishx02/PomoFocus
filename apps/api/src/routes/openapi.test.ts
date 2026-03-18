@@ -30,7 +30,7 @@ describe('GET /openapi.json', () => {
   it('returns valid OpenAPI 3.1.0 spec', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as Record<string, unknown>;
+    const body: Record<string, unknown> = await res.json();
 
     expect(body.openapi).toBe('3.1.0');
   });
@@ -38,7 +38,7 @@ describe('GET /openapi.json', () => {
   it('includes correct info block', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as { info: { title: string; version: string } };
+    const body: { info: { title: string; version: string } } = await res.json();
 
     expect(body.info.title).toBe('PomoFocus API');
     expect(body.info.version).toBe('0.1.0');
@@ -47,7 +47,7 @@ describe('GET /openapi.json', () => {
   it('includes all 4 routes', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as { paths: Record<string, unknown> };
+    const body: { paths: Record<string, unknown> } = await res.json();
     const paths = Object.keys(body.paths).sort();
 
     expect(paths).toContain('/health');
@@ -58,7 +58,7 @@ describe('GET /openapi.json', () => {
   it('includes GET /health', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const body: { paths: Record<string, Record<string, unknown>> } = await res.json();
 
     expect(body.paths['/health']?.['get']).toBeDefined();
   });
@@ -66,7 +66,7 @@ describe('GET /openapi.json', () => {
   it('includes GET /v1/me', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const body: { paths: Record<string, Record<string, unknown>> } = await res.json();
 
     expect(body.paths['/v1/me']?.['get']).toBeDefined();
   });
@@ -74,7 +74,7 @@ describe('GET /openapi.json', () => {
   it('includes POST /v1/sessions', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const body: { paths: Record<string, Record<string, unknown>> } = await res.json();
 
     expect(body.paths['/v1/sessions']?.['post']).toBeDefined();
   });
@@ -82,7 +82,7 @@ describe('GET /openapi.json', () => {
   it('includes GET /v1/sessions', async () => {
     const app = createTestApp();
     const res = await app.request('/openapi.json');
-    const body = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const body: { paths: Record<string, Record<string, unknown>> } = await res.json();
 
     expect(body.paths['/v1/sessions']?.['get']).toBeDefined();
   });
