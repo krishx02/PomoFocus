@@ -200,6 +200,6 @@ export function registerSessionsRoute(app: OpenAPIHono): void {
       throw error;
     }
 
-    return c.json({ data: data ?? [], total: count ?? 0 }, 200);
+    return c.json({ data, total: count ?? 0 }, 200);
   });
 }
