@@ -105,6 +105,7 @@ describe('isRunning', () => {
     const state: TimerState = {
       status: TIMER_STATUS.COMPLETED,
       sessionNumber: 1,
+      config: defaultConfig,
     };
     expect(isRunning(state)).toBe(false);
   });
@@ -114,6 +115,7 @@ describe('isRunning', () => {
       status: TIMER_STATUS.ABANDONED,
       sessionNumber: 1,
       abandonedAt: 5000,
+      config: defaultConfig,
     };
     expect(isRunning(state)).toBe(false);
   });
@@ -194,6 +196,7 @@ describe('getTimeRemaining', () => {
     const state: TimerState = {
       status: TIMER_STATUS.COMPLETED,
       sessionNumber: 1,
+      config: defaultConfig,
     };
     expect(getTimeRemaining(state)).toBe(0);
   });
@@ -203,6 +206,7 @@ describe('getTimeRemaining', () => {
       status: TIMER_STATUS.ABANDONED,
       sessionNumber: 1,
       abandonedAt: 5000,
+      config: defaultConfig,
     };
     expect(getTimeRemaining(state)).toBe(0);
   });
