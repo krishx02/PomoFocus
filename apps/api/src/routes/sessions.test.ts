@@ -1,19 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { registerSessionsRoute, CreateSessionBodySchema } from './sessions.js';
+import { registerSessionsRoute, CreateSessionBodySchema, ListSessionsQuerySchema } from './sessions.js';
 
 /**
  * Mock Supabase module so no real network calls are made.
  * The mock returns a chainable query builder matching the Supabase SDK pattern.
+ *
+ * INSERT chain: insert() -> select() -> single()
+ * SELECT chain: select('*', { count: 'exact' }) -> order() -> range()
  */
 const mockSingle = vi.fn();
-const mockSelect = vi.fn(() => ({ single: mockSingle }));
-const mockInsert = vi.fn(() => ({ select: mockSelect }));
+const mockInsertSelect = vi.fn(() => ({ single: mockSingle }));
+const mockInsert = vi.fn(() => ({ select: mockInsertSelect }));
+
+const mockRange = vi.fn();
+const mockOrder = vi.fn(() => ({ range: mockRange }));
+const mockQuerySelect = vi.fn(() => ({ order: mockOrder }));
 
 vi.mock('../lib/supabase.js', () => ({
   createSupabaseClient: vi.fn(() => ({
     from: vi.fn(() => ({
       insert: mockInsert,
+      select: mockQuerySelect,
     })),
   })),
 }));
@@ -301,5 +309,122 @@ describe('POST /v1/sessions', () => {
       });
       expect(result.success).toBe(true);
     }
+  });
+});
+
+describe('GET /v1/sessions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  const FAKE_SESSIONS_LIST = [
+    {
+      ...FAKE_SESSION_ROW,
+      id: '22222222-2222-2222-2222-222222222222',
+      started_at: '2026-03-17T11:00:00.000Z',
+    },
+    FAKE_SESSION_ROW,
+  ];
+
+  it('returns 200 with default pagination (limit=20, offset=0)', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: FAKE_SESSIONS_LIST,
+      error: null,
+      count: 2,
+    });
+
+    const app = createTestApp();
+    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data).toHaveLength(2);
+    expect(body.total).toBe(2);
+
+    // Verify default pagination was applied: select -> order -> range(0, 19)
+    expect(mockQuerySelect).toHaveBeenCalledWith('*', { count: 'exact' });
+    expect(mockOrder).toHaveBeenCalledWith('started_at', { ascending: false });
+    expect(mockRange).toHaveBeenCalledWith(0, 19);
+  });
+
+  it('returns 200 with custom limit and offset', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: [FAKE_SESSION_ROW],
+      error: null,
+      count: 50,
+    });
+
+    const app = createTestApp();
+    const res = await app.request(
+      '/v1/sessions?limit=5&offset=10',
+      { method: 'GET' },
+      FAKE_ENV,
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data).toHaveLength(1);
+    expect(body.total).toBe(50);
+
+    // Verify custom pagination: range(10, 14)
+    expect(mockRange).toHaveBeenCalledWith(10, 14);
+  });
+
+  it('caps limit at 100 via Zod validation', () => {
+    const overLimit = ListSessionsQuerySchema.safeParse({ limit: 200, offset: 0 });
+    expect(overLimit.success).toBe(false);
+
+    const atLimit = ListSessionsQuerySchema.safeParse({ limit: 100, offset: 0 });
+    expect(atLimit.success).toBe(true);
+  });
+
+  it('rejects limit below 1 via Zod validation', () => {
+    const zeroLimit = ListSessionsQuerySchema.safeParse({ limit: 0, offset: 0 });
+    expect(zeroLimit.success).toBe(false);
+
+    const negativeLimit = ListSessionsQuerySchema.safeParse({ limit: -5, offset: 0 });
+    expect(negativeLimit.success).toBe(false);
+  });
+
+  it('rejects negative offset via Zod validation', () => {
+    const negativeOffset = ListSessionsQuerySchema.safeParse({ limit: 20, offset: -1 });
+    expect(negativeOffset.success).toBe(false);
+  });
+
+  it('returns empty data array when no sessions exist', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: [],
+      error: null,
+      count: 0,
+    });
+
+    const app = createTestApp();
+    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data).toEqual([]);
+    expect(body.total).toBe(0);
+  });
+
+  it('returns 500 when Supabase select fails', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: null,
+      error: new Error('something unexpected happened'),
+      count: null,
+    });
+
+    const app = createTestApp();
+    app.onError((_err, c) => {
+      return c.json(
+        { error: 'Internal server error', status: 500 },
+        500,
+      );
+    });
+
+    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+
+    expect(res.status).toBe(500);
   });
 });
