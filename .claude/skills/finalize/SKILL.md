@@ -3,7 +3,7 @@ name: finalize
 description: Orchestrates the end of a completed implementation. Launches the github-issue-manager subagent to create a descriptive PR and update labels, then launches code-reviewer subagent(s) to post inline review comments. Supports multiple issues on one branch — spawns parallel scoped reviewers (one per issue). Loops the review up to 3 times if critical issues are found, auto-fixing before each re-review. Use when user says "create the PR", "finalize this branch", "I'm done implementing", or "ship it".
 user-invocable: true
 context: fork
-allowed-tools: Bash(gh *), Bash(git *), Bash(timeout *), Bash(echo *), Agent
+allowed-tools: Bash(gh *), Bash(git *), Bash(timeout *), Bash(echo *), Bash(pnpm *), Bash(npx *), Bash(node *), Bash(ls *), Bash(cat *), Bash(test *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Agent
 compatibility: 'Requires gh CLI, git. Claude Code only.'
 argument-hint: "[issue number(s)] — e.g. '28' or '28 29 36 37' or '28,29,36,37'"
 metadata:
@@ -165,6 +165,50 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
 
 ---
 
+## Step 3.75 — Diff Scope Check
+
+Before code review, verify that the diff only contains files relevant to the issue(s).
+
+```bash
+git diff --name-only origin/main..HEAD
+```
+
+Store as `CHANGED_FILES`.
+
+If `ISSUE_NUMBERS` is not "none", fetch the issue body for each issue and extract the **Affected Files** list:
+
+```bash
+gh issue view $N --json body --jq '.body'
+```
+
+Compare `CHANGED_FILES` against the union of all issues' Affected Files. Identify any **out-of-scope files** — files in the diff that don't appear in any issue's Affected Files list.
+
+**Ignore these when checking scope** (they're expected noise):
+- Lock files (`pnpm-lock.yaml`)
+- Generated files (`openapi.json`, files in `dist/`)
+- Config files touched by lint/build fixes (`.eslintrc`, `tsconfig.*.json`)
+
+**If out-of-scope source files exist** (`.ts`, `.tsx`, `.swift`, `.cpp` files outside the issue's scope):
+
+1. Report: `"Found [N] files outside issue scope: [list]. Attempting rebase to clean up branch divergence..."`
+2. Auto-rebase:
+   ```bash
+   git rebase origin/main
+   git push --force-with-lease origin $BRANCH_NAME
+   ```
+3. Re-check `git diff --name-only origin/main..HEAD`. If out-of-scope files are gone: wait for CI to re-run, then proceed to Step 4.
+4. If out-of-scope files persist after rebase: include this note in the code-reviewer prompt:
+   ```
+   NOTE: The following files are outside the issue's stated scope and may be
+   from a separate change bundled into this branch. Flag them but do not
+   treat them as critical unless they introduce bugs:
+   [list of out-of-scope files]
+   ```
+
+**If no out-of-scope source files:** proceed to Step 4.
+
+---
+
 ## Step 4 — Code Review with Verify-Then-Fix Loop
 
 ### 4a — Determine Fixer Agent Type
@@ -232,10 +276,20 @@ Focus your review on these files:
 [list of files from ISSUE_FILE_SCOPES for this issue]
 
 Follow your agent instructions completely.
+
+For each warning, classify as ACTIONABLE or DEFERRED.
+
 Your final output must include:
   Review complete on PR #[PR] (scope: issue #[N])
-  🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
+  🔴 Critical: N  |  🟡 Warnings: N (M actionable, K deferred)  |  ℹ️ Info: N
   Verdict: [LGTM / Needs Changes / Critical Fixes Required]
+
+  === REVIEW FINDINGS ===
+  [For each finding, one block:]
+  [EMOJI] [SEVERITY] ([ACTIONABLE/DEFERRED if warning]): [title]
+  File: [path]:[line] (or "General" if no specific location)
+  [1-2 sentence description]
+  === END FINDINGS ===
 ```
 
 Wait for ALL reviewers to complete. Collect results from each.
@@ -273,13 +327,25 @@ ISSUE_NUMBER: [issue number or "none"]
 BRANCH_NAME: [branch name]
 
 Follow your agent instructions completely.
+
+For each warning, classify it as:
+- ACTIONABLE: should be fixed before merge (incorrect behavior, security risk, data loss, schema mismatch)
+- DEFERRED: noted but not blocking (style preference, future concern, minor inconsistency, YAGNI)
+
 Your final output must include:
   Review complete on PR #[N]
-  🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
+  🔴 Critical: N  |  🟡 Warnings: N (M actionable, K deferred)  |  ℹ️ Info: N
   Verdict: [LGTM / Needs Changes / Critical Fixes Required]
+
+  === REVIEW FINDINGS ===
+  [For each finding, one block:]
+  [EMOJI] [SEVERITY] ([ACTIONABLE/DEFERRED if warning]): [title]
+  File: [path]:[line] (or "General" if no specific location)
+  [1-2 sentence description]
+  === END FINDINGS ===
 ```
 
-Wait for the agent to complete. Parse `Critical` count and `Verdict` from its output.
+Wait for the agent to complete. Parse `Critical` count, `Verdict`, and warning breakdown from its output. Also extract the text between `=== REVIEW FINDINGS ===` and `=== END FINDINGS ===` — store as `REVIEW_FINDINGS_TEXT`.
 
 **After the reviewer returns:**
 
@@ -445,14 +511,21 @@ Output a clean summary to the user:
    Overall:  🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
    Verdict: [aggregate verdict]
 [If not IS_MULTI_ISSUE:]
-   🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
+   🔴 Critical: N  |  🟡 Warnings: N (M actionable, K deferred)  |  ℹ️ Info: N
    Verdict: [verdict]
 
 [If Critical > 0]:
 ⚠️  Critical issues were found. Review the PR comments before merging.
 
-[If Critical == 0 and Warnings == 0]:
-🚀 No critical issues. Ready for human review.
+[If Critical == 0 and actionable warnings > 0]:
+🟡 No critical issues, but [M] actionable warning(s) found. Review before merging.
+
+[If Critical == 0 and actionable warnings == 0]:
+🚀 No critical or actionable issues. Ready for human review.
+
+[If REVIEW_FINDINGS_TEXT is not empty:]
+📋 Review Details:
+   [paste REVIEW_FINDINGS_TEXT, indented with 3 spaces]
 ```
 
 ---

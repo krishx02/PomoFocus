@@ -4,7 +4,7 @@ description: Pick up a GitHub issue by number. If effort:large, decomposes it in
 user-invocable: true
 context: fork
 isolation: worktree
-allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(npx *), Bash(node *), Bash(xcodebuild *), Bash(maestro *), Bash(ls *), Bash(cat *), Bash(echo *), Bash(test *), Bash(mkdir *), Bash(command *), Read, Edit, Write, Grep, Glob
+allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(npx *), Bash(node *), Bash(xcodebuild *), Bash(maestro *), Bash(ls *), Bash(cat *), Bash(echo *), Bash(test *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Bash(timeout *), Read, Edit, Write, Grep, Glob
 compatibility: 'Requires gh CLI, git, pnpm. Claude Code only.'
 argument-hint: '[issue number]'
 metadata:
@@ -70,6 +70,12 @@ echo "Current branch: $current"
 
 **Otherwise**, create or switch to the issue branch:
 
+First, fetch latest main so the new branch starts from the current tip:
+
+```bash
+git fetch origin main
+```
+
 Derive the branch slug from the issue title (lowercase, hyphens, max 40 chars).
 
 Determine branch type from the issue labels:
@@ -80,8 +86,8 @@ Determine branch type from the issue labels:
 For bugs:
 
 ```bash
-if git checkout -b fix/issue-$ARGUMENTS-<slug>; then
-  : # new branch created
+if git checkout -b fix/issue-$ARGUMENTS-<slug> origin/main; then
+  : # new branch created from latest main
 elif git checkout fix/issue-$ARGUMENTS-<slug>; then
   : # switched to existing branch — verify below
 else
@@ -93,8 +99,8 @@ fi
 For features:
 
 ```bash
-if git checkout -b feature/issue-$ARGUMENTS-<slug>; then
-  : # new branch created
+if git checkout -b feature/issue-$ARGUMENTS-<slug> origin/main; then
+  : # new branch created from latest main
 elif git checkout feature/issue-$ARGUMENTS-<slug>; then
   : # switched to existing branch — verify below
 else
@@ -179,15 +185,25 @@ Stop — do not open a PR.
 
 Do NOT open a PR with failing tests.
 
-Also run:
+Also run lint and type-check for the affected project:
 
-```
+```bash
+pnpm nx lint @pomofocus/<affected-project>
 pnpm type-check
 ```
 
-If type errors exist, fix them before proceeding.
+If lint or type errors exist, fix them and re-run. Apply the same fix loop pattern (up to 5 attempts) as tests above.
 
-After tests pass AND type-check is clean, stage and commit:
+Then run Nx affected tests to catch downstream breakage (e.g., a `packages/core/` change breaking `apps/api/`):
+
+```bash
+git fetch origin main
+pnpm nx affected --target=test --base=origin/main --head=HEAD 2>/dev/null || echo "SKIP: Nx affected test not configured"
+```
+
+If affected tests fail, fix the root cause and re-run. These failures mean your change broke a downstream consumer — do not skip them.
+
+After tests pass, lint is clean, type-check is clean, AND affected tests pass, stage and commit:
 
 ```bash
 # Stage only files from the issue's Affected Files list + any new test files written.
@@ -230,22 +246,20 @@ Map changed files to platform buckets:
 
 Files not matching any prefix (docs, CI config, root config) do not trigger platform tests — skip them.
 
-### 8b — Build Verification
+### 8b — Build & Lint Verification
 
-Run Nx affected build if configured:
+Run Nx affected build and lint across all downstream packages:
 
 ```bash
 pnpm nx affected --target=build --base=origin/main --head=HEAD 2>/dev/null || echo "SKIP: Nx build not configured yet"
+pnpm nx affected --target=lint --base=origin/main --head=HEAD 2>/dev/null || echo "SKIP: Nx lint not configured yet"
 ```
 
-### 8c — Integration & E2E Tests
+### 8c — E2E Tests
 
-For each affected platform, check if test infrastructure exists and run it. Skip gracefully if not configured:
+Nx affected unit tests already ran in Step 7. Run E2E tests if infrastructure exists:
 
 ```bash
-# Nx affected tests (catches downstream failures)
-pnpm nx affected --target=test --base=origin/main --head=HEAD 2>/dev/null || echo "SKIP: Nx test not configured"
-
 # Web E2E (Playwright)
 if [ -d "apps/web-e2e" ]; then
   pnpm nx e2e @pomofocus/web-e2e

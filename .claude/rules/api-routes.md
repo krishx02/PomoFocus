@@ -16,3 +16,4 @@ Hono REST API on Cloudflare Workers (`apps/api/`).
 - **API-005:** Forward user JWT for user-scoped operations (RLS stays active). Use `service_role` key only for admin operations (`DELETE /v1/me`, cross-user aggregations).
 - **API-006:** Serve OpenAPI 3.1 spec at `GET /openapi.json`. This is the single source of truth for TS and Swift client generation.
 - **API-007:** Social endpoints enforce privacy via friendship JOINs — never expose session data to non-friends, never rely solely on RLS for social visibility (ADR-018).
+- **API-008:** Every field in a Zod request body schema must correspond to either a database column in the target table or be explicitly documented with a comment explaining why it's accepted but not stored. Do not validate fields the API silently discards.
