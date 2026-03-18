@@ -47,6 +47,22 @@ export const SessionResponseSchema = z.object({
 });
 
 /**
+ * Zod schema for GET /v1/sessions query parameters.
+ */
+export const ListSessionsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+});
+
+/**
+ * Zod schema for the paginated sessions response.
+ */
+export const ListSessionsResponseSchema = z.object({
+  data: z.array(SessionResponseSchema),
+  total: z.number(),
+});
+
+/**
  * OpenAPI route definition for POST /v1/sessions.
  */
 export const createSessionRoute = createRoute({
@@ -86,6 +102,38 @@ export const createSessionRoute = createRoute({
 });
 
 /**
+ * OpenAPI route definition for GET /v1/sessions.
+ */
+export const listSessionsRoute = createRoute({
+  method: 'get',
+  path: '/v1/sessions',
+  request: {
+    query: ListSessionsQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: ListSessionsResponseSchema,
+        },
+      },
+      description: 'Paginated list of sessions',
+    },
+    422: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            error: z.string(),
+            details: z.unknown(),
+          }),
+        },
+      },
+      description: 'Validation failed',
+    },
+  },
+});
+
+/**
  * Zod schema to validate that the Cloudflare Workers env contains
  * the required Supabase bindings at runtime (U-009: Zod parsing, not type assertions).
  */
@@ -95,11 +143,13 @@ const SupabaseEnvSchema = z.object({
 });
 
 /**
- * Registers the POST /v1/sessions route on the given OpenAPIHono app.
+ * Registers the POST /v1/sessions and GET /v1/sessions routes on the given OpenAPIHono app.
  *
- * Validates request body with Zod, inserts a session into Supabase,
+ * POST: Validates request body with Zod, inserts a session into Supabase,
  * and returns the created session. Auth is not yet implemented (Phase 2) —
  * user_id and process_goal_id use placeholder values.
+ *
+ * GET: Returns a paginated list of sessions ordered by started_at descending.
  */
 export function registerSessionsRoute(app: OpenAPIHono): void {
   app.openapi(createSessionRoute, async (c) => {
@@ -132,5 +182,24 @@ export function registerSessionsRoute(app: OpenAPIHono): void {
     }
 
     return c.json(data, 201);
+  });
+
+  app.openapi(listSessionsRoute, async (c) => {
+    const { limit, offset } = c.req.valid('query');
+
+    const env = SupabaseEnvSchema.parse(c.env);
+    const supabase = createSupabaseClient(env);
+
+    const { data, error, count } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact' })
+      .order('started_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    return c.json({ data: data ?? [], total: count ?? 0 }, 200);
   });
 }
