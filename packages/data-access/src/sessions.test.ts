@@ -2,15 +2,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createApiClient } from './client';
 import { createSession, getSessions } from './sessions';
 
+type StubResponse = {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: { get: (key: string) => string | null };
+  json: () => Promise<unknown>;
+  text: () => Promise<string>;
+  clone: () => StubResponse;
+};
+
 function stubFetch(status: number, body: unknown): void {
-  const response = {
+  const response: StubResponse = {
     ok: status >= 200 && status < 300,
     status,
     statusText: '',
     headers: { get: (key: string) => key === 'content-type' ? 'application/json' : null },
     json: () => Promise.resolve(body),
     text: () => Promise.resolve(JSON.stringify(body)),
-    clone: (): typeof response => response,
+    clone: () => response,
   };
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
 }
