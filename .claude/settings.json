@@ -44,7 +44,21 @@
       "Bash(mktemp*)",
       "Bash(rm /tmp/*)",
       "Bash(timeout *)",
-      "Bash(kill %*)"
+      "Bash(kill %*)",
+      "Bash(git rebase*)",
+      "Bash(date *)",
+      "Bash(grep *)",
+      "Bash(sort *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(xargs *)",
+      "Bash(wc *)",
+      "Bash(tr *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(curl *)",
+      "Bash(python3 *)",
+      "Bash(cd *)"
     ],
     "ask": [
       "Bash(git reset*)",
