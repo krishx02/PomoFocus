@@ -4,8 +4,9 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "types": [],
+    "types": ["@cloudflare/workers-types"],
     "paths": {}
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }
