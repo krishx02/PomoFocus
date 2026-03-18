@@ -5,6 +5,9 @@
   "projectType": "library",
   "tags": ["type:infra", "scope:shared"],
   "targets": {
+    "generate": {
+      "command": "tsx packages/data-access/scripts/generate-client.ts"
+    },
     "lint": {
       "command": "npx eslint .",
       "options": {
