@@ -121,6 +121,7 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
           if (isReflectionEnabled(state.config)) {
             return {
@@ -138,7 +139,6 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
           };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.RESUME:
-        case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.ABANDON:
@@ -168,6 +168,7 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
           if (isReflectionEnabled(state.config)) {
             return {
@@ -185,7 +186,6 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
           };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.RESUME:
-        case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.ABANDON:
