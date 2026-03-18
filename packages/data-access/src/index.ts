@@ -2,3 +2,5 @@
 // All auth imports live here. Core never imports this.
 export { createApiClient } from './client';
 export type { ApiClient } from './client';
+export { isApiError, handleApiError } from './errors';
+export type { ApiError, ErrorResponseInput } from './errors';
