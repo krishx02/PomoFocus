@@ -1109,6 +1109,331 @@ describe('transition — SKIP_BREAK event', () => {
   });
 });
 
+describe('transition — SUBMIT event', () => {
+  it('transitions from reflection to completed with reflectionData (locked_in)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'locked_in', distractionType: 'phone' },
+      },
+      3000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 1,
+      reflectionData: { focusQuality: 'locked_in', distractionType: 'phone' },
+    });
+  });
+
+  it('transitions from reflection to completed with reflectionData (decent)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 2,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'decent', distractionType: 'thoughts_wandering' },
+      },
+      4000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 2,
+      reflectionData: { focusQuality: 'decent', distractionType: 'thoughts_wandering' },
+    });
+  });
+
+  it('transitions from reflection to completed with reflectionData (struggled)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 3,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'struggled', distractionType: 'got_stuck' },
+      },
+      5000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 3,
+      reflectionData: { focusQuality: 'struggled', distractionType: 'got_stuck' },
+    });
+  });
+
+  it('preserves sessionNumber in completed state after SUBMIT', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'locked_in' },
+      },
+      6000,
+    );
+    expect(result).toEqual(
+      expect.objectContaining({ sessionNumber: 4 }),
+    );
+  });
+
+  it('returns state unchanged when SUBMIT from idle', () => {
+    const state: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'locked_in' } },
+      1000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from focusing', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 1200,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'decent' } },
+      2000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.PAUSED,
+      timeRemaining: 900,
+      pausedAt: 1600,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'struggled' } },
+      2000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from short_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.SHORT_BREAK,
+      timeRemaining: 300,
+      startedAt: 2500,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'locked_in' } },
+      3000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from long_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.LONG_BREAK,
+      timeRemaining: 900,
+      startedAt: 3000,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'decent' } },
+      4000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from break_paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.BREAK_PAUSED,
+      timeRemaining: 200,
+      pausedAt: 2700,
+      breakType: 'short',
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'struggled' } },
+      3000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from completed', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.COMPLETED,
+      sessionNumber: 1,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'locked_in' } },
+      3000,
+    );
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SUBMIT from abandoned', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.ABANDONED,
+      sessionNumber: 1,
+      abandonedAt: 5000,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SUBMIT, data: { focusQuality: 'decent' } },
+      6000,
+    );
+    expect(result).toBe(state);
+  });
+});
+
+describe('transition — SKIP event', () => {
+  it('transitions from reflection to completed without reflectionData', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 3000);
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 1,
+    });
+  });
+
+  it('preserves sessionNumber in completed state after SKIP', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 6000);
+    expect(result).toEqual(
+      expect.objectContaining({ sessionNumber: 4 }),
+    );
+  });
+
+  it('does not include reflectionData in completed state after SKIP', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 2,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 4000);
+    expect(result).not.toHaveProperty('reflectionData');
+  });
+
+  it('returns state unchanged when SKIP from idle', () => {
+    const state: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 1000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from focusing', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 1200,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 2000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.PAUSED,
+      timeRemaining: 900,
+      pausedAt: 1600,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 2000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from short_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.SHORT_BREAK,
+      timeRemaining: 300,
+      startedAt: 2500,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from long_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.LONG_BREAK,
+      timeRemaining: 900,
+      startedAt: 3000,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 4000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from break_paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.BREAK_PAUSED,
+      timeRemaining: 200,
+      pausedAt: 2700,
+      breakType: 'short',
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from completed', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.COMPLETED,
+      sessionNumber: 1,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when SKIP from abandoned', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.ABANDONED,
+      sessionNumber: 1,
+      abandonedAt: 5000,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 6000);
+    expect(result).toBe(state);
+  });
+});
+
 describe('transition — unhandled events return state unchanged', () => {
   it('returns idle state unchanged for non-START events', () => {
     const idle: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };

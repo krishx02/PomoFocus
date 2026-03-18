@@ -245,6 +245,32 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         }
       }
     case TIMER_STATUS.REFLECTION:
+      switch (event.type) {
+        case TIMER_EVENT_TYPE.SUBMIT:
+          return {
+            status: TIMER_STATUS.COMPLETED,
+            sessionNumber: state.sessionNumber,
+            reflectionData: event.data,
+          };
+        case TIMER_EVENT_TYPE.SKIP:
+          return {
+            status: TIMER_STATUS.COMPLETED,
+            sessionNumber: state.sessionNumber,
+          };
+        case TIMER_EVENT_TYPE.START:
+        case TIMER_EVENT_TYPE.PAUSE:
+        case TIMER_EVENT_TYPE.RESUME:
+        case TIMER_EVENT_TYPE.TICK:
+        case TIMER_EVENT_TYPE.TIMER_DONE:
+        case TIMER_EVENT_TYPE.SKIP_BREAK:
+        case TIMER_EVENT_TYPE.ABANDON:
+        case TIMER_EVENT_TYPE.RESET:
+          return state;
+        default: {
+          const _exhaustive: never = event;
+          return _exhaustive;
+        }
+      }
     case TIMER_STATUS.COMPLETED:
     case TIMER_STATUS.ABANDONED:
       return state;
