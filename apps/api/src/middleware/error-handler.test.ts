@@ -15,7 +15,7 @@ function createTestApp(): Hono {
 }
 
 async function parseJsonBody(response: Response): Promise<ErrorResponse> {
-  return (await response.json()) as ErrorResponse;
+  return await response.json();
 }
 
 describe('errorHandler', () => {

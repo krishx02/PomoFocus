@@ -14,11 +14,11 @@ export type ErrorResponse = {
  * Messages safe to return to clients for known Supabase error patterns.
  * Maps Supabase/PostgREST error indicators to generic client-facing messages.
  */
-const SUPABASE_ERROR_MAP: ReadonlyArray<{
+const SUPABASE_ERROR_MAP: readonly {
   readonly pattern: RegExp;
   readonly status: number;
   readonly message: string;
-}> = [
+}[] = [
   { pattern: /JWT expired/i, status: 401, message: 'Authentication expired' },
   { pattern: /invalid.*token/i, status: 401, message: 'Invalid authentication' },
   { pattern: /not authorized/i, status: 403, message: 'Not authorized' },
@@ -74,7 +74,6 @@ export const errorHandler: ErrorHandler = (err, c) => {
     const status = err.status;
     const message = err.message || 'Request error';
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Hono c.json() return type is not resolvable by typescript-eslint
     return c.json({ error: message, status } satisfies ErrorResponse, status);
   }
 
@@ -85,7 +84,6 @@ export const errorHandler: ErrorHandler = (err, c) => {
   if (supabaseMatch) {
     console.error(`[API] Supabase error mapped: ${rawMessage}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Hono c.json() return type is not resolvable by typescript-eslint
     return c.json(
       { error: supabaseMatch.error, status: supabaseMatch.status } satisfies ErrorResponse,
       supabaseMatch.status as 400 | 401 | 403 | 409 | 422,
@@ -95,7 +93,6 @@ export const errorHandler: ErrorHandler = (err, c) => {
   // Unknown error — log full details server-side, return generic message to client.
   console.error('[API] Unhandled error:', err);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Hono c.json() return type is not resolvable by typescript-eslint
   return c.json(
     { error: 'Internal server error', status: 500 } satisfies ErrorResponse,
     500,
