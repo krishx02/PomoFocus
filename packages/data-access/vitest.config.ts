@@ -12,6 +12,16 @@ export default mergeConfig(
       environment: 'node',
       include: ['src/**/*.test.ts'],
       exclude: ['**/generated/**'],
+      coverage: {
+        include: ['src/**/*.ts'],
+        exclude: ['src/**/*.test.ts', 'src/generated/**'],
+        thresholds: {
+          lines: 80,
+          functions: 80,
+          branches: 80,
+          statements: 80,
+        },
+      },
     },
     resolve: {
       alias: {
