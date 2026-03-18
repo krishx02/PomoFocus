@@ -478,6 +478,206 @@ describe('transition — TICK event', () => {
   });
 });
 
+describe('transition — TIMER_DONE event', () => {
+  it('transitions from focusing to short_break when isLongBreak is false (session 1)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 0,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const now = 2500;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual({
+      status: 'short_break',
+      timeRemaining: defaultConfig.shortBreakDuration,
+      startedAt: now,
+      sessionNumber: 1,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from focusing to short_break for session 2', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 0,
+      startedAt: 1000,
+      sessionNumber: 2,
+      config: defaultConfig,
+    };
+    const now = 3000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual({
+      status: 'short_break',
+      timeRemaining: defaultConfig.shortBreakDuration,
+      startedAt: now,
+      sessionNumber: 2,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from focusing to short_break for session 3', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 0,
+      startedAt: 1000,
+      sessionNumber: 3,
+      config: defaultConfig,
+    };
+    const now = 4000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual({
+      status: 'short_break',
+      timeRemaining: defaultConfig.shortBreakDuration,
+      startedAt: now,
+      sessionNumber: 3,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from focusing to long_break when isLongBreak is true (session 4)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 0,
+      startedAt: 1000,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const now = 5000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual({
+      status: 'long_break',
+      timeRemaining: defaultConfig.longBreakDuration,
+      startedAt: now,
+      sessionNumber: 4,
+      config: defaultConfig,
+    });
+  });
+
+  it('preserves sessionNumber and config across TIMER_DONE transition', () => {
+    const customConfig: TimerConfig = {
+      ...defaultConfig,
+      shortBreakDuration: 600,
+    };
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 0,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: customConfig,
+    };
+    const now = 2000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual(
+      expect.objectContaining({
+        sessionNumber: 1,
+        config: customConfig,
+        timeRemaining: 600,
+      }),
+    );
+  });
+
+  it('sets startedAt to now for break state', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 0,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const now = 9999;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual(
+      expect.objectContaining({ startedAt: now }),
+    );
+  });
+
+  it('returns state unchanged when TIMER_DONE from idle', () => {
+    const state: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 1000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.PAUSED,
+      timeRemaining: 900,
+      pausedAt: 1600,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 2000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from short_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.SHORT_BREAK,
+      timeRemaining: 300,
+      startedAt: 2500,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from long_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.LONG_BREAK,
+      timeRemaining: 900,
+      startedAt: 3000,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 4000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from break_paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.BREAK_PAUSED,
+      timeRemaining: 200,
+      pausedAt: 2700,
+      breakType: 'short',
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from reflection', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from completed', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.COMPLETED,
+      sessionNumber: 1,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when TIMER_DONE from abandoned', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.ABANDONED,
+      sessionNumber: 1,
+      abandonedAt: 5000,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 6000);
+    expect(result).toBe(state);
+  });
+});
+
 describe('transition — unhandled events return state unchanged', () => {
   it('returns idle state unchanged for non-START events', () => {
     const idle: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };
