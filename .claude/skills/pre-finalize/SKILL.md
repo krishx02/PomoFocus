@@ -3,7 +3,7 @@ name: pre-finalize
 description: Runs build verification, integration tests, E2E tests, and cross-package dependency tests for all platforms affected by the current branch. Sits between /ship-issue and /finalize. Auto-fixes failures up to 3 times, then escalates. Use when user says "run all tests", "verify build", "test before PR", or "run E2E".
 user-invocable: true
 context: fork
-allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Bash(maestro *), Bash(node *), Bash(npx *), Bash(ls *), Bash(test *), Read, Edit, Write, Grep, Glob
+allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Bash(maestro *), Bash(node *), Bash(npx *), Bash(ls *), Bash(cat *), Bash(test *), Bash(echo *), Bash(timeout *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Read, Edit, Write, Grep, Glob
 compatibility: 'Requires gh CLI, git, pnpm. Claude Code only. Optional: xcodebuild (Apple), maestro (mobile E2E).'
 argument-hint: '[issue number]'
 metadata:
