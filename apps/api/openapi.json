@@ -1,0 +1,369 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PomoFocus API",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "started_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "ended_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "focus_quality": {
+                    "type": "string",
+                    "enum": [
+                      "locked_in",
+                      "decent",
+                      "struggled"
+                    ]
+                  },
+                  "distraction_type": {
+                    "type": "string",
+                    "enum": [
+                      "phone",
+                      "people",
+                      "thoughts_wandering",
+                      "got_stuck",
+                      "other"
+                    ]
+                  }
+                },
+                "required": [
+                  "started_at",
+                  "ended_at"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "user_id": {
+                      "type": "string"
+                    },
+                    "process_goal_id": {
+                      "type": "string"
+                    },
+                    "intention_text": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "started_at": {
+                      "type": "string"
+                    },
+                    "ended_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "completed": {
+                      "type": "boolean"
+                    },
+                    "abandonment_reason": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "focus_quality": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "locked_in",
+                        "decent",
+                        "struggled"
+                      ]
+                    },
+                    "distraction_type": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "phone",
+                        "people",
+                        "thoughts_wandering",
+                        "got_stuck",
+                        "other"
+                      ]
+                    },
+                    "device_id": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "process_goal_id",
+                    "intention_text",
+                    "started_at",
+                    "ended_at",
+                    "completed",
+                    "abandonment_reason",
+                    "focus_quality",
+                    "distraction_type",
+                    "device_id",
+                    "created_at"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "nullable": true,
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "user_id": {
+                            "type": "string"
+                          },
+                          "process_goal_id": {
+                            "type": "string"
+                          },
+                          "intention_text": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "started_at": {
+                            "type": "string"
+                          },
+                          "ended_at": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "completed": {
+                            "type": "boolean"
+                          },
+                          "abandonment_reason": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "focus_quality": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "locked_in",
+                              "decent",
+                              "struggled"
+                            ]
+                          },
+                          "distraction_type": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "phone",
+                              "people",
+                              "thoughts_wandering",
+                              "got_stuck",
+                              "other"
+                            ]
+                          },
+                          "device_id": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "user_id",
+                          "process_goal_id",
+                          "intention_text",
+                          "started_at",
+                          "ended_at",
+                          "completed",
+                          "abandonment_reason",
+                          "focus_quality",
+                          "distraction_type",
+                          "device_id",
+                          "created_at"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
