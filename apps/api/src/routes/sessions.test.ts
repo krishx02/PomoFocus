@@ -303,7 +303,7 @@ describe('POST /v1/sessions', () => {
     });
 
     const app = createTestApp();
-    app.onError((err, c) => {
+    app.onError((_err, c) => {
       return c.json(
         { error: 'Internal server error', status: 500 },
         500,
