@@ -286,6 +286,34 @@ EOF
 
 Stop — do not push or open a PR.
 
+### 8e — Rebase onto Latest Main
+
+Ensure the feature branch is up-to-date with `main` before pushing (origin/main was already fetched in 8a):
+
+```bash
+git rebase origin/main
+```
+
+If rebase succeeds: proceed to Step 9.
+
+If rebase fails (conflicts):
+
+1. Abort the rebase: `git rebase --abort`
+2. Label and comment:
+
+```bash
+gh issue edit $ARGUMENTS --add-label "needs-human"
+gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+## Rebase Conflict — Needs Human
+
+The feature branch has conflicts with the latest main that cannot be auto-resolved.
+Please rebase manually and re-run `/ship-issue $ARGUMENTS`.
+EOF
+)"
+```
+
+3. Stop — do not push or open a PR.
+
 ## Step 9 — Push and Stop
 
 All checks pass (unit tests, type-check, build, integration/E2E). Push the branch and stop.
