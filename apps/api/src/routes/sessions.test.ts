@@ -44,7 +44,6 @@ function createTestApp(): OpenAPIHono {
 
 function validSessionBody(): Record<string, unknown> {
   return {
-    duration: 25,
     started_at: '2026-03-17T10:00:00.000Z',
     ended_at: '2026-03-17T10:25:00.000Z',
   };
@@ -124,26 +123,6 @@ describe('POST /v1/sessions', () => {
     expect(body.distraction_type).toBe('phone');
   });
 
-  it('returns 422 when required field "duration" is missing', async () => {
-    const app = createTestApp();
-    const { duration: _, ...bodyWithoutDuration } = validSessionBody();
-
-    const res = await app.request(
-      '/v1/sessions',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyWithoutDuration),
-      },
-      FAKE_ENV,
-    );
-
-    expect(res.status).toBe(422);
-    const body = await res.json();
-    expect(body.error).toBe('Validation failed');
-    expect(body.details).toBeDefined();
-  });
-
   it('returns 422 when required field "started_at" is missing', async () => {
     const app = createTestApp();
     const { started_at: _, ...bodyWithoutStartedAt } = validSessionBody();
@@ -215,27 +194,6 @@ describe('POST /v1/sessions', () => {
         body: JSON.stringify({
           ...validSessionBody(),
           distraction_type: 'invalid_value',
-        }),
-      },
-      FAKE_ENV,
-    );
-
-    expect(res.status).toBe(422);
-    const body = await res.json();
-    expect(body.error).toBe('Validation failed');
-  });
-
-  it('returns 422 when duration is not a number', async () => {
-    const app = createTestApp();
-
-    const res = await app.request(
-      '/v1/sessions',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...validSessionBody(),
-          duration: 'twenty-five',
         }),
       },
       FAKE_ENV,

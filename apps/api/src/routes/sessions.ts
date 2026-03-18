@@ -22,7 +22,6 @@ const DISTRACTION_TYPE_VALUES = [
  * Zod schema for the POST /v1/sessions request body.
  */
 export const CreateSessionBodySchema = z.object({
-  duration: z.number().positive(),
   started_at: z.string().datetime(),
   ended_at: z.string().datetime(),
   focus_quality: z.enum(FOCUS_QUALITY_VALUES).optional(),
