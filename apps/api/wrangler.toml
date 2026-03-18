@@ -5,3 +5,4 @@ compatibility_date = "2026-03-14"
 [vars]
 SUPABASE_URL = ""
 SUPABASE_SERVICE_ROLE_KEY = ""
+ALLOWED_ORIGINS = ""
