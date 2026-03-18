@@ -276,10 +276,20 @@ Focus your review on these files:
 [list of files from ISSUE_FILE_SCOPES for this issue]
 
 Follow your agent instructions completely.
+
+For each warning, classify as ACTIONABLE or DEFERRED.
+
 Your final output must include:
   Review complete on PR #[PR] (scope: issue #[N])
-  🔴 Critical: N  |  🟡 Warnings: N  |  ℹ️ Info: N
+  🔴 Critical: N  |  🟡 Warnings: N (M actionable, K deferred)  |  ℹ️ Info: N
   Verdict: [LGTM / Needs Changes / Critical Fixes Required]
+
+  === REVIEW FINDINGS ===
+  [For each finding, one block:]
+  [EMOJI] [SEVERITY] ([ACTIONABLE/DEFERRED if warning]): [title]
+  File: [path]:[line] (or "General" if no specific location)
+  [1-2 sentence description]
+  === END FINDINGS ===
 ```
 
 Wait for ALL reviewers to complete. Collect results from each.
@@ -326,9 +336,16 @@ Your final output must include:
   Review complete on PR #[N]
   🔴 Critical: N  |  🟡 Warnings: N (M actionable, K deferred)  |  ℹ️ Info: N
   Verdict: [LGTM / Needs Changes / Critical Fixes Required]
+
+  === REVIEW FINDINGS ===
+  [For each finding, one block:]
+  [EMOJI] [SEVERITY] ([ACTIONABLE/DEFERRED if warning]): [title]
+  File: [path]:[line] (or "General" if no specific location)
+  [1-2 sentence description]
+  === END FINDINGS ===
 ```
 
-Wait for the agent to complete. Parse `Critical` count, `Verdict`, and warning breakdown from its output.
+Wait for the agent to complete. Parse `Critical` count, `Verdict`, and warning breakdown from its output. Also extract the text between `=== REVIEW FINDINGS ===` and `=== END FINDINGS ===` — store as `REVIEW_FINDINGS_TEXT`.
 
 **After the reviewer returns:**
 
@@ -505,6 +522,10 @@ Output a clean summary to the user:
 
 [If Critical == 0 and actionable warnings == 0]:
 🚀 No critical or actionable issues. Ready for human review.
+
+[If REVIEW_FINDINGS_TEXT is not empty:]
+📋 Review Details:
+   [paste REVIEW_FINDINGS_TEXT, indented with 3 spaces]
 ```
 
 ---
