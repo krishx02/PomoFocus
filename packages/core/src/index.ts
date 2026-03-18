@@ -1,7 +1,7 @@
 // Pure domain logic: timer, goals, sessions, sync protocol.
 // No IO, no React, no Supabase imports.
 export type { StreakResult, GoalProgress } from './goals/index.js';
-export { TIMER_STATUS, TIMER_EVENT_TYPE, createInitialState, isRunning, getTimeRemaining } from './timer/index.js';
+export { TIMER_STATUS, TIMER_EVENT_TYPE, createInitialState, isRunning, getTimeRemaining, transition } from './timer/index.js';
 export type {
   TimerStatus,
   TimerEventType,
