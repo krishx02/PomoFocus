@@ -1,5 +1,6 @@
 import { TIMER_STATUS, TIMER_EVENT_TYPE } from './types.js';
 import type { TimerState, TimerEvent } from './types.js';
+import { isLongBreak } from './guards.js';
 
 export function transition(state: TimerState, event: TimerEvent, now: number): TimerState {
   switch (state.status) {
@@ -46,9 +47,25 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.TIMER_DONE:
+          if (isLongBreak(state.sessionNumber, state.config)) {
+            return {
+              status: TIMER_STATUS.LONG_BREAK,
+              timeRemaining: state.config.longBreakDuration,
+              startedAt: now,
+              sessionNumber: state.sessionNumber,
+              config: state.config,
+            };
+          }
+          return {
+            status: TIMER_STATUS.SHORT_BREAK,
+            timeRemaining: state.config.shortBreakDuration,
+            startedAt: now,
+            sessionNumber: state.sessionNumber,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.RESUME:
-        case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
