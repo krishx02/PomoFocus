@@ -64,12 +64,18 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.ABANDON:
+          return {
+            status: TIMER_STATUS.ABANDONED,
+            sessionNumber: state.sessionNumber,
+            abandonedAt: now,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.RESUME:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
-        case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
           return state;
         default: {
@@ -87,6 +93,13 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.ABANDON:
+          return {
+            status: TIMER_STATUS.ABANDONED,
+            sessionNumber: state.sessionNumber,
+            abandonedAt: now,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.PAUSE:
         case TIMER_EVENT_TYPE.TICK:
@@ -94,7 +107,6 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
-        case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
           return state;
         default: {
@@ -137,11 +149,17 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber + 1,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.ABANDON:
+          return {
+            status: TIMER_STATUS.ABANDONED,
+            sessionNumber: state.sessionNumber,
+            abandonedAt: now,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.RESUME:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
-        case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
           return state;
         default: {
@@ -184,11 +202,17 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber + 1,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.ABANDON:
+          return {
+            status: TIMER_STATUS.ABANDONED,
+            sessionNumber: state.sessionNumber,
+            abandonedAt: now,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.RESUME:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
-        case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
           return state;
         default: {
@@ -230,13 +254,19 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             sessionNumber: state.sessionNumber + 1,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.ABANDON:
+          return {
+            status: TIMER_STATUS.ABANDONED,
+            sessionNumber: state.sessionNumber,
+            abandonedAt: now,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.PAUSE:
         case TIMER_EVENT_TYPE.TICK:
         case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
-        case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
           return state;
         default: {
@@ -250,12 +280,21 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
           return {
             status: TIMER_STATUS.COMPLETED,
             sessionNumber: state.sessionNumber,
+            config: state.config,
             reflectionData: event.data,
           };
         case TIMER_EVENT_TYPE.SKIP:
           return {
             status: TIMER_STATUS.COMPLETED,
             sessionNumber: state.sessionNumber,
+            config: state.config,
+          };
+        case TIMER_EVENT_TYPE.ABANDON:
+          return {
+            status: TIMER_STATUS.ABANDONED,
+            sessionNumber: state.sessionNumber,
+            abandonedAt: now,
+            config: state.config,
           };
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.PAUSE:
@@ -263,7 +302,6 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.TICK:
         case TIMER_EVENT_TYPE.TIMER_DONE:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
-        case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
           return state;
         default: {
@@ -272,8 +310,49 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         }
       }
     case TIMER_STATUS.COMPLETED:
+      switch (event.type) {
+        case TIMER_EVENT_TYPE.RESET:
+          return {
+            status: TIMER_STATUS.IDLE,
+            config: state.config,
+          };
+        case TIMER_EVENT_TYPE.START:
+        case TIMER_EVENT_TYPE.PAUSE:
+        case TIMER_EVENT_TYPE.RESUME:
+        case TIMER_EVENT_TYPE.TICK:
+        case TIMER_EVENT_TYPE.TIMER_DONE:
+        case TIMER_EVENT_TYPE.SKIP:
+        case TIMER_EVENT_TYPE.SUBMIT:
+        case TIMER_EVENT_TYPE.SKIP_BREAK:
+        case TIMER_EVENT_TYPE.ABANDON:
+          return state;
+        default: {
+          const _exhaustive: never = event;
+          return _exhaustive;
+        }
+      }
     case TIMER_STATUS.ABANDONED:
-      return state;
+      switch (event.type) {
+        case TIMER_EVENT_TYPE.RESET:
+          return {
+            status: TIMER_STATUS.IDLE,
+            config: state.config,
+          };
+        case TIMER_EVENT_TYPE.START:
+        case TIMER_EVENT_TYPE.PAUSE:
+        case TIMER_EVENT_TYPE.RESUME:
+        case TIMER_EVENT_TYPE.TICK:
+        case TIMER_EVENT_TYPE.TIMER_DONE:
+        case TIMER_EVENT_TYPE.SKIP:
+        case TIMER_EVENT_TYPE.SUBMIT:
+        case TIMER_EVENT_TYPE.SKIP_BREAK:
+        case TIMER_EVENT_TYPE.ABANDON:
+          return state;
+        default: {
+          const _exhaustive: never = event;
+          return _exhaustive;
+        }
+      }
     default: {
       const _exhaustive: never = state;
       return _exhaustive;

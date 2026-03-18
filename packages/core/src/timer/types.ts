@@ -98,12 +98,14 @@ export type TimerState =
   | {
       status: typeof TIMER_STATUS.COMPLETED;
       sessionNumber: number;
+      config: TimerConfig;
       reflectionData?: ReflectionData;
     }
   | {
       status: typeof TIMER_STATUS.ABANDONED;
       sessionNumber: number;
       abandonedAt: number;
+      config: TimerConfig;
     };
 
 // ── Timer Events (10 event types per ADR-004) ──
