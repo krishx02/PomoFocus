@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { registerHealthRoute } from './health.js';
+import { registerHealthRoute, HealthResponseSchema } from './health.js';
 
 function createTestApp(): OpenAPIHono {
   const app = new OpenAPIHono();
@@ -19,7 +19,7 @@ describe('GET /health', () => {
   it('returns JSON with status "ok"', async () => {
     const app = createTestApp();
     const res = await app.request('/health');
-    const body = await res.json();
+    const body = HealthResponseSchema.parse(await res.json());
 
     expect(body.status).toBe('ok');
   });
@@ -27,7 +27,7 @@ describe('GET /health', () => {
   it('returns a valid ISO 8601 timestamp', async () => {
     const app = createTestApp();
     const res = await app.request('/health');
-    const body = await res.json();
+    const body = HealthResponseSchema.parse(await res.json());
 
     expect(body.timestamp).toBeDefined();
     // Verify it's a valid ISO 8601 date string
@@ -46,7 +46,7 @@ describe('GET /health', () => {
   it('returns exactly the expected shape', async () => {
     const app = createTestApp();
     const res = await app.request('/health');
-    const body = await res.json();
+    const body = HealthResponseSchema.parse(await res.json());
 
     expect(Object.keys(body).sort()).toEqual(['status', 'timestamp']);
   });
