@@ -615,28 +615,76 @@ describe('transition — TIMER_DONE event', () => {
     expect(result).toBe(state);
   });
 
-  it('returns state unchanged when TIMER_DONE from short_break', () => {
+  it('transitions from short_break to reflection when reflectionEnabled', () => {
     const state: TimerState = {
       status: TIMER_STATUS.SHORT_BREAK,
-      timeRemaining: 300,
+      timeRemaining: 0,
       startedAt: 2500,
       sessionNumber: 1,
       config: defaultConfig,
     };
     const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 3000);
-    expect(result).toBe(state);
+    expect(result).toEqual({
+      status: 'reflection',
+      sessionNumber: 1,
+      config: defaultConfig,
+    });
   });
 
-  it('returns state unchanged when TIMER_DONE from long_break', () => {
+  it('transitions from short_break to focusing with sessionNumber + 1 when reflection disabled', () => {
+    const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
+    const state: TimerState = {
+      status: TIMER_STATUS.SHORT_BREAK,
+      timeRemaining: 0,
+      startedAt: 2500,
+      sessionNumber: 1,
+      config: noReflectionConfig,
+    };
+    const now = 3000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: noReflectionConfig.focusDuration,
+      startedAt: now,
+      sessionNumber: 2,
+      config: noReflectionConfig,
+    });
+  });
+
+  it('transitions from long_break to reflection when reflectionEnabled', () => {
     const state: TimerState = {
       status: TIMER_STATUS.LONG_BREAK,
-      timeRemaining: 900,
+      timeRemaining: 0,
       startedAt: 3000,
       sessionNumber: 4,
       config: defaultConfig,
     };
     const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, 4000);
-    expect(result).toBe(state);
+    expect(result).toEqual({
+      status: 'reflection',
+      sessionNumber: 4,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from long_break to focusing with sessionNumber + 1 when reflection disabled', () => {
+    const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
+    const state: TimerState = {
+      status: TIMER_STATUS.LONG_BREAK,
+      timeRemaining: 0,
+      startedAt: 3000,
+      sessionNumber: 4,
+      config: noReflectionConfig,
+    };
+    const now = 4000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: noReflectionConfig.focusDuration,
+      startedAt: now,
+      sessionNumber: 5,
+      config: noReflectionConfig,
+    });
   });
 
   it('returns state unchanged when TIMER_DONE from break_paused', () => {
