@@ -3,20 +3,16 @@ import { createApiClient } from './client';
 import { createSession, getSessions } from './sessions';
 
 function stubFetch(status: number, body: unknown): void {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok: status >= 200 && status < 300,
-      status,
-      statusText: '',
-      headers: { get: (key: string) => key === 'content-type' ? 'application/json' : null },
-      json: () => Promise.resolve(body),
-      text: () => Promise.resolve(JSON.stringify(body)),
-      clone() {
-        return this;
-      },
-    }),
-  );
+  const response = {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: '',
+    headers: { get: (key: string) => key === 'content-type' ? 'application/json' : null },
+    json: () => Promise.resolve(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
+    clone: (): typeof response => response,
+  };
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
 }
 
 describe('createSession', () => {

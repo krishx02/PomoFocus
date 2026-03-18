@@ -17,20 +17,16 @@ import type {
 } from './index';
 
 function stubFetch(status: number, body: unknown): void {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok: status >= 200 && status < 300,
-      status,
-      statusText: status === 422 ? 'Unprocessable Entity' : '',
-      headers: { get: (key: string) => key === 'content-type' ? 'application/json' : null },
-      json: () => Promise.resolve(body),
-      text: () => Promise.resolve(JSON.stringify(body)),
-      clone() {
-        return this;
-      },
-    }),
-  );
+  const response = {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: status === 422 ? 'Unprocessable Entity' : '',
+    headers: { get: (key: string) => key === 'content-type' ? 'application/json' : null },
+    json: () => Promise.resolve(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
+    clone: (): typeof response => response,
+  };
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
 }
 
 describe('data-access integration', () => {
