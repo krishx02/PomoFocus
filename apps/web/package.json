@@ -3,11 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start --web",
     "export": "expo export --platform web"
   },
   "dependencies": {
+    "@babel/runtime": "^7.29.2",
     "@pomofocus/core": "workspace:*",
     "@pomofocus/data-access": "workspace:*",
     "@pomofocus/state": "workspace:*",

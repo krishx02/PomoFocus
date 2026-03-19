@@ -4,7 +4,7 @@ description: Pick up a GitHub issue by number. If effort:large, decomposes it in
 user-invocable: true
 context: fork
 isolation: worktree
-allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(npx *), Bash(node *), Bash(xcodebuild *), Bash(maestro *), Bash(ls *), Bash(cat *), Bash(echo *), Bash(test *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Bash(timeout *), Read, Edit, Write, Grep, Glob
+allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(npx *), Bash(node *), Bash(xcodebuild *), Bash(maestro *), Bash(ls *), Bash(cat *), Bash(echo *), Bash(test *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Bash(timeout *), Bash(kill *), mcp__playwright__*, Read, Edit, Write, Grep, Glob
 compatibility: 'Requires gh CLI, git, pnpm. Claude Code only.'
 argument-hint: '[issue number]'
 metadata:
@@ -306,6 +306,37 @@ else
   echo "SKIP: Maestro not configured"
 fi
 ```
+
+### 8c-web — Browser Smoke Test (web platform only)
+
+If the `web` bucket was detected in 8a, run a live browser verification using Playwright MCP:
+
+1. Start the dev server in the background:
+   ```bash
+   cd apps/web && npx expo start --web --port 8081 &
+   DEV_PID=$!
+   sleep 15  # Wait for Metro to bundle
+   ```
+
+2. Use **Playwright MCP** to verify the app loads:
+   - Navigate to `http://localhost:8081`
+   - Wait for the page to be fully loaded (network idle)
+   - Take a screenshot
+   - Check for JavaScript console errors (filter out React dev mode warnings and `[HMR]` messages)
+   - Verify key elements are present on the page (e.g., timer display text, buttons)
+
+3. Kill the dev server:
+   ```bash
+   kill $DEV_PID 2>/dev/null
+   ```
+
+4. If console errors or missing elements are found: treat as a failure — enter the 8d fix loop.
+   If the page loads cleanly: proceed to 8d/8e.
+
+**Skip conditions:** Skip this step if:
+- The `web` bucket was NOT detected in 8a
+- `apps/web/app/` has no route files (no pages to test)
+- Playwright MCP is not available (check with a test call — if it fails, log `SKIP: Playwright MCP not available` and continue)
 
 ### 8d — Fix Loop (if failures)
 

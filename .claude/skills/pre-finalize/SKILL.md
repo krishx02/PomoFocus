@@ -3,7 +3,7 @@ name: pre-finalize
 description: Runs build verification, integration tests, E2E tests, and cross-package dependency tests for all platforms affected by the current branch. Sits between /ship-issue and /finalize. Auto-fixes failures up to 3 times, then escalates. Use when user says "run all tests", "verify build", "test before PR", or "run E2E".
 user-invocable: true
 context: fork
-allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Bash(maestro *), Bash(node *), Bash(npx *), Bash(ls *), Bash(cat *), Bash(test *), Bash(echo *), Bash(timeout *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Read, Edit, Write, Grep, Glob
+allowed-tools: Bash(gh *), Bash(git *), Bash(pnpm *), Bash(xcodebuild *), Bash(maestro *), Bash(node *), Bash(npx *), Bash(ls *), Bash(cat *), Bash(test *), Bash(echo *), Bash(timeout *), Bash(mkdir *), Bash(command *), Bash(which *), Bash(mktemp*), Bash(rm /tmp/*), Bash(date *), Bash(kill *), mcp__playwright__*, Read, Edit, Write, Grep, Glob
 compatibility: 'Requires gh CLI, git, pnpm. Claude Code only. Optional: xcodebuild (Apple), maestro (mobile E2E).'
 argument-hint: '[issue number]'
 metadata:
@@ -305,7 +305,39 @@ else
 fi
 ```
 
-Record all results from Steps 4-4e: which tests ran, which passed, which were skipped, which failed.
+## Step 4f — Live Browser Verification (web platform only)
+
+If the `web` bucket is affected, perform a live browser verification using Playwright MCP:
+
+1. Start the dev server in the background:
+   ```bash
+   cd apps/web && npx expo start --web --port 8081 &
+   DEV_PID=$!
+   sleep 15  # Wait for Metro to bundle
+   ```
+
+2. Use **Playwright MCP** to run an interactive smoke test:
+   - Navigate to `http://localhost:8081`
+   - Screenshot the initial page state
+   - If the timer shows "idle" or a Start button is visible: click Start
+   - Wait 2 seconds, verify the timer display has changed (countdown is ticking)
+   - Click Pause (if visible), verify the timer stops
+   - Screenshot the paused state
+   - Check for JavaScript console errors throughout (filter out React dev mode warnings and `[HMR]` messages)
+
+3. Kill the dev server:
+   ```bash
+   kill $DEV_PID 2>/dev/null
+   ```
+
+4. If any step fails (page doesn't load, console errors, elements missing, interactions don't work): record the failure and proceed to Step 5 (Self-Healing Fix Loop).
+
+**Skip conditions:** Skip this step if:
+- The `web` bucket was NOT detected in Step 2
+- `apps/web/app/` has no route files
+- Playwright MCP is not available (log `SKIP: Playwright MCP not available` and continue)
+
+Record all results from Steps 4-4f: which tests ran, which passed, which were skipped, which failed.
 
 ## Step 5 — Self-Healing Fix Loop
 

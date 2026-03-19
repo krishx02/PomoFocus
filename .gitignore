@@ -25,3 +25,4 @@ supabase/.temp/
 
 # Vercel
 .vercel/
+apps/web/.expo/
