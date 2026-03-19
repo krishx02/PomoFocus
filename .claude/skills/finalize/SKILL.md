@@ -142,7 +142,11 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
 
    ```
    You are a CI fixer. The following GitHub Actions logs show failures on branch [BRANCH_NAME].
-   Fix the root cause. Do not change anything else.
+
+   SELF-HEALING RULES:
+   - Do NOT modify test files (*.test.ts, *.spec.ts) — fix implementation code only (SH-006)
+   - Before fixing, explicitly reason: what failed, WHY it failed, what the root cause is (SH-003)
+   - Fix the root cause. Do not change anything else.
 
    [paste log output]
 
@@ -152,7 +156,9 @@ timeout 600 gh pr checks $PR_NUMBER --watch || echo "CI check timed out after 10
    - Run: git push -u origin [BRANCH_NAME]
    ```
 
-4. Increment `CI_ATTEMPT`. Return to top of CI loop.
+4. **If the fixer agent fails or returns no output** (subagent crash recovery): report `"CI fixer agent failed on attempt [CI_ATTEMPT]. Treating as failed attempt."` and increment CI_ATTEMPT. Do NOT retry the same agent with the same input — the failure is likely structural.
+
+5. Increment `CI_ATTEMPT`. Return to top of CI loop.
 
 **If any check fails AND CI_ATTEMPT >= MAX_CI_ATTEMPTS:**
 
@@ -389,6 +395,11 @@ Wait for the agent to complete. Parse `Critical` count, `Verdict`, and warning b
      You are an independent code fixer. You have received review findings from a
      code review of branch [BRANCH_NAME]. Your job is to VERIFY each finding
      independently before making any changes.
+
+     SELF-HEALING RULES:
+     - Do NOT modify test files — fix implementation code only (SH-006)
+     - Before fixing, reason about WHY each issue exists and what the correct fix is (SH-003)
+     - After all fixes, re-run the FULL test suite to catch regressions (SH-008)
 
      ## Protocol
 

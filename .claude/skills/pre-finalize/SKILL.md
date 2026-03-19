@@ -307,34 +307,54 @@ fi
 
 Record all results from Steps 4-4e: which tests ran, which passed, which were skipped, which failed.
 
-## Step 5 — Fix Loop
+## Step 5 — Self-Healing Fix Loop
 
 If ALL tests passed (or were skipped), go to Step 6.
 
-If any test failed, enter the fix loop.
+If any test failed, enter the self-healing fix loop.
 
-**Iteration limit: 3 attempts.**
+**Set `FIX_ATTEMPT = 1`, `MAX_ATTEMPTS = 3`, `PREV_FAIL_COUNT = [count of failing tests]`.**
 
-Set `FIX_ATTEMPT = 1`.
+**IMPORTANT CONSTRAINTS (from self-healing rules):**
+- Do NOT modify test files during this loop — fix implementation code only (SH-006).
+- After EACH fix, re-run ALL failing test commands (not just one) to catch regressions (SH-008).
+- Do NOT modify files outside the issue's platform scope.
 
 **Loop:**
 
-1. Read the failure output carefully. Identify the root cause.
-2. Fix the failing code. Rules:
-   - Do NOT modify files outside the issue's platform scope
-   - Follow existing patterns in the files you modify
+1. **Reflect before fixing (SH-003).** Before touching any code, explicitly reason through:
+   - What specifically failed? (quote the error)
+   - What is the root cause?
+   - If `FIX_ATTEMPT > 1`: why did the previous fix not work? What will you do differently?
+
+2. Fix the failing code. Follow existing patterns in the files you modify.
+
 3. Stage only the changed files by name (do NOT use `git add -A`):
    ```bash
    git add [specific files]
    git commit -m "fix: address integration test failure (attempt $FIX_ATTEMPT) (#$ARGUMENTS)"
    ```
+
 4. Push the fix:
    ```bash
    git push
    ```
-5. Re-run ONLY the failing test command(s) — do not re-run tests that already passed.
-6. If tests now pass, exit the loop and go to Step 6.
-7. Increment `FIX_ATTEMPT`. If `FIX_ATTEMPT > 3`, go to Step 5b.
+
+5. Re-run the failing test command(s).
+
+6. **Derivative check (SH-002).** Count failing tests.
+   - If `CURRENT_FAIL_COUNT > PREV_FAIL_COUNT`: your fix made things WORSE. Revert the commit:
+     ```bash
+     git revert HEAD --no-edit
+     git push
+     ```
+     Try a fundamentally different approach. This counts as using one attempt.
+   - If `CURRENT_FAIL_COUNT == 0`: all tests pass — exit the loop and go to Step 6.
+   - Otherwise: update `PREV_FAIL_COUNT = CURRENT_FAIL_COUNT`.
+
+7. Increment `FIX_ATTEMPT`. If `FIX_ATTEMPT > MAX_ATTEMPTS`, go to Step 5b.
+
+8. Return to step 1 of the loop.
 
 ### Step 5b — Escalate to needs-human
 
@@ -347,11 +367,11 @@ Integration or E2E tests are still failing after 3 fix attempts in `/pre-finaliz
 
 **Failing test(s):** [list the specific test command(s) that failed]
 **Last failure output:** [summary of the error — the actionable part, not the full log]
+**What was tried:** [list each approach and why it failed]
+**Possible root cause:** [your best assessment]
 
 Unit tests pass (via `/ship-issue`). The failure is in broader integration or E2E tests,
 which may require infrastructure changes, environment setup, or a design decision.
-
-Please review the test failure and resolve the root cause manually.
 EOF
 )"
 ```
