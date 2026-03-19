@@ -158,32 +158,64 @@ Run the Test Plan command from the issue.
 [exact command from issue's Test Plan field]
 ```
 
-If tests fail:
+If tests pass on the first run, skip to the commit step below.
 
-1. Read the failure output carefully
-2. Fix the failure
-3. Run tests again
-4. Repeat until all tests pass
+If tests fail, enter the self-healing fix loop:
 
-**Iteration limit:** If tests are still failing after 5 attempts, stop the loop:
+**Set `ATTEMPT = 1`, `MAX_ATTEMPTS = 5`, `PREV_FAIL_COUNT = [count failing tests]`.**
+
+**IMPORTANT CONSTRAINTS:**
+- Do NOT modify test files (`*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`) during this loop — fix the implementation, not the tests (SH-006).
+- After EACH fix, re-run the FULL test suite (not just the failing test) to catch regressions (SH-008).
+
+**Loop:**
+
+1. **Reflect before fixing (SH-003).** Before touching any code, explicitly reason through:
+   - What specifically failed? (quote the error message)
+   - What is the root cause? (not the symptom — the actual cause)
+   - If ATTEMPT > 1: why did the previous fix not work?
+   - What specifically will you do differently this time?
+
+2. **Apply the fix.** Modify only implementation code.
+
+3. **Re-run the FULL test suite** (the exact Test Plan command from the issue).
+
+4. **Derivative check (SH-002).** Count the number of failing tests.
+   - If `CURRENT_FAIL_COUNT > PREV_FAIL_COUNT`: your fix made things WORSE. Immediately revert: `git checkout -- .` and try a fundamentally different approach (do NOT retry the same fix). This counts as using one attempt.
+   - If `CURRENT_FAIL_COUNT == 0`: all tests pass — exit the loop.
+   - Otherwise: update `PREV_FAIL_COUNT = CURRENT_FAIL_COUNT`.
+
+5. **Fresh start check (SH-005).** If `ATTEMPT == 3` and tests are still failing: revert ALL uncommitted changes (`git checkout -- .`), re-read the original error from attempt 1, and approach the problem from scratch. Ignore your previous fix attempts — they are polluting your reasoning.
+
+6. Increment `ATTEMPT`. If `ATTEMPT > MAX_ATTEMPTS`, go to **Ralph Loop Exhausted** below.
+
+7. Return to step 1 of the loop.
+
+### Ralph Loop Exhausted
 
 ```bash
 gh issue edit $ARGUMENTS --remove-label "in-progress" --add-label "needs-human"
 gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
 ## Ralph Loop Exhausted — Needs Human
 
-Tests are still failing after 5 fix attempts. The failure may require
-infrastructure unavailable in this environment, involve a pre-existing flake,
-or need a deeper design decision.
+Tests are still failing after 5 fix attempts.
 
-Please review the test failure output and resolve the root cause manually.
+**What was tried:**
+- [List each approach attempted and why it failed]
+- [Include the final error output]
+
+**Possible root causes:**
+- [Your best assessment of why the tests won't pass]
+
+The failure may require infrastructure unavailable in this environment,
+involve a pre-existing flake, or need a deeper design decision.
 EOF
 )"
 ```
 
-Stop — do not open a PR.
+Stop — do not open a PR. Do NOT open a PR with failing tests.
 
-Do NOT open a PR with failing tests.
+---
 
 Also run lint and type-check for the affected project:
 
@@ -192,7 +224,7 @@ pnpm nx lint @pomofocus/<affected-project>
 pnpm type-check
 ```
 
-If lint or type errors exist, fix them and re-run. Apply the same fix loop pattern (up to 5 attempts) as tests above.
+If lint or type errors exist, fix them and re-run. Apply the same self-healing fix loop pattern (up to 5 attempts, with derivative check and reflection) as tests above.
 
 Then run Nx affected tests to catch downstream breakage (e.g., a `packages/core/` change breaking `apps/api/`):
 
