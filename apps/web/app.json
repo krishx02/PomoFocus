@@ -8,6 +8,7 @@
       "bundler": "metro",
       "output": "single"
     },
-    "scheme": "pomofocus"
+    "scheme": "pomofocus",
+    "plugins": ["expo-router"]
   }
 }

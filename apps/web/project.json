@@ -5,6 +5,12 @@
   "projectType": "application",
   "tags": ["type:app", "scope:web"],
   "targets": {
+    "start": {
+      "command": "expo start --web",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
     "lint": {
       "command": "npx eslint .",
       "options": {

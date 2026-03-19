@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/.next/**',
       '**/coverage/**',
       '**/vitest.config.ts',
+      '**/metro.config.js',
       '**/scripts/**',
     ],
   },
@@ -456,8 +457,9 @@ export default tseslint.config(
       '**/not-found.tsx',
       '**/route.ts',
       '**/middleware.ts',
-      // Expo Router conventions (uses index.tsx for routes)
+      // Expo Router conventions (uses index.tsx for routes, _layout.tsx for layouts)
       '**/app/**/index.tsx',
+      '**/app/**/_layout.tsx',
       // Hono / Cloudflare Workers entry point (export default app)
       'apps/api/src/index.ts',
       // Config files
