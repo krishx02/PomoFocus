@@ -18,6 +18,7 @@ type TimerActions = {
   abandon: () => void;
   reset: () => void;
   tick: () => void;
+  timerDone: () => void;
   skipBreak: () => void;
   submitReflection: (data: ReflectionData) => void;
   skipReflection: () => void;
@@ -104,6 +105,16 @@ export function createTimerStore(config: TimerConfig = DEFAULT_CONFIG): TimerSto
             }),
             false,
             'timer/tick',
+          );
+        },
+
+        timerDone: (): void => {
+          set(
+            (store) => ({
+              state: transition(store.state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, Date.now()),
+            }),
+            false,
+            'timer/timerDone',
           );
         },
 
