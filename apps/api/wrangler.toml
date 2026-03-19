@@ -2,7 +2,9 @@ name = "pomofocus-api"
 main = "src/index.ts"
 compatibility_date = "2026-03-14"
 
+# SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set as CF Workers secrets
+# via `wrangler secret put` — never stored in this file.
+# See: https://developers.cloudflare.com/workers/configuration/secrets/
+
 [vars]
-SUPABASE_URL = ""
-SUPABASE_SERVICE_ROLE_KEY = ""
 ALLOWED_ORIGINS = ""
