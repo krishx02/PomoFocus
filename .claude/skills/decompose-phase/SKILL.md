@@ -137,6 +137,35 @@ Every issue gets these labels:
 - `agent-ready` (unless `needs-human`)
 - `effort:small` (unless explicitly large)
 - `phase:$ARGUMENTS` (e.g., `phase:0`, `phase:7A`)
+- `stream:X` — determine from the stream mapping table below
+
+### Stream Mapping
+
+Each issue belongs to a stream based on its content and dependencies. Use this mapping:
+
+| Phase Sub-Item | If Pure Logic (no IO, no auth) | If API/Wiring/Drivers | If UI | If Firmware | If Social |
+|---------------|-------------------------------|----------------------|-------|-------------|-----------|
+| 1.5, 1.6 | — | — | stream:A | — | — |
+| 2.1, 2.2, 2.3 | — | stream:A | — | — | — |
+| 2.4 | stream:B (types, core logic) | stream:C (API routes, state hooks) | — | — | — |
+| 2.5 | stream:B | — | — | — | — |
+| 2.6 | — | stream:C | — | — | — |
+| 3.1 | — | — | stream:D | — | — |
+| 3.2 | stream:B (logic) | — | stream:D (UI) | — | — |
+| 3.3 | — | — | stream:D | — | — |
+| 3.4 | stream:B (logic) | — | stream:D (UI) | — | — |
+| 3.5 | stream:B (pure function) | stream:C (persistence wiring) | — | — | — |
+| 4.1 | — | — | stream:D | — | — |
+| 4.2-4.6 | — | — | stream:E | — | — |
+| 5.1 | stream:B | — | — | — | — |
+| 5.2-5.4 | — | stream:C | — | — | — |
+| 6.1-6.3 | — | — | stream:E | — | — |
+| 7A.1-7A.8 | — | — | — | stream:G | — |
+| 7B.1-7B.5 | — | — | — | — | stream:H |
+| 8.1-8.5 | — | — | — | — | stream:F |
+| 9.1-9.5 | — | stream:C (GDPR, prefs) | stream:Z (onboarding, polish) | — | — |
+
+If a sub-item doesn't clearly map, default to the stream of its primary dependency.
 
 Plus ONE platform label based on the affected files:
 
@@ -281,6 +310,22 @@ gh issue create \
 
 [List which issues can be worked on simultaneously by separate agents]
 
+### Batch-Ship Groups
+
+Issues that can be `/batch-ship`ped together (sibling issues touching non-overlapping files):
+
+**Batch 1:** [description]
+```
+/batch-ship [issue numbers]
+```
+
+**Batch 2:** [description]
+```
+/batch-ship [issue numbers]
+```
+
+[... list all identified batch groups]
+
 ### Total: [N] issues created
 EOF
 )"
@@ -300,7 +345,8 @@ Output a summary to the user:
 5. **Dependency chain:** [describe which must go first]
 6. **Parallel opportunities:** [which can run simultaneously]
 7. **`needs-human` issues (if any):** #[n] — [what decision is needed]
-8. **Recommended first pick:** "Start with #[lowest dependency issue] — run `/ship-issue [number]`"
+8. **Batch-ship groups:** [list each batch with issue numbers and the `/batch-ship` command]
+9. **Recommended first pick:** "Start with batch 1: `/batch-ship [issue numbers]`" (or `/ship-issue [number]` for single issues)
 
 ## Guidelines
 
