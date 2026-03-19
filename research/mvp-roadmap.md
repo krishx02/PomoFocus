@@ -931,16 +931,149 @@ Items explicitly deferred from v1, with ADR references. These become the backlog
 | 9         | Polish + Ship          | 2 weeks  | 22-30        | After all above                        | **Yes** — gate to launch          |
 | **Total** |                        |          | **~300-404** |                                        |                                   |
 
-> **Note on timeline:** The critical path for the TypeScript pipeline is Phases 0→1→2→3→4→9 (~15 weeks serial). But Phase 7A (firmware) runs **entirely in parallel from day 1** — by the time the mobile app exists (end of Phase 4), the firmware should have a working standalone device with BLE GATT server ready for integration.
+> **Note on timeline:** The sequential phase structure gives ~17 weeks. With the **stream-based parallelization** (see [Parallelized Execution: Streams](#parallelized-execution-streams) above), the effective timeline compresses to **~9 weeks** by running 6-8 streams concurrently. Use `/decompose-stream` to create issues organized by parallel execution track.
+
+---
+
+## Parallelized Execution: Streams
+
+> **Added:** 2026-03-18 | Based on [self-healing agents research](./10-self-healing-agents.md) and dependency analysis
 >
-> **Effective timeline with parallelism:**
->
-> - Weeks 1-2: Phase 0 (TS foundation) + Phase 7A.1-7A.4 (firmware scaffold, display, timer, encoder)
-> - Weeks 3-5: Phase 1 (walking skeleton) + Phase 7A.5-7A.6 (protobuf, GATT server)
-> - Weeks 6-8: Phase 2 (auth, sync, goals) + Phase 7A.7-7A.8 (outbox, sleep) + Phase 7B.1-7B.2 (TS BLE package)
-> - Weeks 9-10: Phase 3 (session lifecycle) + Phase 8 (social — can overlap)
-> - Weeks 11-13: Phase 4 (mobile) + Phase 5 (analytics — parallel)
-> - Weeks 14-15: Phase 7B.3-7B.5 (BLE client integration) + Phase 6 (iOS widget)
-> - Weeks 16-17: Phase 9 (polish + ship)
->
-> **~17 weeks with full parallelism** (vs 30+ weeks serial). Firmware de-risking happens during the first 8 weeks while TS infrastructure is being built.
+> The sequential phase structure (17 weeks) assumes each phase completes before the next starts. In reality, many items have dependencies only on specific packages, not entire phases. Restructuring into **dependency-based streams** compresses the timeline to **~9 weeks**.
+
+### Stream Definitions
+
+| Stream | Name | Weeks | Est. Issues | Depends On | Phase Sub-Items |
+|--------|------|-------|-------------|------------|-----------------|
+| A | Auth Foundation | 1-3 | ~25 | Phase 1 | 1.5, 1.6, 2.1, 2.2, 2.3 |
+| B | Pure Domain Logic | 1-4 | ~35 | types + core only | 2.4 (core), 2.5, 3.2 (core), 3.4 (core), 3.5 (core), 5.1 |
+| C | API + Sync Wiring | 3-5 | ~33 | Stream A | 2.4 (API), 2.6, 3.5 (wiring), 5.2-5.4, 9.2, 9.3 |
+| D | Web Session Experience | 3-6 | ~28 | Streams A + B | 3.1 (UI), 3.2 (UI), 3.3 (UI), 3.4 (UI), 4.1, 9.5 (web) |
+| E | Mobile + iOS Widget | 5-8 | ~41 | Streams A + D | 4.2-4.6, 6.1-6.3, 9.1 (mobile) |
+| F | Social Features | 4-6 | ~34 | Stream A only | 8.1-8.5 |
+| G | Firmware | 1-6 | ~53 | INDEPENDENT | 7A.1-7A.8 |
+| H | BLE Integration | 3-8 | ~31 | Streams E + G | 7B.1-7B.5 |
+| Z | Polish + Ship | 8-9 | ~14 | All | 9.1 (final), 9.4, 9.5 (final) |
+
+**Key insight:** Stream B (pure domain logic) has **zero dependency on auth, API, or any IO layer.** Goals core logic, sync FSM, focus/break cycling, analytics pure functions — all are pure functions in `packages/core/` and `packages/analytics/` that can be batch-shipped starting Day 1 after Phase 1.
+
+### Stream Dependency Graph
+
+```
+                    AFTER PHASE 1
+                         |
+            +-----------+-----------+
+            |           |           |
+       Stream A    Stream B    Stream G
+       (auth)      (pure core)  (firmware)
+            |           |           |
+       +----+----+      |      +---+---+
+       |         |      |      |       |
+     Stream C  Stream F |    [7A.5]  [7A.6]
+     (API+sync) (social)|      |       |
+       |         |      |   Stream H.1-2
+       +----+----+------+   (BLE TS pkg)
+            |                    |
+       Stream D                  |
+       (web session)             |
+            |                    |
+       Stream E ----convergence--+
+       (mobile)       |
+            |    Stream H.3-5
+            |    (BLE client)
+            +--------+
+                      |
+                 Stream Z
+                 (polish)
+```
+
+### Sub-Item to Stream Mapping
+
+Some phase sub-items split across streams. The **core logic** (pure functions, no IO) goes to Stream B, while the **API/wiring** goes to Stream C and the **UI** goes to Stream D.
+
+| Phase Sub-Item | Core Logic (Stream B) | API/Wiring (Stream C) | UI (Stream D) | Other |
+|---------------|----------------------|----------------------|---------------|-------|
+| 2.4 Goals | Goal types, streak calc, validation | Goals CRUD API, state hooks | — | — |
+| 2.5 Sync FSM | Queue states, transitions, retry, conflict | — | — | — |
+| 2.6 Sync Drivers | — | Upload driver, persistence, network detection | — | — |
+| 3.1 Pre-session | — | — | Goal picker, intention input, countdown | — |
+| 3.2 Break cycling | Break selection logic, cycle counting | — | Break cycling UI, timer display | — |
+| 3.3 Reflection | — | — | Reflection form, quality slider, distraction picker | — |
+| 3.4 Abandonment | Partial duration calc, state transition | — | Stop button, reason prompt | — |
+| 3.5 Persistence | Rehydration pure function | localStorage + sync wiring | — | — |
+| 5.1 Analytics | All pure functions (completion rate, focus quality, consistency, streak, goal progress, weekly dots, trends) | — | — | — |
+| 5.2-5.4 Analytics API | — | Tier 1/2/3 API endpoints | — | — |
+
+### Week-by-Week Schedule
+
+| Week | Streams Active | Key Deliverables | Est. Issues |
+|------|---------------|------------------|-------------|
+| 1 | A, B, G | Finish P1 web UI, goals core, sync FSM types, PlatformIO scaffold | ~20 |
+| 2 | A, B, G | Auth flows, timer extensions, abandonment logic, e-ink + timer C++ + encoder | ~30 |
+| 3 | A, B, C, H | RLS policies, analytics pure functions, auth state hook, Protobuf TS gen | ~28 |
+| 4 | B, C, D, F, G | Analytics complete, goals API, sync drivers, pre-session UI, social DB, GATT | ~40 |
+| 5 | C, D, E, F, G | Analytics API, session UI, Expo scaffold, library mode, session outbox | ~40 |
+| 6 | D, E, F, G | Web polish, mobile auth + notifications, social UI, power management | ~32 |
+| 7 | E, H | Mobile sync, iOS widget setup, BLE adapters | ~24 |
+| 8 | E, H, Z | iOS widget, BLE E2E, Sentry, accessibility | ~20 |
+| 9 | Z | Integration testing, bug fixes, final polish | ~10 |
+
+### Batch-Ship Opportunities
+
+Each batch contains **sibling issues** (non-overlapping files) that can run via `/batch-ship` in parallel:
+
+| Batch | Stream | Description | Files | Merge Risk |
+|-------|--------|-------------|-------|------------|
+| 1 | A | Phase 1.5 web UI components (4 issues) | apps/web/ different components | LOW |
+| 2 | B | Goal core types + logic (3 issues) | packages/core/goals/ | LOW |
+| 3 | B | Sync FSM types + transitions (3 issues) | packages/core/sync/ | LOW |
+| 4 | A | Auth flows — email, Google, Apple (3 issues) | packages/data-access/auth/ | MED |
+| 5 | B | Timer extensions — break cycling, abandonment, rehydration (3 issues) | packages/core/timer/ | MED |
+| 6 | G | Firmware HW — display, timer C++, encoder (3 issues) | firmware/device/src/ different .cpp | LOW |
+| 7 | A | RLS policies — 5 table groups (5 issues) | supabase/migrations/ | LOW |
+| 8 | B | Analytics — completion rate, focus quality, consistency, streak (4 issues) | packages/analytics/src/ | LOW |
+| 9 | B | Analytics — goal progress, weekly dots, trends, distraction (4 issues) | packages/analytics/src/ | LOW |
+| 10 | F | Social API — friend requests, friendships, search, invite (4 issues) | apps/api/routes/ | LOW |
+| 11 | D | Session UI — goal picker, intention, break cycling (3 issues) | apps/web/ different screens | LOW |
+| 12 | C | Analytics API — Tier 1, Tier 2, Tier 3 endpoints (3 issues) | apps/api/routes/analytics/ | MED |
+| 13 | F | Social features — library mode, quiet feed, invite links (3 issues) | apps/api/routes/ | LOW |
+| 14 | D | Shared UI components — Button, Card, Timer, Goal, Session (5 issues) | packages/ui/components/ | LOW |
+| 15 | C | GDPR + preferences API (2 issues) | apps/api/routes/ | LOW |
+| 16 | E | Mobile setup — auth screens, notifications, push tokens (3 issues) | apps/mobile/ different dirs | LOW |
+| 17 | F | Social UI — friend list, library mode, quiet feed, taps (4 issues) | apps/web/ + apps/mobile/ | LOW |
+| 18 | H | BLE adapters — mobile + web (2 issues) | packages/ble-protocol/adapters/ | LOW |
+
+### Compressed Timeline
+
+| Metric | Sequential (phases) | Parallelized (streams) |
+|--------|-------------------|----------------------|
+| Calendar time | ~17 weeks | **~9 weeks** |
+| Issues/week | ~18-24 | ~30-44 |
+| Parallel streams at peak | 2 | **6-8** |
+| Batch-ship batches | ~5 | **~18** |
+
+### Merge Conflict Mitigation
+
+The main risk with aggressive parallelism is merge conflicts, especially on barrel export files (`index.ts`).
+
+**Strategy:**
+1. Each hook/function/component goes in its own file (e.g., `use-goals.ts`, `use-friends.ts`)
+2. Barrel export (`index.ts`) updates are the LAST issue in each batch — never parallel
+3. When batch-shipping, avoid two issues that modify the same `index.ts`
+4. If conflict occurs: the later-merged PR resolves it (simple additive conflict)
+
+### Using the Stream System
+
+```bash
+# Decompose a stream into issues:
+/decompose-stream B
+
+# Ship a batch of sibling issues in parallel:
+/batch-ship 201 202 203
+
+# Finalize all successful issues:
+/batch-finalize 201 202 203
+
+# Then ship the next batch from the stream:
+/batch-ship 204 205 206
+```
