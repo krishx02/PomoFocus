@@ -8,6 +8,7 @@
     "export": "expo export --platform web"
   },
   "dependencies": {
+    "@pomofocus/core": "workspace:*",
     "@pomofocus/state": "workspace:*",
     "expo": "~52.0.0",
     "expo-router": "~4.0.0",
@@ -19,6 +20,7 @@
     "react-native-web": "~0.19.13"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.0",
     "typescript": "^5.7.0"
   }

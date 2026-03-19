@@ -100,6 +100,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@pomofocus/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@pomofocus/state':
         specifier: workspace:*
         version: link:../../packages/state
@@ -128,6 +131,9 @@ importers:
         specifier: ~0.19.13
         version: 0.19.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/react':
         specifier: ^18.3.0
         version: 18.3.28
