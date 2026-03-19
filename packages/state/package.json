@@ -12,14 +12,17 @@
     }
   },
   "dependencies": {
-    "@pomofocus/types": "workspace:*",
     "@pomofocus/core": "workspace:*",
     "@pomofocus/data-access": "workspace:*",
-    "zustand": "^5.0.0",
+    "@pomofocus/types": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
-    "immer": "^10.0.0"
+    "immer": "^10.0.0",
+    "zustand": "^5.0.0"
   },
   "peerDependencies": {
     "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28"
   }
 }

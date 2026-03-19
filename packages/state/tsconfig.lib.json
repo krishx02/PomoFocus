@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
+    "jsx": "react-jsx",
     "types": [],
     "paths": {
       "@pomofocus/types": ["../types/src/index.ts"],
@@ -11,5 +12,5 @@
       "@pomofocus/data-access": ["../data-access/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
