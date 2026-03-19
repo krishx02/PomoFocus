@@ -103,6 +103,9 @@ importers:
       '@pomofocus/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@pomofocus/data-access':
+        specifier: workspace:*
+        version: link:../../packages/data-access
       '@pomofocus/state':
         specifier: workspace:*
         version: link:../../packages/state

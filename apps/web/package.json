@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@pomofocus/core": "workspace:*",
+    "@pomofocus/data-access": "workspace:*",
     "@pomofocus/state": "workspace:*",
     "expo": "~52.0.0",
     "expo-router": "~4.0.0",
