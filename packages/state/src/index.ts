@@ -6,3 +6,4 @@ export { startTimer, stopTimer } from './timer/timer-driver.js';
 export { createQueryClient } from './query-client.js';
 export { QueryProvider } from './providers.js';
 export { useSessions, sessionsQueryOptions } from './hooks/use-sessions.js';
+export { useCreateSession } from './hooks/use-create-session.js';
