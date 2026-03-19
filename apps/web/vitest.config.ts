@@ -14,6 +14,7 @@ export default mergeConfig(
     },
     resolve: {
       alias: {
+        'react-native': resolve(appRoot, 'node_modules/react-native-web'),
         '@pomofocus/types': resolve(workspaceRoot, 'packages/types/src/index.ts'),
         '@pomofocus/core': resolve(workspaceRoot, 'packages/core/src/index.ts'),
         '@pomofocus/state': resolve(workspaceRoot, 'packages/state/src/index.ts'),
