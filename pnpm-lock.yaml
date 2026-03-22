@@ -178,6 +178,9 @@ importers:
       '@pomofocus/types':
         specifier: workspace:*
         version: link:../types
+      '@supabase/supabase-js':
+        specifier: ^2.99.1
+        version: 2.99.1
       openapi-fetch:
         specifier: ^0.14.0
         version: 0.14.1

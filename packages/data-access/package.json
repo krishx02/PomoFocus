@@ -12,8 +12,9 @@
     }
   },
   "dependencies": {
-    "@pomofocus/types": "workspace:*",
     "@pomofocus/core": "workspace:*",
+    "@pomofocus/types": "workspace:*",
+    "@supabase/supabase-js": "^2.99.1",
     "openapi-fetch": "^0.14.0"
   },
   "devDependencies": {

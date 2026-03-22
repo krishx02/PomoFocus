@@ -13,3 +13,23 @@ export type {
   CreateSessionResult,
   GetSessionsResult,
 } from './sessions';
+export {
+  createAuthClient,
+  signUp,
+  signIn,
+  signOut,
+  signInWithOAuth,
+  getSession,
+  getAccessToken,
+  onAuthStateChange,
+} from './auth';
+export type {
+  AuthClientConfig,
+  AuthUser,
+  AuthSession,
+  AuthError,
+  AuthResult,
+  OAuthProvider,
+  AuthStateChangeCallback,
+  Unsubscribe,
+} from './auth';
