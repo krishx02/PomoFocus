@@ -90,6 +90,15 @@ describe('createCorsMiddleware', () => {
       expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
     });
 
+    it('allows localhost:8081 when no ALLOWED_ORIGINS set', async () => {
+      const app = createTestApp(undefined);
+      const res = await app.request('/health', {
+        headers: { Origin: 'http://localhost:8081' },
+      });
+
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:8081');
+    });
+
     it('rejects unknown origins when no ALLOWED_ORIGINS set', async () => {
       const app = createTestApp(undefined);
       const res = await app.request('/health', {

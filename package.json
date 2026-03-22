@@ -4,7 +4,8 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "nx": "nx"
+    "nx": "nx",
+    "diagnose": "tsx scripts/diagnose.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -22,6 +23,7 @@
     "nx": "^21.3.2",
     "prettier": "^3.8.1",
     "supabase": "^2.78.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.57.0",
     "vitest": "^4.1.0"

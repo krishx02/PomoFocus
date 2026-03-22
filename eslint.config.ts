@@ -14,6 +14,7 @@ export default tseslint.config(
       '**/coverage/**',
       '**/vitest.config.ts',
       '**/metro.config.js',
+      '**/metro.config.cjs',
       '**/scripts/**',
     ],
   },

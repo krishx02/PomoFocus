@@ -252,8 +252,8 @@ describe('POST /v1/sessions', () => {
     );
 
     expect(mockInsert).toHaveBeenCalledWith({
-      user_id: '00000000-0000-0000-0000-000000000000',
-      process_goal_id: '00000000-0000-0000-0000-000000000000',
+      user_id: 'aaaa1111-0000-0000-0000-000000000001',
+      process_goal_id: 'eeee0001-0000-0000-0000-000000000001',
       started_at: '2026-03-17T10:00:00.000Z',
       ended_at: '2026-03-17T10:25:00.000Z',
       focus_quality: 'decent',

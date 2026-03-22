@@ -8,6 +8,7 @@ import type { MiddlewareHandler } from 'hono';
 const DEFAULT_DEV_ORIGINS: readonly string[] = [
   'http://localhost:3000',
   'http://localhost:5173',
+  'http://localhost:8081',
   'http://localhost:8787',
 ];
 

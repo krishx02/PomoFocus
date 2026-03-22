@@ -160,8 +160,10 @@ export function registerSessionsRoute(app: OpenAPIHono): void {
 
     // Phase 2 will derive user_id from auth middleware and require process_goal_id.
     // For the walking skeleton, use placeholder values.
-    const PLACEHOLDER_USER_ID = '00000000-0000-0000-0000-000000000000';
-    const PLACEHOLDER_PROCESS_GOAL_ID = '00000000-0000-0000-0000-000000000000';
+    // Must match seed.sql rows — Alice's profile and first process goal.
+    // Phase 2 will derive user_id from auth middleware and require process_goal_id.
+    const PLACEHOLDER_USER_ID = 'aaaa1111-0000-0000-0000-000000000001';
+    const PLACEHOLDER_PROCESS_GOAL_ID = 'eeee0001-0000-0000-0000-000000000001';
 
     const { data, error } = await supabase
       .from('sessions')
