@@ -1,31 +1,17 @@
 // PomoFocus Device Firmware — Rotary Encoder Input Handler
-// KY-040 rotary encoder rotation detection with software debouncing.
+// Rotation: Gray-code state table with ISR + software debounce.
+// Press: polling-based debounce with short/long classification and ghost suppression.
 // Hardware: 100nF caps on CLK-GND and DT-GND (ADR-010).
-// Pins: D4 = CLK, D5 = DT (interrupt-capable on nRF52840).
-//
-// Algorithm: Gray-code state table. Each CLK transition triggers an ISR
-// that samples both CLK and DT to form a 2-bit state. Combined with
-// the previous state (4-bit index), a lookup table yields +1 (CW),
-// -1 (CCW), or 0 (invalid/bounce). Software debouncing adds a minimum
-// interval between accepted transitions to filter residual bounce that
-// passes through the 100nF hardware caps at 64 MHz sampling speed.
 
 #include "input.h"
 
-// --- Pin assignments (from design doc pin table) ---
-// XIAO nRF52840 D4 = nRF52840 P0.04 = Feather variant A0 (Arduino index 14)
-// XIAO nRF52840 D5 = nRF52840 P0.05 = Feather variant A1 (Arduino index 15)
-// The board JSON uses the feather_nrf52840_express variant which lacks XIAO
-// Dx constants, so we map through the feather's analog pin names.
-constexpr uint8_t PIN_ENC_CLK = A0;  // XIAO D4
-constexpr uint8_t PIN_ENC_DT  = A1;  // XIAO D5
+// ==================== Rotation (ISR-driven) ====================
 
-// --- Software debounce ---
-// Minimum microseconds between accepted state transitions.
+// Software debounce: minimum microseconds between accepted state transitions.
 // 100nF caps handle most bounce; this catches residual at 64 MHz.
 constexpr uint32_t DEBOUNCE_US = 1500;
 
-// --- Gray-code state table ---
+// Gray-code state table.
 // Index: (previous_state << 2) | current_state
 // Values: 0 = invalid/no-move, +1 = CW, -1 = CCW
 // States are 2-bit: (CLK << 1) | DT
@@ -48,14 +34,14 @@ static constexpr int8_t STATE_TABLE[16] = {
    0   // 11 -> 11: no change
 };
 
-// --- Volatile ISR state ---
+// Volatile ISR state
 static volatile uint8_t  s_prev_state    = 0;
-static volatile int8_t   s_pending_delta = 0; // accumulated +/- since last poll
-static volatile uint32_t s_last_us       = 0; // timestamp of last accepted transition
+static volatile int8_t   s_pending_delta = 0;
+static volatile uint32_t s_last_us       = 0;
 
-// --- Non-volatile poll-side state ---
+// Non-volatile poll-side state
 static int32_t        s_step_count = 0;
-static EncoderCallback s_callback  = nullptr;
+static EncoderCallback s_rotation_callback = nullptr;
 
 // Read the current 2-bit Gray-code state from CLK and DT.
 static inline uint8_t read_encoder_state() {
@@ -68,7 +54,7 @@ static inline uint8_t read_encoder_state() {
 static void encoder_isr() {
   uint32_t now = micros();
   if ((now - s_last_us) < DEBOUNCE_US) {
-    return; // too soon — likely bounce
+    return;
   }
 
   uint8_t current = read_encoder_state();
@@ -83,27 +69,8 @@ static void encoder_isr() {
   s_prev_state = current;
 }
 
-void input_init() {
-  pinMode(PIN_ENC_CLK, INPUT_PULLUP);
-  pinMode(PIN_ENC_DT,  INPUT_PULLUP);
-
-  // Sample initial state so the first transition has a valid reference.
-  s_prev_state = read_encoder_state();
-  s_last_us    = micros();
-
-  // Attach interrupts on both pins for full Gray-code resolution.
-  attachInterrupt(digitalPinToInterrupt(PIN_ENC_CLK), encoder_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_ENC_DT),  encoder_isr, CHANGE);
-
-  Serial.println("[input] encoder init: CLK=XIAO_D4(P0.04) DT=XIAO_D5(P0.05)");
-}
-
-void input_on_rotation(EncoderCallback cb) {
-  s_callback = cb;
-}
-
-void input_poll() {
-  // Atomically read and clear the pending delta from the ISR.
+// Poll rotation events and dispatch callbacks.
+static void poll_rotation() {
   noInterrupts();
   int8_t delta = s_pending_delta;
   s_pending_delta = 0;
@@ -113,9 +80,6 @@ void input_poll() {
     return;
   }
 
-  // Each unit of delta represents one detent step.
-  // Fast rotation may accumulate multiple steps between polls.
-  // Process as individual steps so callers see one event per detent.
   int8_t sign = (delta > 0) ? 1 : -1;
   int8_t count = (delta > 0) ? delta : -delta;
 
@@ -130,10 +94,121 @@ void input_poll() {
     Serial.print(" step=");
     Serial.println(s_step_count);
 
-    if (s_callback != nullptr) {
-      s_callback(dir, s_step_count);
+    if (s_rotation_callback != nullptr) {
+      s_rotation_callback(dir, s_step_count);
     }
   }
+}
+
+// ==================== Press (polling-based) ====================
+
+// Debounce state for SW pin
+static bool     s_last_raw_sw     = HIGH;  // Pull-up: idle = HIGH
+static bool     s_debounced_sw    = HIGH;
+static uint32_t s_last_change_ms  = 0;
+
+// Press tracking
+static bool     s_press_active    = false;
+static uint32_t s_press_start_ms  = 0;
+
+// Rotation ghost suppression: snapshot CLK/DT at press-down.
+// If they changed by release, the press is mechanical crosstalk.
+static bool     s_clk_at_press    = HIGH;
+static bool     s_dt_at_press     = HIGH;
+
+static PressCallback s_press_callback = nullptr;
+
+// Poll press events and dispatch callbacks.
+static void poll_press() {
+  const uint32_t now    = millis();
+  const bool     raw_sw = digitalRead(PIN_ENC_SW);
+
+  // Software debounce: reset timer on any raw state change.
+  if (raw_sw != s_last_raw_sw) {
+    s_last_change_ms = now;
+    s_last_raw_sw    = raw_sw;
+  }
+
+  if ((now - s_last_change_ms) < DEBOUNCE_MS) {
+    return;
+  }
+
+  const bool prev_debounced = s_debounced_sw;
+  s_debounced_sw = raw_sw;
+
+  // Press-down edge (HIGH -> LOW, pull-up: LOW = pressed)
+  if (prev_debounced == HIGH && s_debounced_sw == LOW) {
+    s_press_active   = true;
+    s_press_start_ms = now;
+    s_clk_at_press = digitalRead(PIN_ENC_CLK);
+    s_dt_at_press  = digitalRead(PIN_ENC_DT);
+    return;
+  }
+
+  // Release edge (LOW -> HIGH)
+  if (prev_debounced == LOW && s_debounced_sw == HIGH && s_press_active) {
+    s_press_active = false;
+
+    // Ghost press suppression: CLK or DT changed during press = rotation crosstalk.
+    const bool clk_now = digitalRead(PIN_ENC_CLK);
+    const bool dt_now  = digitalRead(PIN_ENC_DT);
+    if (clk_now != s_clk_at_press || dt_now != s_dt_at_press) {
+      Serial.println("[input] ghost press suppressed (rotation detected)");
+      return;
+    }
+
+    const uint32_t duration_ms = now - s_press_start_ms;
+    PressEvent event;
+    if (duration_ms >= LONG_PRESS_MS) {
+      event = PressEvent::LONG_PRESS;
+      Serial.print("[input] LONG_PRESS (");
+    } else {
+      event = PressEvent::SHORT_PRESS;
+      Serial.print("[input] SHORT_PRESS (");
+    }
+    Serial.print(duration_ms);
+    Serial.println("ms)");
+
+    if (s_press_callback != nullptr) {
+      s_press_callback(event);
+    }
+  }
+}
+
+// ==================== Public API ====================
+
+void input_init() {
+  // Rotation pins: INPUT_PULLUP for Gray-code ISR
+  pinMode(PIN_ENC_CLK, INPUT_PULLUP);
+  pinMode(PIN_ENC_DT,  INPUT_PULLUP);
+
+  s_prev_state = read_encoder_state();
+  s_last_us    = micros();
+
+  attachInterrupt(digitalPinToInterrupt(PIN_ENC_CLK), encoder_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_ENC_DT),  encoder_isr, CHANGE);
+
+  // Press pin: INPUT_PULLUP (KY-040 has no pull-up on SW)
+  pinMode(PIN_ENC_SW, INPUT_PULLUP);
+  s_last_raw_sw    = digitalRead(PIN_ENC_SW);
+  s_debounced_sw   = s_last_raw_sw;
+  s_last_change_ms = millis();
+  s_press_active   = false;
+
+  Serial.println("[input] encoder init: CLK=D4(P0.04) DT=D5(P0.05) SW=D2(P0.28)");
+}
+
+void input_on_rotation(EncoderCallback cb) {
+  s_rotation_callback = cb;
+}
+
+void input_set_press_callback(PressCallback callback) {
+  s_press_callback = callback;
+}
+
+void input_poll() {
+  poll_rotation();
+  poll_press();
 }
 
 int32_t input_step_count() {
