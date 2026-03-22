@@ -2,6 +2,7 @@
 // Arduino setup/loop skeleton. See ADR-010 and ADR-015.
 
 #include <Arduino.h>
+#include "display.h"
 #include "input.h"
 #include "timer.h"
 
@@ -25,6 +26,10 @@ void setup() {
   digitalWrite(LED_BUILTIN, LOW);
   delay(LED_BLINK_MS);
   digitalWrite(LED_BUILTIN, HIGH);
+
+  // Initialize e-ink display and show test pattern.
+  Display::init();
+  Display::showTestPattern();
 
   // Initialise rotary encoder input (CLK=D4, DT=D5).
   input_init();
