@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PomoFocus Database Schema</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+    h1 { text-align: center; color: #58a6ff; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: #8b949e; margin-bottom: 24px; font-size: 14px; }
+    .legend {
+      display: flex; gap: 24px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px; font-size: 13px;
+    }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 3px;
+    }
+    .mermaid { text-align: center; }
+    .stats {
+      display: flex; gap: 16px; justify-content: center; margin: 20px 0; flex-wrap: wrap;
+    }
+    .stat {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 12px 20px; text-align: center;
+    }
+    .stat-num { font-size: 28px; font-weight: 700; color: #58a6ff; }
+    .stat-label { font-size: 12px; color: #8b949e; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <h1>PomoFocus Database Schema</h1>
+  <p class="subtitle">12 tables &middot; 9 enums &middot; RLS on every table &middot; Postgres 17 on Supabase</p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num">12</div><div class="stat-label">Tables</div></div>
+    <div class="stat"><div class="stat-num">9</div><div class="stat-label">Enums</div></div>
+    <div class="stat"><div class="stat-num">6</div><div class="stat-label">Migrations</div></div>
+    <div class="stat"><div class="stat-num">17</div><div class="stat-label">RLS Policies</div></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#388bfd"></div> Identity</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div> Goals</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div> Sessions</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div> Social</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#a371f7"></div> Devices</div>
+  </div>
+
+  <pre class="mermaid">
+erDiagram
+    %% ──────────── IDENTITY ────────────
+    auth_users {
+        uuid id PK
+    }
+
+    profiles {
+        uuid id PK "= auth.users.id"
+        text username UK "unique, lowercase"
+        text display_name
+        text avatar_url
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    user_preferences {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        int focus_duration_minutes "default 25"
+        int short_break_minutes "default 5"
+        int long_break_minutes "default 15"
+        int long_break_interval "default 4"
+        text timezone
+        bool reflection_enabled "default true"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ──────────── GOALS ────────────
+    long_term_goals {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        text title
+        text description
+        goal_status status "active|completed|retired"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    process_goals {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        uuid long_term_goal_id FK "→ long_term_goals.id"
+        text title
+        recurrence_type recurrence "daily|weekly"
+        int target_sessions
+        goal_status status "active|completed|retired"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ──────────── SESSIONS ────────────
+    sessions {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        uuid process_goal_id FK "→ process_goals.id (nullable)"
+        int planned_duration_minutes
+        int actual_duration_seconds
+        bool completed
+        abandonment_reason abandonment_reason "nullable"
+        focus_quality focus_quality "nullable"
+        distraction_type distraction_type "nullable"
+        text reflection_note "nullable"
+        timestamptz started_at
+        timestamptz ended_at
+        timestamptz created_at
+    }
+
+    breaks {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        uuid session_id FK "→ sessions.id"
+        break_type type "short|long"
+        int planned_duration_minutes
+        int actual_duration_seconds
+        break_usefulness usefulness "nullable: yes|somewhat|no"
+        timestamptz started_at
+        timestamptz ended_at
+        timestamptz created_at
+    }
+
+    %% ──────────── SOCIAL ────────────
+    friend_requests {
+        uuid id PK
+        uuid sender_id FK "→ profiles.id"
+        uuid recipient_id FK "→ profiles.id"
+        request_status status "pending|accepted|declined"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    friendships {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        uuid friend_id FK "→ profiles.id"
+        timestamptz created_at
+    }
+
+    encouragement_taps {
+        uuid id PK
+        uuid sender_id FK "→ profiles.id"
+        uuid recipient_id FK "→ profiles.id"
+        timestamptz created_at
+    }
+
+    %% ──────────── DEVICES ────────────
+    devices {
+        uuid id PK
+        uuid user_id FK "→ profiles.id"
+        text hardware_id UK "unique BLE device"
+        text device_name
+        text expo_push_token "nullable"
+        timestamptz last_synced_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    device_sync_log {
+        uuid id PK
+        uuid device_id FK "→ devices.id"
+        sync_direction direction "up|down"
+        text entity_type
+        uuid entity_id
+        timestamptz synced_at
+    }
+
+    %% ──────────── RELATIONSHIPS ────────────
+    auth_users ||--|| profiles : "1:1 identity"
+    profiles ||--|| user_preferences : "1:1 settings"
+    profiles ||--o{ long_term_goals : "has many"
+    profiles ||--o{ process_goals : "has many"
+    long_term_goals ||--o{ process_goals : "has many"
+    profiles ||--o{ sessions : "records"
+    process_goals ||--o{ sessions : "tracks"
+    sessions ||--o{ breaks : "followed by"
+    profiles ||--o{ friend_requests : "sends"
+    profiles ||--o{ friendships : "has"
+    profiles ||--o{ encouragement_taps : "sends/receives"
+    profiles ||--o{ devices : "owns"
+    devices ||--o{ device_sync_log : "logs"
+  </pre>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      er: {
+        diagramPadding: 20,
+        layoutDirection: 'TB',
+        minEntityWidth: 180,
+        entityPadding: 12,
+        useMaxWidth: false
+      }
+    });
+  </script>
+</body>
+</html>
