@@ -31,13 +31,13 @@ void setup() {
   Display::init();
   Display::showTestPattern();
 
-  // Initialise rotary encoder input (CLK=D4, DT=D5).
+  // Initialize rotary encoder input (rotation + press).
   input_init();
 
   Serial.println("Setup complete");
 }
 
 void loop() {
-  // Poll rotary encoder for pending rotation events.
+  // Poll rotary encoder for rotation and press events.
   input_poll();
 }
