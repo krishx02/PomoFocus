@@ -197,6 +197,7 @@ secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
 redirect_uri = ""
 url = ""
 skip_nonce_check = false
+email_optional = false
 
 [auth.web3.solana]
 enabled = false
