@@ -349,9 +349,11 @@ describe('signInWithGoogle', () => {
 
     await signInWithGoogle(client);
 
-    const calledOptions = signInWithOAuth.mock.calls[0]?.[0]?.options as Record<string, unknown>;
+    const firstCall = signInWithOAuth.mock.calls[0] as Record<string, unknown>[] | undefined;
+    const firstArg = firstCall?.[0];
+    const calledOptions = firstArg?.['options'] as Record<string, unknown> | undefined;
     expect(calledOptions).toBeDefined();
-    expect('redirectTo' in calledOptions).toBe(false);
+    expect('redirectTo' in (calledOptions ?? {})).toBe(false);
   });
 
   it('returns error when OAuth initiation fails', async () => {
