@@ -1,6 +1,18 @@
 // Pure domain logic: timer, goals, sessions, sync protocol.
 // No IO, no React, no Supabase imports.
-export type { StreakResult, GoalProgress } from './goals/index.js';
+export { GOAL_STATUS, RECURRENCE_TYPE } from './goals/index.js';
+export type {
+  GoalStatus,
+  RecurrenceType,
+  LongTermGoal,
+  ProcessGoal,
+  StreakResult,
+  GoalProgress,
+  ValidationResult,
+  ProcessGoalInput,
+  LongTermGoalInput,
+} from './goals/index.js';
+export { validateIntention, validateProcessGoal, validateLongTermGoal } from './goals/index.js';
 export { TIMER_STATUS, TIMER_EVENT_TYPE, createInitialState, isRunning, getTimeRemaining, transition } from './timer/index.js';
 export type {
   TimerStatus,
