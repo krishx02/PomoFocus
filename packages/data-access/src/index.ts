@@ -37,5 +37,13 @@ export {
   signInWithApple,
   extractAppleUserProfile,
   isApplePrivateRelayEmail,
+  signInWithGoogle,
+  exchangeGoogleOAuthCode,
+  GOOGLE_SCOPES,
 } from './auth/oauth';
-export type { AppleSignInResult, AppleUserProfile } from './auth/oauth';
+export type {
+  AppleSignInResult,
+  AppleUserProfile,
+  SignInWithGoogleResult,
+  ExchangeCodeResult,
+} from './auth/oauth';
