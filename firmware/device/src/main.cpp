@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "input.h"
+#include "timer.h"
 
 // Serial baud rate for debug output (matches monitor_speed in platformio.ini)
 constexpr uint32_t SERIAL_BAUD = 115200;
