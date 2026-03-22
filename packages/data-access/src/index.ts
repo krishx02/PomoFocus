@@ -33,3 +33,9 @@ export type {
   AuthStateChangeCallback,
   Unsubscribe,
 } from './auth';
+export {
+  signInWithApple,
+  extractAppleUserProfile,
+  isApplePrivateRelayEmail,
+} from './auth/oauth';
+export type { AppleSignInResult, AppleUserProfile } from './auth/oauth';
