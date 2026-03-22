@@ -34,3 +34,4 @@ export type {
   RetryPolicy,
 } from './sync/index.js';
 export type { SessionData, SessionReflection } from './session/index.js';
+export { calculatePartialDuration } from './session/index.js';
