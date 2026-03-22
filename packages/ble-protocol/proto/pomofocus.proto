@@ -1,0 +1,119 @@
+syntax = "proto3";
+package pomofocus.ble;
+
+// === Timer Service ===
+
+enum TimerPhase {
+  TIMER_PHASE_IDLE = 0;
+  TIMER_PHASE_FOCUSING = 1;
+  TIMER_PHASE_PAUSED = 2;
+  TIMER_PHASE_SHORT_BREAK = 3;
+  TIMER_PHASE_LONG_BREAK = 4;
+  TIMER_PHASE_BREAK_PAUSED = 5;
+  TIMER_PHASE_REFLECTION = 6;
+  TIMER_PHASE_COMPLETED = 7;
+  TIMER_PHASE_ABANDONED = 8;
+}
+
+enum TimerAction {
+  TIMER_ACTION_START = 0;
+  TIMER_ACTION_PAUSE = 1;
+  TIMER_ACTION_RESUME = 2;
+  TIMER_ACTION_ABANDON = 3;
+  TIMER_ACTION_SKIP_BREAK = 4;
+  TIMER_ACTION_RATE_SESSION = 5;
+}
+
+message TimerState {
+  TimerPhase phase = 1;
+  uint32 remaining_seconds = 2;
+  uint32 elapsed_seconds = 3;
+  bytes goal_id = 4;
+  uint32 session_count = 5;
+}
+
+message TimerCommand {
+  TimerAction action = 1;
+  bytes goal_id = 2;
+  uint32 focus_duration = 3;
+}
+
+// === Goal Service ===
+
+enum GoalType {
+  GOAL_TYPE_LONG_TERM = 0;
+  GOAL_TYPE_PROCESS = 1;
+}
+
+message Goal {
+  bytes id = 1;
+  string title = 2;
+  GoalType type = 3;
+  uint32 target_sessions = 4;
+  uint32 completed_today = 5;
+}
+
+message GoalList {
+  repeated Goal goals = 1;
+}
+
+message SelectedGoal {
+  bytes goal_id = 1;
+}
+
+// === Session Sync Service ===
+
+enum SessionType {
+  SESSION_TYPE_FOCUS = 0;
+  SESSION_TYPE_SHORT_BREAK = 1;
+  SESSION_TYPE_LONG_BREAK = 2;
+}
+
+enum SessionOutcome {
+  SESSION_OUTCOME_COMPLETED = 0;
+  SESSION_OUTCOME_ABANDONED = 1;
+}
+
+enum SyncState {
+  SYNC_STATE_IDLE = 0;
+  SYNC_STATE_READY = 1;
+  SYNC_STATE_TRANSFERRING = 2;
+  SYNC_STATE_COMPLETE = 3;
+  SYNC_STATE_ERROR = 4;
+}
+
+enum SyncCommand {
+  SYNC_COMMAND_START = 0;
+  SYNC_COMMAND_ACK = 1;
+  SYNC_COMMAND_NACK = 2;
+  SYNC_COMMAND_ABORT = 3;
+  SYNC_COMMAND_CURSOR_UPDATE = 4;
+}
+
+message SessionRecord {
+  bytes id = 1;
+  bytes goal_id = 2;
+  int64 started_at = 3;
+  int64 ended_at = 4;
+  uint32 planned_duration = 5;
+  uint32 actual_duration = 6;
+  SessionType type = 7;
+  SessionOutcome outcome = 8;
+  uint32 focus_quality = 9;
+  string intention = 10;
+  string reflection = 11;
+  string distraction_note = 12;
+}
+
+message SyncStatus {
+  uint32 pending_sessions = 1;
+  uint32 total_stored = 2;
+  bytes last_synced_id = 3;
+  SyncState state = 4;
+}
+
+message SyncControl {
+  SyncCommand command = 1;
+  uint32 ack_count = 2;
+  bytes last_synced_id = 3;
+}
