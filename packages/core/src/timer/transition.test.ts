@@ -1546,20 +1546,14 @@ describe('transition — ABANDON event', () => {
     });
   });
 
-  it('transitions from reflection to abandoned with abandonedAt and sessionNumber', () => {
+  it('returns state unchanged when ABANDON from reflection', () => {
     const state: TimerState = {
       status: TIMER_STATUS.REFLECTION,
       sessionNumber: 3,
       config: defaultConfig,
     };
-    const now = 5000;
-    const result = transition(state, { type: TIMER_EVENT_TYPE.ABANDON }, now);
-    expect(result).toEqual({
-      status: 'abandoned',
-      sessionNumber: 3,
-      abandonedAt: now,
-      config: defaultConfig,
-    });
+    const result = transition(state, { type: TIMER_EVENT_TYPE.ABANDON }, 5000);
+    expect(result).toBe(state);
   });
 
   it('returns state unchanged when ABANDON from idle', () => {
