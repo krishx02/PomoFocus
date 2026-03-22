@@ -1,0 +1,4 @@
+This directory is for PlatformIO unit tests.
+Tests run on native or target hardware via `pio test`.
+
+See https://docs.platformio.org/en/latest/advanced/unit-testing/index.html

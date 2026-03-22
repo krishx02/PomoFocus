@@ -1,0 +1,6 @@
+This directory is for project-specific (private) libraries.
+PlatformIO will compile each subdirectory as an independent library.
+
+See https://docs.platformio.org/en/latest/librarymanager/creating.html
+
+lib/proto/ is reserved for Nanopb-generated Protobuf files (issue #7A.5).
