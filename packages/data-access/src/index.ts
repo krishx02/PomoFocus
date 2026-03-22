@@ -47,3 +47,5 @@ export type {
   SignInWithGoogleResult,
   ExchangeCodeResult,
 } from './auth/oauth';
+export { signUpWithEmail, signInWithEmail } from './auth/email';
+export type { SignUpResult, SignInResult } from './auth/email';
