@@ -1,5 +1,7 @@
 import type { SupabaseClient, AuthError } from '@supabase/supabase-js';
 
+// ==================== Apple Sign-In ====================
+
 /**
  * Apple's private relay email domain. When users choose "Hide My Email"
  * during Apple Sign-In, Apple generates a unique @privaterelay.appleid.com
@@ -120,5 +122,64 @@ function extractDisplayName(
   return undefined;
 }
 
+// ==================== Google Sign-In ====================
+
+/**
+ * Google OAuth scopes per ADR-012: request minimum data.
+ * openid = OIDC subject identifier
+ * email = user's email address
+ * profile = display name and avatar
+ */
+const GOOGLE_SCOPES = 'openid email profile';
+
+type SignInWithGoogleResult = {
+  readonly data: {
+    readonly provider: string;
+    readonly url: string | null;
+  };
+  readonly error: unknown;
+};
+
+type ExchangeCodeResult = {
+  readonly data: {
+    readonly session: unknown;
+    readonly user: unknown;
+  };
+  readonly error: unknown;
+};
+
+async function signInWithGoogle(
+  client: SupabaseClient,
+  redirectTo?: string,
+): Promise<SignInWithGoogleResult> {
+  const options: { scopes: string; redirectTo?: string } = {
+    scopes: GOOGLE_SCOPES,
+  };
+
+  if (redirectTo !== undefined) {
+    options.redirectTo = redirectTo;
+  }
+
+  const { data, error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options,
+  });
+
+  return { data, error };
+}
+
+async function exchangeGoogleOAuthCode(
+  client: SupabaseClient,
+  authCode: string,
+): Promise<ExchangeCodeResult> {
+  const { data, error } = await client.auth.exchangeCodeForSession(authCode);
+
+  return { data, error };
+}
+
+// ==================== Exports ====================
+
 export { signInWithApple, extractAppleUserProfile, isApplePrivateRelayEmail };
 export type { AppleSignInResult, AppleUserProfile };
+export { signInWithGoogle, exchangeGoogleOAuthCode, GOOGLE_SCOPES };
+export type { SignInWithGoogleResult, ExchangeCodeResult };
