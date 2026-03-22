@@ -10,5 +10,15 @@ export type {
   TimerState,
   TimerEvent,
 } from './timer/index.js';
-export type { QueueItemState, SyncEvent, RetryPolicy, SyncableEntityType } from './sync/index.js';
+export { QUEUE_ITEM_STATUS, SYNC_EVENT_TYPE, processQueue, createEmptyQueue } from './sync/index.js';
+export type {
+  QueueItemStatus,
+  QueueItemState,
+  SyncEventType,
+  SyncEvent,
+  SyncableEntityType,
+  OutboxEntry,
+  OutboxQueue,
+  RetryPolicy,
+} from './sync/index.js';
 export type { SessionData, SessionReflection } from './session/index.js';
