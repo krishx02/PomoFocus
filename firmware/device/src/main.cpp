@@ -2,6 +2,7 @@
 // Arduino setup/loop skeleton. See ADR-010 and ADR-015.
 
 #include <Arduino.h>
+#include "input.h"
 
 // Serial baud rate for debug output (matches monitor_speed in platformio.ini)
 constexpr uint32_t SERIAL_BAUD = 115200;
@@ -24,9 +25,13 @@ void setup() {
   delay(LED_BLINK_MS);
   digitalWrite(LED_BUILTIN, HIGH);
 
+  // Initialise rotary encoder input (CLK=D4, DT=D5).
+  input_init();
+
   Serial.println("Setup complete");
 }
 
 void loop() {
-  // Empty placeholder — timer driver added in issue 7A.3.
+  // Poll rotary encoder for pending rotation events.
+  input_poll();
 }
