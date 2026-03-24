@@ -76,6 +76,35 @@ void showSessionComplete(const SessionSummary& summary);
 void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
                      uint32_t sessionNumber, const char* goalName);
 
+// Number of partial refreshes before a full refresh to clear ghosting.
+// Per ADR-010: "Every ~5 partial refreshes: full refresh to clear
+// accumulated ghosting."
+constexpr uint8_t FULL_REFRESH_INTERVAL = 5;
+
+// Update the timer countdown using a partial refresh of the time region
+// only. Much faster than showTimerScreen (~0.42s vs ~3.5s) and avoids
+// the full-screen black-white flash.
+//
+// Ghosting management: tracks how many partial refreshes have occurred.
+// Every FULL_REFRESH_INTERVAL partials, performs a full refresh instead
+// to clear accumulated ghosting artifacts. Timer completion (phase ==
+// completed or abandoned) always triggers a full refresh as a visual
+// "done" signal.
+//
+// Refresh rate is controlled by the caller (timer driver), not the
+// display. ADR-010 specifies: 1/min for minutes 25-1, every 10s for
+// the last 60 seconds.
+//
+//   minutes       — minutes remaining (0–99)
+//   seconds       — seconds remaining (0–59)
+//   phase         — current timer phase (for completion detection)
+void updateTimerPartial(uint32_t minutes, uint32_t seconds, TimerPhase phase);
+
+// Reset the partial refresh ghosting counter. Call when entering or
+// leaving the timer screen (e.g., on timer start, after completion)
+// so the counter starts fresh for the next session.
+void resetPartialRefreshCount();
+
 } // namespace Display
 
 #endif // POMOFOCUS_DISPLAY_H
