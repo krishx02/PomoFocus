@@ -1,6 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import type { OpenAPIHono } from '@hono/zod-openapi';
-import { createSupabaseClient } from '../lib/supabase.js';
+import type { AppEnv } from '../types.js';
 
 /**
  * Valid focus_quality enum values matching the Postgres enum.
@@ -68,6 +68,7 @@ export const ListSessionsResponseSchema = z.object({
 export const createSessionRoute = createRoute({
   method: 'post',
   path: '/v1/sessions',
+  security: [{ Bearer: [] }],
   request: {
     body: {
       content: {
@@ -86,6 +87,17 @@ export const createSessionRoute = createRoute({
         },
       },
       description: 'Session created successfully',
+    },
+    401: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            error: z.string(),
+            status: z.number(),
+          }),
+        },
+      },
+      description: 'Missing or invalid authorization token',
     },
     422: {
       content: {
@@ -107,6 +119,7 @@ export const createSessionRoute = createRoute({
 export const listSessionsRoute = createRoute({
   method: 'get',
   path: '/v1/sessions',
+  security: [{ Bearer: [] }],
   request: {
     query: ListSessionsQuerySchema,
   },
@@ -118,6 +131,17 @@ export const listSessionsRoute = createRoute({
         },
       },
       description: 'Paginated list of sessions',
+    },
+    401: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            error: z.string(),
+            status: z.number(),
+          }),
+        },
+      },
+      description: 'Missing or invalid authorization token',
     },
     422: {
       content: {
@@ -134,41 +158,37 @@ export const listSessionsRoute = createRoute({
 });
 
 /**
- * Zod schema to validate that the Cloudflare Workers env contains
- * the required Supabase bindings at runtime (U-009: Zod parsing, not type assertions).
- */
-const SupabaseEnvSchema = z.object({
-  SUPABASE_URL: z.string(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string(),
-});
-
-/**
  * Registers the POST /v1/sessions and GET /v1/sessions routes on the given OpenAPIHono app.
  *
- * POST: Validates request body with Zod, inserts a session into Supabase,
- * and returns the created session. Auth is not yet implemented (Phase 2) —
- * user_id and process_goal_id use placeholder values.
+ * Both routes require authentication — the auth middleware sets a user-scoped
+ * Supabase client on the context. RLS policies scope queries to the authenticated user.
  *
- * GET: Returns a paginated list of sessions ordered by started_at descending.
+ * POST: Validates request body with Zod, derives user_id from the authenticated
+ * Supabase client, inserts a session, and returns the created row.
+ *
+ * GET: Returns a paginated list of the authenticated user's sessions
+ * ordered by started_at descending. RLS filters to the current user.
  */
-export function registerSessionsRoute(app: OpenAPIHono): void {
+export function registerSessionsRoute(app: OpenAPIHono<AppEnv>): void {
   app.openapi(createSessionRoute, async (c) => {
     const body = c.req.valid('json');
+    const supabase = c.get('supabase');
 
-    const env = SupabaseEnvSchema.parse(c.env);
-    const supabase = createSupabaseClient(env);
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      throw userError;
+    }
 
-    // Phase 2 will derive user_id from auth middleware and require process_goal_id.
-    // For the walking skeleton, use placeholder values.
-    // Must match seed.sql rows — Alice's profile and first process goal.
-    // Phase 2 will derive user_id from auth middleware and require process_goal_id.
-    const PLACEHOLDER_USER_ID = 'aaaa1111-0000-0000-0000-000000000001';
+    const userId = userData.user.id;
+
+    // process_goal_id still uses a placeholder — goal selection is a future feature.
+    // Must match seed.sql rows — Alice's first process goal.
     const PLACEHOLDER_PROCESS_GOAL_ID = 'eeee0001-0000-0000-0000-000000000001';
 
     const { data, error } = await supabase
       .from('sessions')
       .insert({
-        user_id: PLACEHOLDER_USER_ID,
+        user_id: userId,
         process_goal_id: PLACEHOLDER_PROCESS_GOAL_ID,
         started_at: body.started_at,
         ended_at: body.ended_at,
@@ -188,9 +208,7 @@ export function registerSessionsRoute(app: OpenAPIHono): void {
 
   app.openapi(listSessionsRoute, async (c) => {
     const { limit, offset } = c.req.valid('query');
-
-    const env = SupabaseEnvSchema.parse(c.env);
-    const supabase = createSupabaseClient(env);
+    const supabase = c.get('supabase');
 
     const { data, error, count } = await supabase
       .from('sessions')
