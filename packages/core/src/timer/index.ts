@@ -12,3 +12,9 @@ export { isLongBreak, isReflectionEnabled } from './guards.js';
 export { transition } from './transition.js';
 export { rehydrate } from './rehydrate.js';
 export type { RehydrationResult } from './rehydrate.js';
+export {
+  serializeState,
+  deserializeState,
+  SERIALIZATION_VERSION,
+} from './serialize.js';
+export type { SerializedTimerState } from './serialize.js';
