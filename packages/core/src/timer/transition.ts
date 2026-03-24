@@ -23,6 +23,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SKIP_BREAK:
         case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -77,6 +79,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -108,6 +112,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -143,10 +149,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             };
           }
           return {
-            status: TIMER_STATUS.FOCUSING,
-            timeRemaining: state.config.focusDuration,
-            startedAt: now,
-            sessionNumber: state.sessionNumber + 1,
+            status: TIMER_STATUS.COMPLETED,
+            sessionNumber: state.sessionNumber,
             config: state.config,
           };
         case TIMER_EVENT_TYPE.ABANDON:
@@ -161,6 +165,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -196,10 +202,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             };
           }
           return {
-            status: TIMER_STATUS.FOCUSING,
-            timeRemaining: state.config.focusDuration,
-            startedAt: now,
-            sessionNumber: state.sessionNumber + 1,
+            status: TIMER_STATUS.COMPLETED,
+            sessionNumber: state.sessionNumber,
             config: state.config,
           };
         case TIMER_EVENT_TYPE.ABANDON:
@@ -214,6 +218,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -248,10 +254,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             };
           }
           return {
-            status: TIMER_STATUS.FOCUSING,
-            timeRemaining: state.config.focusDuration,
-            startedAt: now,
-            sessionNumber: state.sessionNumber + 1,
+            status: TIMER_STATUS.COMPLETED,
+            sessionNumber: state.sessionNumber,
             config: state.config,
           };
         case TIMER_EVENT_TYPE.ABANDON:
@@ -268,6 +272,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SKIP:
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -277,15 +283,6 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
     case TIMER_STATUS.REFLECTION:
       switch (event.type) {
         case TIMER_EVENT_TYPE.SUBMIT:
-          if (event.continueSession) {
-            return {
-              status: TIMER_STATUS.FOCUSING,
-              timeRemaining: state.config.focusDuration,
-              startedAt: now,
-              sessionNumber: state.sessionNumber + 1,
-              config: state.config,
-            };
-          }
           return {
             status: TIMER_STATUS.COMPLETED,
             sessionNumber: state.sessionNumber,
@@ -293,15 +290,6 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             reflectionData: event.data,
           };
         case TIMER_EVENT_TYPE.SKIP:
-          if (event.continueSession) {
-            return {
-              status: TIMER_STATUS.FOCUSING,
-              timeRemaining: state.config.focusDuration,
-              startedAt: now,
-              sessionNumber: state.sessionNumber + 1,
-              config: state.config,
-            };
-          }
           return {
             status: TIMER_STATUS.COMPLETED,
             sessionNumber: state.sessionNumber,
@@ -315,6 +303,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SKIP_BREAK:
         case TIMER_EVENT_TYPE.ABANDON:
         case TIMER_EVENT_TYPE.RESET:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
@@ -323,11 +313,20 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
       }
     case TIMER_STATUS.COMPLETED:
       switch (event.type) {
+        case TIMER_EVENT_TYPE.CONTINUE:
+          return {
+            status: TIMER_STATUS.FOCUSING,
+            timeRemaining: state.config.focusDuration,
+            startedAt: now,
+            sessionNumber: state.sessionNumber + 1,
+            config: state.config,
+          };
         case TIMER_EVENT_TYPE.RESET:
           return {
             status: TIMER_STATUS.IDLE,
             config: state.config,
           };
+        case TIMER_EVENT_TYPE.FINISH:
         case TIMER_EVENT_TYPE.START:
         case TIMER_EVENT_TYPE.PAUSE:
         case TIMER_EVENT_TYPE.RESUME:
@@ -359,6 +358,8 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
         case TIMER_EVENT_TYPE.SUBMIT:
         case TIMER_EVENT_TYPE.SKIP_BREAK:
         case TIMER_EVENT_TYPE.ABANDON:
+        case TIMER_EVENT_TYPE.CONTINUE:
+        case TIMER_EVENT_TYPE.FINISH:
           return state;
         default: {
           const _exhaustive: never = event;
