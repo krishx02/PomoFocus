@@ -1,6 +1,5 @@
-// PomoFocus Timer — C++ type definitions for nRF52840 firmware.
-// Direct port of packages/core/src/timer/types.ts (ADR-004).
-// Transition function is a separate issue — this file defines types only.
+// PomoFocus Timer — C++ type definitions and transition function for nRF52840 firmware.
+// Direct port of packages/core/src/timer/types.ts and transition.ts (ADR-004).
 
 #ifndef POMOFOCUS_TIMER_H
 #define POMOFOCUS_TIMER_H
@@ -102,5 +101,11 @@ constexpr TimerState createIdleState(TimerConfig config) {
       .breakType = BreakType::short_break,
   };
 }
+
+// ── Transition Function ──
+// Pure function: transition(state, event, now) -> newState.
+// Direct port of packages/core/src/timer/transition.ts.
+// Invalid events return current state unchanged.
+TimerState transition(TimerState state, TimerEvent event, unsigned long now);
 
 #endif // POMOFOCUS_TIMER_H
