@@ -116,8 +116,8 @@ export type TimerEvent =
   | { type: typeof TIMER_EVENT_TYPE.RESUME }
   | { type: typeof TIMER_EVENT_TYPE.TICK }
   | { type: typeof TIMER_EVENT_TYPE.TIMER_DONE }
-  | { type: typeof TIMER_EVENT_TYPE.SKIP }
-  | { type: typeof TIMER_EVENT_TYPE.SUBMIT; data: ReflectionData }
+  | { type: typeof TIMER_EVENT_TYPE.SKIP; continueSession?: boolean }
+  | { type: typeof TIMER_EVENT_TYPE.SUBMIT; data: ReflectionData; continueSession?: boolean }
   | { type: typeof TIMER_EVENT_TYPE.SKIP_BREAK }
   | { type: typeof TIMER_EVENT_TYPE.ABANDON }
   | { type: typeof TIMER_EVENT_TYPE.RESET };
