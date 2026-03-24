@@ -214,3 +214,71 @@ void input_poll() {
 int32_t input_step_count() {
   return s_step_count;
 }
+
+// ==================== Input-to-Timer Event Mapping (issue #221) ====================
+
+MappedEvent input_map_press(TimerPhase phase, PressEvent press) {
+  switch (phase) {
+    case TimerPhase::idle:
+      if (press == PressEvent::SHORT_PRESS) {
+        return {true, TimerEvent::START};
+      }
+      return {false, {}};
+
+    case TimerPhase::focusing:
+      if (press == PressEvent::SHORT_PRESS) {
+        return {true, TimerEvent::PAUSE};
+      }
+      if (press == PressEvent::LONG_PRESS) {
+        return {true, TimerEvent::ABANDON};
+      }
+      return {false, {}};
+
+    case TimerPhase::paused:
+      if (press == PressEvent::SHORT_PRESS) {
+        return {true, TimerEvent::RESUME};
+      }
+      if (press == PressEvent::LONG_PRESS) {
+        return {true, TimerEvent::ABANDON};
+      }
+      return {false, {}};
+
+    case TimerPhase::short_break:
+    case TimerPhase::long_break:
+    case TimerPhase::break_paused:
+      if (press == PressEvent::SHORT_PRESS) {
+        return {true, TimerEvent::SKIP_BREAK};
+      }
+      if (press == PressEvent::LONG_PRESS) {
+        return {true, TimerEvent::ABANDON};
+      }
+      return {false, {}};
+
+    case TimerPhase::reflection:
+      if (press == PressEvent::SHORT_PRESS) {
+        return {true, TimerEvent::SKIP};
+      }
+      return {false, {}};
+
+    case TimerPhase::completed:
+    case TimerPhase::abandoned:
+      if (press == PressEvent::SHORT_PRESS) {
+        return {true, TimerEvent::RESET};
+      }
+      return {false, {}};
+  }
+
+  return {false, {}};
+}
+
+int8_t input_map_rotation_to_goal_delta(RotationDir dir) {
+  switch (dir) {
+    case RotationDir::Clockwise:
+      return 1;
+    case RotationDir::CounterClockwise:
+      return -1;
+    case RotationDir::None:
+      return 0;
+  }
+  return 0;
+}
