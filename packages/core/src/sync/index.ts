@@ -10,3 +10,9 @@ export type {
   RetryPolicy,
 } from './types.js';
 export { processQueue, createEmptyQueue } from './transition.js';
+export { isIdempotent, resolveConflict, CONFLICT_RESOLUTION } from './conflict.js';
+export type {
+  ConflictRecord,
+  ConflictResolution,
+  ConflictResolutionType,
+} from './conflict.js';
