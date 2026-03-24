@@ -10,3 +10,9 @@ export type {
   RetryPolicy,
 } from './types.js';
 export { processQueue, createEmptyQueue } from './transition.js';
+export {
+  getRetryDelay,
+  calculateNextRetry,
+  shouldRetry,
+  DEFAULT_RETRY_POLICY,
+} from './retry.js';
