@@ -19,3 +19,4 @@ export type {
 } from './validation.js';
 export { currentStreak } from './streak.js';
 export type { StreakSession } from './streak.js';
+export { goalProgress } from './progress.js';
