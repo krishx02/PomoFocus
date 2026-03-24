@@ -1,16 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
 import type { MiddlewareHandler } from 'hono';
-import type { AppEnv } from '../types.js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@pomofocus/types';
+import { HTTPException } from 'hono/http-exception';
+import { createUserClient } from '../lib/supabase.js';
+import type { SupabaseEnv } from '../lib/supabase.js';
 
 /**
- * Paths that are excluded from JWT authentication.
- * These endpoints must be accessible without a Bearer token.
+ * Hono context variables set by the auth middleware.
+ * Routes access the user-scoped Supabase client via `c.get('supabase')`.
  */
-const PUBLIC_PATHS: ReadonlySet<string> = new Set(['/health']);
+export type AuthVariables = {
+  supabase: SupabaseClient<Database>;
+};
 
 /**
- * Extracts a Bearer token from the Authorization header value.
- * Returns undefined if the header is missing, empty, or not in "Bearer <token>" format.
+ * Extracts a Bearer token from the Authorization header.
+ * Returns undefined if the header is missing or malformed.
  */
 export function extractBearerToken(header: string | undefined): string | undefined {
   if (!header) {
@@ -23,7 +28,7 @@ export function extractBearerToken(header: string | undefined): string | undefin
   }
 
   const token = parts[1];
-  if (!token) {
+  if (!token || token.length === 0) {
     return undefined;
   }
 
@@ -31,45 +36,31 @@ export function extractBearerToken(header: string | undefined): string | undefin
 }
 
 /**
- * JWT validation middleware for the Hono API.
+ * Auth middleware that extracts the user's JWT from the Authorization header,
+ * creates a user-scoped Supabase client, and attaches it to the Hono context.
  *
- * Extracts the Bearer token from the Authorization header, verifies it
- * with Supabase Auth admin API, and sets the authenticated user on the
- * Hono context. All routes except those in PUBLIC_PATHS require a valid JWT.
+ * The user client forwards the JWT to Supabase so RLS policies apply
+ * as if the client talked directly to Supabase (ADR-007, API-005).
  *
- * - Missing Authorization header: 401 with `{ error: 'Missing authorization header' }`
- * - Invalid/expired token: 401 with `{ error: 'Invalid token' }`
- * - Valid token: `c.set('user', { id, email })` and continues to next handler
+ * Routes access the client via `c.get('supabase')`.
  *
- * Creates a Supabase admin client per-request (API-004: no expensive work at module scope).
- * Uses service_role key for token verification only — never for user data queries.
+ * Throws 401 if:
+ * - Authorization header is missing
+ * - Authorization header is not a valid Bearer token
  */
-export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
-  if (PUBLIC_PATHS.has(c.req.path)) {
-    return next();
-  }
-
+export const authMiddleware: MiddlewareHandler<{
+  Bindings: SupabaseEnv;
+  Variables: AuthVariables;
+}> = async (c, next) => {
   const authHeader = c.req.header('Authorization');
   const token = extractBearerToken(authHeader);
 
   if (!token) {
-    return c.json({ error: 'Missing authorization header' }, 401);
+    throw new HTTPException(401, { message: 'Missing or invalid authorization token' });
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const supabase = createUserClient(c.env, token);
+  c.set('supabase', supabase);
 
-  const { data, error } = await supabase.auth.getUser(token);
-
-  if (error) {
-    return c.json({ error: 'Invalid token' }, 401);
-  }
-
-  c.set('user', {
-    id: data.user.id,
-    email: data.user.email,
-  });
-
-  return next();
+  await next();
 };
