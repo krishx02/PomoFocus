@@ -10,3 +10,9 @@ export type {
 export { createInitialState, isRunning, getTimeRemaining } from './utils.js';
 export { isLongBreak, isReflectionEnabled } from './guards.js';
 export { transition } from './transition.js';
+export {
+  serializeState,
+  deserializeState,
+  SERIALIZATION_VERSION,
+} from './serialize.js';
+export type { SerializedTimerState } from './serialize.js';
