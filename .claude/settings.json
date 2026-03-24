@@ -74,12 +74,13 @@
       "Bash(npm *)",
       "Bash(chmod *)",
       "Bash(brew *)",
-      "Bash(export *)"
+      "Bash(export *)",
+      "Bash(sleep *)",
+      "Bash(git push --force-with-lease*)"
     ],
     "ask": [
       "Bash(git reset*)",
       "Bash(git push --force*)",
-      "Bash(git push --force-with-lease*)",
       "Bash(git clean*)",
       "Bash(git checkout -- *)",
       "Bash(rm -rf*)",
