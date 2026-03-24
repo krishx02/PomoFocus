@@ -270,7 +270,7 @@ describe('timer store', () => {
       expect(state.status).toBe(TIMER_STATUS.REFLECTION);
     });
 
-    it('transitions from short_break to focusing when reflection disabled', () => {
+    it('transitions from short_break to completed when reflection disabled', () => {
       const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
       const store = createStore(noReflectionConfig);
 
@@ -288,10 +288,9 @@ describe('timer store', () => {
       store.getState().skipBreak();
 
       const { state } = store.getState();
-      expect(state.status).toBe(TIMER_STATUS.FOCUSING);
-      if (state.status === TIMER_STATUS.FOCUSING) {
-        expect(state.sessionNumber).toBe(2);
-        expect(state.startedAt).toBe(2000);
+      expect(state.status).toBe(TIMER_STATUS.COMPLETED);
+      if (state.status === TIMER_STATUS.COMPLETED) {
+        expect(state.sessionNumber).toBe(1);
       }
     });
 
