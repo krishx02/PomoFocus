@@ -59,6 +59,7 @@ export type StreakResult = {
 
 export type GoalProgress = {
   readonly goalId: string;
+  readonly goalTitle: string;
   readonly completedToday: number;
-  readonly target: number;
+  readonly targetToday: number;
 };

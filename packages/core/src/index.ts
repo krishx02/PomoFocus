@@ -12,7 +12,7 @@ export type {
   ProcessGoalInput,
   LongTermGoalInput,
 } from './goals/index.js';
-export { validateIntention, validateProcessGoal, validateLongTermGoal, currentStreak } from './goals/index.js';
+export { validateIntention, validateProcessGoal, validateLongTermGoal, currentStreak, goalProgress } from './goals/index.js';
 export type { StreakSession } from './goals/index.js';
 export { TIMER_STATUS, TIMER_EVENT_TYPE, createInitialState, isRunning, getTimeRemaining, transition } from './timer/index.js';
 export type {
