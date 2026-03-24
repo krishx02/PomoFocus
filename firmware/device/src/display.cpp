@@ -28,6 +28,8 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <nrf_gpio.h>
+#include <cstring>
+#include <cstdio>
 
 // ---------- Pin definitions (Feather variant Arduino pin numbers) ----------
 // These are indices into g_ADigitalPinMap that resolve to the correct
@@ -129,6 +131,147 @@ void showTestPattern() {
     } while (display.nextPage());
 
     Serial.println("Test pattern displayed");
+}
+
+// ---------- Timer screen ----------
+
+// Map TimerPhase enum to a human-readable label for the display.
+static const char* phaseLabel(TimerPhase phase) {
+    switch (phase) {
+        case TimerPhase::idle:         return "IDLE";
+        case TimerPhase::focusing:     return "FOCUSING";
+        case TimerPhase::paused:       return "PAUSED";
+        case TimerPhase::short_break:  return "SHORT BREAK";
+        case TimerPhase::long_break:   return "LONG BREAK";
+        case TimerPhase::break_paused: return "BREAK PAUSED";
+        case TimerPhase::reflection:   return "REFLECTION";
+        case TimerPhase::completed:    return "COMPLETED";
+        case TimerPhase::abandoned:    return "ABANDONED";
+    }
+    return "UNKNOWN";
+}
+
+// Text size scale factors (Adafruit GFX default 5x7 font):
+//   Character pixel size = (5 * scale) wide x (7 * scale) tall
+//   Horizontal spacing   = (6 * scale) per character (5 + 1 pixel gap)
+
+// Large countdown text: scale 14 → 84x98 per char, readable from ~1m.
+// "00:00" = 5 chars × (6*14) = 420px wide. Centered on 800: x=(800-420)/2=190.
+constexpr uint8_t  TIME_TEXT_SIZE   = 14;
+constexpr int16_t  TIME_CHAR_W      = 6 * TIME_TEXT_SIZE;  // 84px per char
+constexpr int16_t  TIME_CHAR_H      = 7 * TIME_TEXT_SIZE;  // 98px tall
+constexpr int16_t  TIME_STR_W       = 5 * TIME_CHAR_W;     // 420px for "MM:SS"
+constexpr int16_t  TIME_X           = (Display::WIDTH - TIME_STR_W) / 2;
+constexpr int16_t  TIME_Y           = (Display::HEIGHT - TIME_CHAR_H) / 2 - 20;
+
+// Phase label: scale 3 → 18x21 per char, positioned below the countdown.
+constexpr uint8_t  PHASE_TEXT_SIZE  = 3;
+constexpr int16_t  PHASE_CHAR_W     = 6 * PHASE_TEXT_SIZE;  // 18px per char
+constexpr int16_t  PHASE_Y          = TIME_Y + TIME_CHAR_H + 20;
+
+// Session number: scale 2 → 12x14 per char, above the countdown.
+constexpr uint8_t  SESSION_TEXT_SIZE = 2;
+constexpr int16_t  SESSION_CHAR_W    = 6 * SESSION_TEXT_SIZE; // 12px per char
+constexpr int16_t  SESSION_CHAR_H    = 7 * SESSION_TEXT_SIZE; // 14px tall
+constexpr int16_t  SESSION_Y         = TIME_Y - SESSION_CHAR_H - 16;
+
+// Goal name: scale 2 → 12x14 per char, near the bottom of the screen.
+constexpr uint8_t  GOAL_TEXT_SIZE   = 2;
+constexpr int16_t  GOAL_CHAR_W      = 6 * GOAL_TEXT_SIZE;    // 12px per char
+constexpr int16_t  GOAL_Y           = Display::HEIGHT - 50;
+
+// Maximum characters that fit on screen at goal text size.
+// Screen width 800 / 12px per char = 66 chars. Leave small margin.
+constexpr uint8_t  GOAL_MAX_CHARS   = 64;
+
+// Fixed buffer for formatted time string "MM:SS\0" (6 bytes).
+constexpr uint8_t  TIME_BUF_LEN     = 6;
+
+// Fixed buffer for session label "Session NN\0" (max 11 bytes).
+constexpr uint8_t  SESSION_BUF_LEN  = 12;
+
+void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
+                     uint32_t sessionNumber, const char* goalName) {
+    // Format time as "MM:SS" into a stack buffer (NAT-F01: no dynamic alloc).
+    char timeBuf[TIME_BUF_LEN];
+    snprintf(timeBuf, TIME_BUF_LEN, "%02lu:%02lu",
+             static_cast<unsigned long>(minutes),
+             static_cast<unsigned long>(seconds));
+
+    // Format session label into a stack buffer.
+    char sessionBuf[SESSION_BUF_LEN];
+    snprintf(sessionBuf, SESSION_BUF_LEN, "Session %lu",
+             static_cast<unsigned long>(sessionNumber));
+
+    // Get phase label string.
+    const char* phaseLbl = phaseLabel(phase);
+    uint16_t phaseLblLen = static_cast<uint16_t>(strlen(phaseLbl));
+
+    // Calculate centered X position for the phase label.
+    int16_t phaseStrW = static_cast<int16_t>(phaseLblLen) * PHASE_CHAR_W;
+    int16_t phaseX = (Display::WIDTH - phaseStrW) / 2;
+
+    // Calculate centered X position for the session label.
+    uint16_t sessionLblLen = static_cast<uint16_t>(strlen(sessionBuf));
+    int16_t sessionStrW = static_cast<int16_t>(sessionLblLen) * SESSION_CHAR_W;
+    int16_t sessionX = (Display::WIDTH - sessionStrW) / 2;
+
+    // Truncate goal name to fit screen width. Use a stack-allocated copy.
+    char goalBuf[GOAL_MAX_CHARS + 1] = {};
+    int16_t goalX = 0;
+    bool hasGoal = (goalName != nullptr && goalName[0] != '\0');
+    if (hasGoal) {
+        uint16_t goalLen = static_cast<uint16_t>(strlen(goalName));
+        if (goalLen > GOAL_MAX_CHARS) {
+            // Truncate and add ellipsis: copy (max-3) chars then "..."
+            memcpy(goalBuf, goalName, GOAL_MAX_CHARS - 3);
+            goalBuf[GOAL_MAX_CHARS - 3] = '.';
+            goalBuf[GOAL_MAX_CHARS - 2] = '.';
+            goalBuf[GOAL_MAX_CHARS - 1] = '.';
+            goalBuf[GOAL_MAX_CHARS] = '\0';
+            goalLen = GOAL_MAX_CHARS;
+        } else {
+            memcpy(goalBuf, goalName, goalLen);
+            goalBuf[goalLen] = '\0';
+        }
+        int16_t goalStrW = static_cast<int16_t>(goalLen) * GOAL_CHAR_W;
+        goalX = (Display::WIDTH - goalStrW) / 2;
+    }
+
+    // Render using paged drawing (low RAM usage, same pattern as showTestPattern).
+    display.setTextColor(GxEPD_BLACK);
+    display.setFont(nullptr);  // default Adafruit GFX 5x7 font
+    display.setFullWindow();
+    display.firstPage();
+    do {
+        display.fillScreen(GxEPD_WHITE);
+
+        // Session number (above time)
+        if (sessionNumber > 0) {
+            display.setTextSize(SESSION_TEXT_SIZE);
+            display.setCursor(sessionX, SESSION_Y);
+            display.print(sessionBuf);
+        }
+
+        // Large MM:SS countdown (center)
+        display.setTextSize(TIME_TEXT_SIZE);
+        display.setCursor(TIME_X, TIME_Y);
+        display.print(timeBuf);
+
+        // Phase indicator (below time)
+        display.setTextSize(PHASE_TEXT_SIZE);
+        display.setCursor(phaseX, PHASE_Y);
+        display.print(phaseLbl);
+
+        // Goal name (near bottom, if set)
+        if (hasGoal) {
+            display.setTextSize(GOAL_TEXT_SIZE);
+            display.setCursor(goalX, GOAL_Y);
+            display.print(goalBuf);
+        }
+    } while (display.nextPage());
+
+    Serial.println("Timer screen displayed");
 }
 
 } // namespace Display
