@@ -10,3 +10,5 @@ export type {
 export { createInitialState, isRunning, getTimeRemaining } from './utils.js';
 export { isLongBreak, isReflectionEnabled } from './guards.js';
 export { transition } from './transition.js';
+export { rehydrate } from './rehydrate.js';
+export type { RehydrationResult } from './rehydrate.js';
