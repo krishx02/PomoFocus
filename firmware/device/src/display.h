@@ -14,6 +14,28 @@ namespace Display {
 constexpr uint16_t WIDTH = 800;
 constexpr uint16_t HEIGHT = 480;
 
+// Maximum title length for a goal (fits ~26 chars at text size 3 on 800px).
+// Titles longer than this are truncated with ellipsis by rendering functions.
+constexpr uint8_t MAX_GOAL_TITLE_LEN = 40;
+
+// Maximum number of goals the device can hold at once.
+// Synced from phone via BLE Goal Service (ADR-013).
+constexpr uint8_t MAX_GOALS = 10;
+
+// Goal data synced from phone. Fixed-size for zero dynamic allocation (NAT-F01).
+struct GoalInfo {
+    char title[MAX_GOAL_TITLE_LEN + 1];  // null-terminated
+    uint8_t targetSessions;               // daily target
+    uint8_t completedSessions;            // completed today
+};
+
+// Session summary shown on the completion screen.
+struct SessionSummary {
+    uint32_t focusDurationSec;            // actual focus time in seconds
+    uint8_t sessionNumber;                // which session this was (1-based)
+    char goalTitle[MAX_GOAL_TITLE_LEN + 1]; // goal this session was for
+};
+
 // Initialize display hardware: configures SPI pins for EN04 FPC
 // connector, resets the display controller, and powers on.
 // Call once from setup().
@@ -28,6 +50,19 @@ void hibernate();
 
 // Draw centered "PomoFocus" test pattern for hardware validation.
 void showTestPattern();
+
+// Idle screen: "Ready to focus" with today's session count and current goal.
+void showIdleScreen(uint8_t sessionsToday, const char* currentGoalTitle);
+
+// Goal selection menu: scrollable list with highlighted selection.
+// goals: array of GoalInfo structs.
+// goalCount: number of valid entries in goals (0..MAX_GOALS).
+// selectedIndex: index of the currently highlighted goal.
+void showGoalScreen(const GoalInfo* goals, uint8_t goalCount,
+                    uint8_t selectedIndex);
+
+// Session complete screen: summary of the finished session.
+void showSessionComplete(const SessionSummary& summary);
 
 } // namespace Display
 
