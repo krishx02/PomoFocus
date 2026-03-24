@@ -1,0 +1,31 @@
+# Nanopb options for pomofocus.proto
+# Ensures static-only allocation — no malloc on MCU.
+# String max_size includes null terminator.
+# All bytes fields are 128-bit UUIDs (16 bytes).
+
+# --- Timer Service ---
+
+pomofocus.ble.TimerState.goal_id             max_size:16
+
+pomofocus.ble.TimerCommand.goal_id           max_size:16
+
+# --- Goal Service ---
+
+pomofocus.ble.Goal.id                        max_size:16
+pomofocus.ble.Goal.title                     max_size:101
+
+pomofocus.ble.GoalList.goals                 max_count:10
+
+pomofocus.ble.SelectedGoal.goal_id           max_size:16
+
+# --- Session Sync Service ---
+
+pomofocus.ble.SessionRecord.id               max_size:16
+pomofocus.ble.SessionRecord.goal_id          max_size:16
+pomofocus.ble.SessionRecord.intention        max_size:201
+pomofocus.ble.SessionRecord.reflection       max_size:501
+pomofocus.ble.SessionRecord.distraction_note max_size:201
+
+pomofocus.ble.SyncStatus.last_synced_id      max_size:16
+
+pomofocus.ble.SyncControl.last_synced_id     max_size:16
