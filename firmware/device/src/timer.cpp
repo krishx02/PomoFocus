@@ -6,13 +6,13 @@
 
 // ── Guards (port of packages/core/src/timer/guards.ts) ──
 
-static bool isLongBreak(uint32_t sessionNumber, const TimerConfig& config) {
+bool isLongBreak(uint32_t sessionNumber, const TimerConfig& config) {
   if (sessionNumber < 1) return false;
   if (config.sessionsBeforeLongBreak < 1) return false;
   return sessionNumber % config.sessionsBeforeLongBreak == 0;
 }
 
-static bool isReflectionEnabled(const TimerConfig& config) {
+bool isReflectionEnabled(const TimerConfig& config) {
   return config.reflectionEnabled;
 }
 
