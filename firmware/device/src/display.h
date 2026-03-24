@@ -7,6 +7,7 @@
 #define POMOFOCUS_DISPLAY_H
 
 #include <cstdint>
+#include "timer.h"
 
 namespace Display {
 
@@ -63,6 +64,17 @@ void showGoalScreen(const GoalInfo* goals, uint8_t goalCount,
 
 // Session complete screen: summary of the finished session.
 void showSessionComplete(const SessionSummary& summary);
+
+// Render the timer screen: large MM:SS countdown, phase indicator,
+// session number, and optional goal name. Full refresh.
+//
+//   minutes       — minutes remaining (0–99)
+//   seconds       — seconds remaining (0–59)
+//   phase         — current timer phase (from TimerPhase enum)
+//   sessionNumber — current focus session number (1-based, 0 = not started)
+//   goalName      — optional goal text (nullptr if none); truncated to fit
+void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
+                     uint32_t sessionNumber, const char* goalName);
 
 } // namespace Display
 
