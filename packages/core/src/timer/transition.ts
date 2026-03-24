@@ -277,6 +277,15 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
     case TIMER_STATUS.REFLECTION:
       switch (event.type) {
         case TIMER_EVENT_TYPE.SUBMIT:
+          if (event.continueSession) {
+            return {
+              status: TIMER_STATUS.FOCUSING,
+              timeRemaining: state.config.focusDuration,
+              startedAt: now,
+              sessionNumber: state.sessionNumber + 1,
+              config: state.config,
+            };
+          }
           return {
             status: TIMER_STATUS.COMPLETED,
             sessionNumber: state.sessionNumber,
@@ -284,6 +293,15 @@ export function transition(state: TimerState, event: TimerEvent, now: number): T
             reflectionData: event.data,
           };
         case TIMER_EVENT_TYPE.SKIP:
+          if (event.continueSession) {
+            return {
+              status: TIMER_STATUS.FOCUSING,
+              timeRemaining: state.config.focusDuration,
+              startedAt: now,
+              sessionNumber: state.sessionNumber + 1,
+              config: state.config,
+            };
+          }
           return {
             status: TIMER_STATUS.COMPLETED,
             sessionNumber: state.sessionNumber,

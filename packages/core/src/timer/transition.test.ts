@@ -1326,6 +1326,101 @@ describe('transition — SUBMIT event', () => {
     );
     expect(result).toBe(state);
   });
+
+  it('transitions from reflection to focusing with sessionNumber + 1 when continueSession is true', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 2,
+      config: defaultConfig,
+    };
+    const now = 5000;
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'locked_in' },
+        continueSession: true,
+      },
+      now,
+    );
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: defaultConfig.focusDuration,
+      startedAt: now,
+      sessionNumber: 3,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from reflection to focusing with continueSession true and struggled quality', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const now = 4000;
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'struggled', distractionType: 'phone' },
+        continueSession: true,
+      },
+      now,
+    );
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: defaultConfig.focusDuration,
+      startedAt: now,
+      sessionNumber: 2,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from reflection to completed when continueSession is false', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'decent' },
+        continueSession: false,
+      },
+      3000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 1,
+      config: defaultConfig,
+      reflectionData: { focusQuality: 'decent' },
+    });
+  });
+
+  it('transitions from reflection to completed when continueSession is undefined (default)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'locked_in' },
+      },
+      3000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 1,
+      config: defaultConfig,
+      reflectionData: { focusQuality: 'locked_in' },
+    });
+  });
 });
 
 describe('transition — SKIP event', () => {
@@ -1451,6 +1546,77 @@ describe('transition — SKIP event', () => {
     };
     const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP }, 6000);
     expect(result).toBe(state);
+  });
+
+  it('transitions from reflection to focusing with sessionNumber + 1 when continueSession is true', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 3,
+      config: defaultConfig,
+    };
+    const now = 7000;
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SKIP, continueSession: true },
+      now,
+    );
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: defaultConfig.focusDuration,
+      startedAt: now,
+      sessionNumber: 4,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from reflection to completed when continueSession is false on SKIP', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 2,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SKIP, continueSession: false },
+      5000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 2,
+      config: defaultConfig,
+    });
+  });
+
+  it('transitions from reflection to completed when continueSession is undefined on SKIP (default)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SKIP },
+      3000,
+    );
+    expect(result).toEqual({
+      status: 'completed',
+      sessionNumber: 1,
+      config: defaultConfig,
+    });
+  });
+
+  it('does not include reflectionData when SKIP with continueSession true', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SKIP, continueSession: true },
+      3000,
+    );
+    expect(result).not.toHaveProperty('reflectionData');
   });
 });
 
@@ -1993,6 +2159,100 @@ describe('transition — full 4-session lifecycle integration', () => {
     state = result.state;
     time = result.time;
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 5, status: 'focusing' }));
+  });
+
+  it('completes multi-session cycle with reflection enabled and continueSession', () => {
+    const reflectionConfig: TimerConfig = {
+      focusDuration: 3,
+      shortBreakDuration: 2,
+      longBreakDuration: 4,
+      sessionsBeforeLongBreak: 4,
+      reflectionEnabled: true,
+    };
+    let time = 0;
+    let state: TimerState = { status: TIMER_STATUS.IDLE, config: reflectionConfig };
+
+    // Session 1: START -> focus -> break -> reflection -> SUBMIT(continueSession: true) -> focusing
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.START }, time);
+    expect(state.status).toBe('focusing');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 1 }));
+
+    let result = completeFocus(state, time);
+    state = result.state;
+    time = result.time;
+    expect(state.status).toBe('short_break');
+
+    result = completeBreak(state, time);
+    state = result.state;
+    time = result.time;
+    expect(state.status).toBe('reflection');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 1 }));
+
+    // User submits reflection and chooses to continue
+    time += 1;
+    state = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'locked_in' },
+        continueSession: true,
+      },
+      time,
+    );
+    expect(state.status).toBe('focusing');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 2 }));
+
+    // Session 2: focus -> break -> reflection -> SKIP(continueSession: true) -> focusing
+    result = completeFocus(state, time);
+    state = result.state;
+    time = result.time;
+    expect(state.status).toBe('short_break');
+
+    result = completeBreak(state, time);
+    state = result.state;
+    time = result.time;
+    expect(state.status).toBe('reflection');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 2 }));
+
+    // User skips reflection and chooses to continue
+    time += 1;
+    state = transition(
+      state,
+      { type: TIMER_EVENT_TYPE.SKIP, continueSession: true },
+      time,
+    );
+    expect(state.status).toBe('focusing');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 3 }));
+
+    // Session 3: focus -> break -> reflection -> SUBMIT(continueSession: false) -> completed
+    result = completeFocus(state, time);
+    state = result.state;
+    time = result.time;
+    expect(state.status).toBe('short_break');
+
+    result = completeBreak(state, time);
+    state = result.state;
+    time = result.time;
+    expect(state.status).toBe('reflection');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 3 }));
+
+    // User submits reflection and chooses to stop
+    time += 1;
+    state = transition(
+      state,
+      {
+        type: TIMER_EVENT_TYPE.SUBMIT,
+        data: { focusQuality: 'decent', distractionType: 'thoughts_wandering' },
+        continueSession: false,
+      },
+      time,
+    );
+    expect(state.status).toBe('completed');
+    expect(state).toEqual(expect.objectContaining({
+      sessionNumber: 3,
+      reflectionData: { focusQuality: 'decent', distractionType: 'thoughts_wandering' },
+    }));
   });
 });
 
