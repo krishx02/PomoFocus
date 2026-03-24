@@ -17,3 +17,5 @@ export type {
   ProcessGoalInput,
   LongTermGoalInput,
 } from './validation.js';
+export { currentStreak } from './streak.js';
+export type { StreakSession } from './streak.js';
