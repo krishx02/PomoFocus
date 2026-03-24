@@ -4,7 +4,7 @@ import type { Database } from '@pomofocus/types';
 
 /**
  * Environment bindings required by the Supabase client helpers.
- * Matches the [vars] block in wrangler.toml.
+ * Set via `wrangler secret put` — never stored in wrangler.toml.
  */
 export type SupabaseEnv = {
   readonly SUPABASE_URL: string;
