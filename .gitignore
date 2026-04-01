@@ -27,3 +27,15 @@ supabase/.temp/
 # Vercel
 .vercel/
 apps/web/.expo/
+
+# Cloudflare
+.wrangler/
+
+# Supabase local
+supabase/.branches/
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# Personal files
+*.pdf
