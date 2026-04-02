@@ -45,9 +45,29 @@ void init();
 // Clear the entire screen to white using a full refresh.
 void clear();
 
-// Put the display controller into deep sleep for minimum power use.
-// Requires a hardware reset (via init()) to wake.
+// Put the SSD1677 controller into deep sleep mode for minimum power
+// draw (~0 uA from the display controller). The e-ink panel retains
+// its last image (bistable). Requires wake() before any further
+// display operations.
+//
+// Integration point for power.cpp (7A.8): call hibernate() when
+// entering System ON sleep, before sd_app_evt_wait().
 void hibernate();
+
+// Wake the display controller from deep sleep. Performs a hardware
+// reset via the nRF GPIO HAL and reinitializes the GxEPD2 driver.
+// The e-ink panel retains its last image — no screen flash or
+// corruption occurs. After wake(), normal drawing operations
+// (showTimerScreen, updateTimerPartial, etc.) work again.
+//
+// Integration point for power.cpp (7A.8): call wake() when resuming
+// from System ON sleep, after the wake interrupt fires.
+void wake();
+
+// Returns true if the display is in deep sleep (after hibernate(),
+// before wake()). Useful for power.cpp to avoid drawing while
+// the controller is asleep.
+bool isHibernating();
 
 // Draw centered "PomoFocus" test pattern for hardware validation.
 void showTestPattern();

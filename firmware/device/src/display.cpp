@@ -60,6 +60,32 @@ constexpr uint16_t PAGE_HEIGHT = 20;
 static GxEPD2_BW<GxEPD2_426_GDEQ0426T82, PAGE_HEIGHT> display(
     GxEPD2_426_GDEQ0426T82(EPD_CS_PIN, EPD_DC_PIN, /*rst=*/-1, EPD_BUSY_PIN));
 
+// Tracks whether the display controller is in deep sleep mode.
+// Set true by hibernate(), cleared by wake().
+static bool displayHibernating = false;
+
+// SSD1677 deep sleep command (0x10) with mode byte 0x01.
+// GxEPD2's hibernate() skips this when rst < 0, but we manage RST
+// manually via the nRF GPIO HAL, so we send the command directly.
+// Protocol: DC low = command byte, DC high = data byte.
+static void sendDeepSleepCommand() {
+    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+
+    // Send command byte 0x10 (Deep Sleep Mode)
+    digitalWrite(EPD_DC_PIN, LOW);
+    digitalWrite(EPD_CS_PIN, LOW);
+    SPI.transfer(0x10);
+    digitalWrite(EPD_CS_PIN, HIGH);
+    digitalWrite(EPD_DC_PIN, HIGH);
+
+    // Send data byte 0x01 (enter deep sleep)
+    digitalWrite(EPD_CS_PIN, LOW);
+    SPI.transfer(0x01);
+    digitalWrite(EPD_CS_PIN, HIGH);
+
+    SPI.endTransaction();
+}
+
 // Hardware reset of the display controller via nRF GPIO HAL.
 // Pulse RST low for 10ms, then wait 10ms for controller startup.
 static void hardwareReset() {
@@ -102,12 +128,44 @@ void clear() {
 }
 
 void hibernate() {
-    // Put the SSD1677 controller into deep sleep. Current draw drops to
-    // near zero. Requires a hardware reset to wake — call init() again.
-    // Note: GxEPD2 hibernate() is a no-op when rst < 0, so we call
-    // powerOff() instead which turns off panel driving voltages.
+    // Put the SSD1677 controller into deep sleep mode. Two-step process:
+    // 1. powerOff() — turns off panel driving voltages via GxEPD2
+    // 2. sendDeepSleepCommand() — sends SSD1677 deep sleep command (0x10)
+    //
+    // GxEPD2's own hibernate() skips step 2 when rst < 0 because it
+    // assumes it cannot wake the controller. Since we manage RST via
+    // the nRF GPIO HAL, we send the command directly.
+    //
+    // After deep sleep, SSD1677 draws near-zero current. The e-ink
+    // panel retains its last image (bistable). A hardware reset is
+    // required before any further SPI commands — call wake().
     display.powerOff();
-    Serial.println("Display powered off");
+    sendDeepSleepCommand();
+    displayHibernating = true;
+    Serial.println("Display hibernating (deep sleep)");
+}
+
+void wake() {
+    if (!displayHibernating) {
+        return;
+    }
+
+    // Hardware reset wakes the SSD1677 from deep sleep. The nRF GPIO
+    // HAL toggles RST (P1.13) since GxEPD2 cannot reach this pin.
+    hardwareReset();
+
+    // Reinitialize the GxEPD2 driver. initial=false tells the driver
+    // this is a wake-from-sleep, not a cold start — it skips the
+    // initial full-screen buffer clear, preserving the e-ink image.
+    display.init(115200, /*initial=*/false);
+    display.setRotation(0);
+
+    displayHibernating = false;
+    Serial.println("Display awake");
+}
+
+bool isHibernating() {
+    return displayHibernating;
 }
 
 void showTestPattern() {
