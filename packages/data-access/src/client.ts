@@ -22,7 +22,12 @@ function createAuthMiddleware(auth: TokenRefreshDeps): Middleware {
         return undefined;
       }
 
+      // openapi-fetch middleware types reference DOM Request/Headers which are
+      // unresolvable without "dom" in tsconfig lib. The types are structurally
+      // correct at runtime (Node 18+ globals).
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       request.headers.set('Authorization', `Bearer ${token}`);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return request;
     },
   };
