@@ -18,3 +18,15 @@ export type GoalBreakdown = {
   readonly sessions: number;
   readonly focusMinutes: number;
 };
+
+/** Full Tier 3 monthly response shape. */
+export type MonthlyResponse = {
+  readonly trends: {
+    readonly consistency: TrendResult;
+    readonly completionRate: TrendResult;
+    readonly focusQuality: TrendResult;
+    readonly totalHours: TrendResult;
+  };
+  readonly topDistraction: DistractionPattern;
+  readonly perGoal: readonly GoalBreakdown[];
+};

@@ -11,7 +11,7 @@ export { perGoalBreakdown } from './tier2/index.js';
 export type { GoalBreakdownEntry } from './tier2/index.js';
 
 // ── Tier 3: Monthly trends ──
-export type { TrendResult, DistractionPattern, GoalBreakdown } from './tier3/index.js';
+export type { TrendResult, DistractionPattern, GoalBreakdown, MonthlyResponse } from './tier3/index.js';
 export {
   consistencyTrend,
   completionTrend,
@@ -20,4 +20,9 @@ export {
   monthlyTrends,
   distractionPatterns,
   perGoalBreakdown as perGoalMonthlyBreakdown,
+  tierThreeMetrics,
 } from './tier3/index.js';
+
+// ── Cold-start thresholds ──
+export { hasSufficientData, ANALYTICS_TIER } from './cold-start.js';
+export type { AnalyticsTier } from './cold-start.js';
