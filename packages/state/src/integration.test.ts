@@ -265,12 +265,12 @@ describe('state package integration', () => {
       vi.advanceTimersByTime(2000);
       expect(store.getState().state.status).toBe(TIMER_STATUS.SHORT_BREAK);
 
-      // Skip the break (reflection disabled → goes directly to next focusing)
+      // Skip the break (reflection disabled → goes to completed, user chooses next step)
       store.getState().skipBreak();
       const stateAfterSkip = store.getState().state;
-      expect(stateAfterSkip.status).toBe(TIMER_STATUS.FOCUSING);
-      if (stateAfterSkip.status === TIMER_STATUS.FOCUSING) {
-        expect(stateAfterSkip.sessionNumber).toBe(2);
+      expect(stateAfterSkip.status).toBe(TIMER_STATUS.COMPLETED);
+      if (stateAfterSkip.status === TIMER_STATUS.COMPLETED) {
+        expect(stateAfterSkip.sessionNumber).toBe(1);
       }
 
       // Stop the driver and switch back to real timers for React hook testing

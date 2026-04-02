@@ -639,7 +639,7 @@ describe('transition — TIMER_DONE event', () => {
     });
   });
 
-  it('transitions from short_break to focusing with sessionNumber + 1 when reflection disabled', () => {
+  it('transitions from short_break to completed when reflection disabled', () => {
     const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
     const state: TimerState = {
       status: TIMER_STATUS.SHORT_BREAK,
@@ -651,10 +651,8 @@ describe('transition — TIMER_DONE event', () => {
     const now = 3000;
     const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
     expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: noReflectionConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 2,
+      status: 'completed',
+      sessionNumber: 1,
       config: noReflectionConfig,
     });
   });
@@ -675,7 +673,7 @@ describe('transition — TIMER_DONE event', () => {
     });
   });
 
-  it('transitions from long_break to focusing with sessionNumber + 1 when reflection disabled', () => {
+  it('transitions from long_break to completed when reflection disabled', () => {
     const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
     const state: TimerState = {
       status: TIMER_STATUS.LONG_BREAK,
@@ -687,10 +685,8 @@ describe('transition — TIMER_DONE event', () => {
     const now = 4000;
     const result = transition(state, { type: TIMER_EVENT_TYPE.TIMER_DONE }, now);
     expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: noReflectionConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 5,
+      status: 'completed',
+      sessionNumber: 4,
       config: noReflectionConfig,
     });
   });
@@ -998,7 +994,7 @@ describe('transition — SKIP_BREAK event', () => {
     });
   });
 
-  it('transitions from short_break to focusing with sessionNumber + 1 when reflection disabled', () => {
+  it('transitions from short_break to completed when reflection disabled', () => {
     const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
     const state: TimerState = {
       status: TIMER_STATUS.SHORT_BREAK,
@@ -1010,15 +1006,13 @@ describe('transition — SKIP_BREAK event', () => {
     const now = 3000;
     const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP_BREAK }, now);
     expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: noReflectionConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 2,
+      status: 'completed',
+      sessionNumber: 1,
       config: noReflectionConfig,
     });
   });
 
-  it('transitions from long_break to focusing with sessionNumber + 1 when reflection disabled', () => {
+  it('transitions from long_break to completed when reflection disabled', () => {
     const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
     const state: TimerState = {
       status: TIMER_STATUS.LONG_BREAK,
@@ -1030,15 +1024,13 @@ describe('transition — SKIP_BREAK event', () => {
     const now = 4000;
     const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP_BREAK }, now);
     expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: noReflectionConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 5,
+      status: 'completed',
+      sessionNumber: 4,
       config: noReflectionConfig,
     });
   });
 
-  it('transitions from break_paused to focusing with sessionNumber + 1 when reflection disabled', () => {
+  it('transitions from break_paused to completed when reflection disabled', () => {
     const noReflectionConfig: TimerConfig = { ...defaultConfig, reflectionEnabled: false };
     const state: TimerState = {
       status: TIMER_STATUS.BREAK_PAUSED,
@@ -1051,10 +1043,8 @@ describe('transition — SKIP_BREAK event', () => {
     const now = 3000;
     const result = transition(state, { type: TIMER_EVENT_TYPE.SKIP_BREAK }, now);
     expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: noReflectionConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 5,
+      status: 'completed',
+      sessionNumber: 4,
       config: noReflectionConfig,
     });
   });
@@ -1327,83 +1317,10 @@ describe('transition — SUBMIT event', () => {
     expect(result).toBe(state);
   });
 
-  it('transitions from reflection to focusing with sessionNumber + 1 when continueSession is true', () => {
+  it('SUBMIT always transitions to completed (user chooses CONTINUE/FINISH from completed)', () => {
     const state: TimerState = {
       status: TIMER_STATUS.REFLECTION,
       sessionNumber: 2,
-      config: defaultConfig,
-    };
-    const now = 5000;
-    const result = transition(
-      state,
-      {
-        type: TIMER_EVENT_TYPE.SUBMIT,
-        data: { focusQuality: 'locked_in' },
-        continueSession: true,
-      },
-      now,
-    );
-    expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: defaultConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 3,
-      config: defaultConfig,
-    });
-  });
-
-  it('transitions from reflection to focusing with continueSession true and struggled quality', () => {
-    const state: TimerState = {
-      status: TIMER_STATUS.REFLECTION,
-      sessionNumber: 1,
-      config: defaultConfig,
-    };
-    const now = 4000;
-    const result = transition(
-      state,
-      {
-        type: TIMER_EVENT_TYPE.SUBMIT,
-        data: { focusQuality: 'struggled', distractionType: 'phone' },
-        continueSession: true,
-      },
-      now,
-    );
-    expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: defaultConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 2,
-      config: defaultConfig,
-    });
-  });
-
-  it('transitions from reflection to completed when continueSession is false', () => {
-    const state: TimerState = {
-      status: TIMER_STATUS.REFLECTION,
-      sessionNumber: 1,
-      config: defaultConfig,
-    };
-    const result = transition(
-      state,
-      {
-        type: TIMER_EVENT_TYPE.SUBMIT,
-        data: { focusQuality: 'decent' },
-        continueSession: false,
-      },
-      3000,
-    );
-    expect(result).toEqual({
-      status: 'completed',
-      sessionNumber: 1,
-      config: defaultConfig,
-      reflectionData: { focusQuality: 'decent' },
-    });
-  });
-
-  it('transitions from reflection to completed when continueSession is undefined (default)', () => {
-    const state: TimerState = {
-      status: TIMER_STATUS.REFLECTION,
-      sessionNumber: 1,
       config: defaultConfig,
     };
     const result = transition(
@@ -1412,11 +1329,11 @@ describe('transition — SUBMIT event', () => {
         type: TIMER_EVENT_TYPE.SUBMIT,
         data: { focusQuality: 'locked_in' },
       },
-      3000,
+      5000,
     );
     expect(result).toEqual({
       status: 'completed',
-      sessionNumber: 1,
+      sessionNumber: 2,
       config: defaultConfig,
       reflectionData: { focusQuality: 'locked_in' },
     });
@@ -1548,46 +1465,25 @@ describe('transition — SKIP event', () => {
     expect(result).toBe(state);
   });
 
-  it('transitions from reflection to focusing with sessionNumber + 1 when continueSession is true', () => {
+  it('SKIP always transitions to completed (user chooses CONTINUE/FINISH from completed)', () => {
     const state: TimerState = {
       status: TIMER_STATUS.REFLECTION,
       sessionNumber: 3,
       config: defaultConfig,
     };
-    const now = 7000;
     const result = transition(
       state,
-      { type: TIMER_EVENT_TYPE.SKIP, continueSession: true },
-      now,
-    );
-    expect(result).toEqual({
-      status: 'focusing',
-      timeRemaining: defaultConfig.focusDuration,
-      startedAt: now,
-      sessionNumber: 4,
-      config: defaultConfig,
-    });
-  });
-
-  it('transitions from reflection to completed when continueSession is false on SKIP', () => {
-    const state: TimerState = {
-      status: TIMER_STATUS.REFLECTION,
-      sessionNumber: 2,
-      config: defaultConfig,
-    };
-    const result = transition(
-      state,
-      { type: TIMER_EVENT_TYPE.SKIP, continueSession: false },
-      5000,
+      { type: TIMER_EVENT_TYPE.SKIP },
+      7000,
     );
     expect(result).toEqual({
       status: 'completed',
-      sessionNumber: 2,
+      sessionNumber: 3,
       config: defaultConfig,
     });
   });
 
-  it('transitions from reflection to completed when continueSession is undefined on SKIP (default)', () => {
+  it('does not include reflectionData when SKIP from reflection', () => {
     const state: TimerState = {
       status: TIMER_STATUS.REFLECTION,
       sessionNumber: 1,
@@ -1596,24 +1492,6 @@ describe('transition — SKIP event', () => {
     const result = transition(
       state,
       { type: TIMER_EVENT_TYPE.SKIP },
-      3000,
-    );
-    expect(result).toEqual({
-      status: 'completed',
-      sessionNumber: 1,
-      config: defaultConfig,
-    });
-  });
-
-  it('does not include reflectionData when SKIP with continueSession true', () => {
-    const state: TimerState = {
-      status: TIMER_STATUS.REFLECTION,
-      sessionNumber: 1,
-      config: defaultConfig,
-    };
-    const result = transition(
-      state,
-      { type: TIMER_EVENT_TYPE.SKIP, continueSession: true },
       3000,
     );
     expect(result).not.toHaveProperty('reflectionData');
@@ -1931,8 +1809,8 @@ describe('transition — full 4-session lifecycle integration', () => {
     return { state: current, time };
   }
 
-  // Use short durations and reflection disabled so sessions auto-advance
-  // (break -> TIMER_DONE -> focusing with sessionNumber + 1)
+  // Use short durations and reflection disabled
+  // (break -> TIMER_DONE -> completed, then CONTINUE -> focusing with sessionNumber + 1)
   const lifecycleConfig: TimerConfig = {
     focusDuration: 3,
     shortBreakDuration: 2,
@@ -1941,7 +1819,7 @@ describe('transition — full 4-session lifecycle integration', () => {
     reflectionEnabled: false,
   };
 
-  it('completes a full 4-session cycle with auto-advancing sessions (reflection disabled)', () => {
+  it('completes a full 4-session cycle with CONTINUE events (reflection disabled)', () => {
     let time = 0;
     let state: TimerState = { status: TIMER_STATUS.IDLE, config: lifecycleConfig };
 
@@ -1960,7 +1838,12 @@ describe('transition — full 4-session lifecycle integration', () => {
     const after1Break = completeBreak(state, time);
     state = after1Break.state;
     time = after1Break.time;
-    // reflection disabled: auto-advances to focusing with sessionNumber + 1
+    // reflection disabled: goes to completed, user chooses CONTINUE
+    expect(state.status).toBe('completed');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 1 }));
+
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state.status).toBe('focusing');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 2 }));
 
@@ -1974,6 +1857,10 @@ describe('transition — full 4-session lifecycle integration', () => {
     const after2Break = completeBreak(state, time);
     state = after2Break.state;
     time = after2Break.time;
+    expect(state.status).toBe('completed');
+
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state.status).toBe('focusing');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 3 }));
 
@@ -1987,6 +1874,10 @@ describe('transition — full 4-session lifecycle integration', () => {
     const after3Break = completeBreak(state, time);
     state = after3Break.state;
     time = after3Break.time;
+    expect(state.status).toBe('completed');
+
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state.status).toBe('focusing');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 4 }));
 
@@ -2001,7 +1892,11 @@ describe('transition — full 4-session lifecycle integration', () => {
     const after4Break = completeBreak(state, time);
     state = after4Break.state;
     time = after4Break.time;
-    // reflection disabled: auto-advances to focusing with sessionNumber + 1
+    // reflection disabled: goes to completed, user chooses CONTINUE
+    expect(state.status).toBe('completed');
+
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state.status).toBe('focusing');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 5 }));
   });
@@ -2080,14 +1975,14 @@ describe('transition — full 4-session lifecycle integration', () => {
     expect(state).toEqual({ status: 'idle', config: reflectionConfig });
   });
 
-  it('verifies isLongBreak triggers correctly at session 4 with auto-advancing', () => {
+  it('verifies isLongBreak triggers correctly at session 4 with CONTINUE cycling', () => {
     let time = 0;
     let state: TimerState = { status: TIMER_STATUS.IDLE, config: lifecycleConfig };
 
     time += 1;
     state = transition(state, { type: TIMER_EVENT_TYPE.START }, time);
 
-    // Fast-forward through sessions 1-3 (short breaks)
+    // Fast-forward through sessions 1-3 (short breaks, then CONTINUE)
     for (let session = 1; session <= 3; session++) {
       const afterFocus = completeFocus(state, time);
       state = afterFocus.state;
@@ -2098,6 +1993,10 @@ describe('transition — full 4-session lifecycle integration', () => {
       const afterBreak = completeBreak(state, time);
       state = afterBreak.state;
       time = afterBreak.time;
+      expect(state.status).toBe('completed');
+
+      time += 1;
+      state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
       expect(state.status).toBe('focusing');
       expect(state).toEqual(expect.objectContaining({ sessionNumber: session + 1 }));
     }
@@ -2121,31 +2020,37 @@ describe('transition — full 4-session lifecycle integration', () => {
     state = transition(state, { type: TIMER_EVENT_TYPE.START }, time);
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 1 }));
 
-    // After session 1 focus + break -> session 2
+    // After session 1 focus + break -> completed -> CONTINUE -> session 2
     let result = completeFocus(state, time);
     state = result.state;
     time = result.time;
     result = completeBreak(state, time);
     state = result.state;
     time = result.time;
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 2, status: 'focusing' }));
 
-    // After session 2 focus + break -> session 3
+    // After session 2 focus + break -> completed -> CONTINUE -> session 3
     result = completeFocus(state, time);
     state = result.state;
     time = result.time;
     result = completeBreak(state, time);
     state = result.state;
     time = result.time;
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 3, status: 'focusing' }));
 
-    // After session 3 focus + break -> session 4
+    // After session 3 focus + break -> completed -> CONTINUE -> session 4
     result = completeFocus(state, time);
     state = result.state;
     time = result.time;
     result = completeBreak(state, time);
     state = result.state;
     time = result.time;
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 4, status: 'focusing' }));
 
     // After session 4 focus -> long break (still session 4)
@@ -2154,14 +2059,18 @@ describe('transition — full 4-session lifecycle integration', () => {
     time = result.time;
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 4, status: 'long_break' }));
 
-    // After long break -> session 5
+    // After long break -> completed -> CONTINUE -> session 5
     result = completeBreak(state, time);
     state = result.state;
     time = result.time;
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 4, status: 'completed' }));
+
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 5, status: 'focusing' }));
   });
 
-  it('completes multi-session cycle with reflection enabled and continueSession', () => {
+  it('completes multi-session cycle with reflection enabled and CONTINUE events', () => {
     const reflectionConfig: TimerConfig = {
       focusDuration: 3,
       shortBreakDuration: 2,
@@ -2172,7 +2081,7 @@ describe('transition — full 4-session lifecycle integration', () => {
     let time = 0;
     let state: TimerState = { status: TIMER_STATUS.IDLE, config: reflectionConfig };
 
-    // Session 1: START -> focus -> break -> reflection -> SUBMIT(continueSession: true) -> focusing
+    // Session 1: START -> focus -> break -> reflection -> SUBMIT -> completed -> CONTINUE -> focusing
     time += 1;
     state = transition(state, { type: TIMER_EVENT_TYPE.START }, time);
     expect(state.status).toBe('focusing');
@@ -2189,21 +2098,26 @@ describe('transition — full 4-session lifecycle integration', () => {
     expect(state.status).toBe('reflection');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 1 }));
 
-    // User submits reflection and chooses to continue
+    // User submits reflection -> completed
     time += 1;
     state = transition(
       state,
       {
         type: TIMER_EVENT_TYPE.SUBMIT,
         data: { focusQuality: 'locked_in' },
-        continueSession: true,
       },
       time,
     );
+    expect(state.status).toBe('completed');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 1 }));
+
+    // User chooses to continue
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state.status).toBe('focusing');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 2 }));
 
-    // Session 2: focus -> break -> reflection -> SKIP(continueSession: true) -> focusing
+    // Session 2: focus -> break -> reflection -> SKIP -> completed -> CONTINUE -> focusing
     result = completeFocus(state, time);
     state = result.state;
     time = result.time;
@@ -2215,17 +2129,22 @@ describe('transition — full 4-session lifecycle integration', () => {
     expect(state.status).toBe('reflection');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 2 }));
 
-    // User skips reflection and chooses to continue
+    // User skips reflection -> completed
     time += 1;
     state = transition(
       state,
-      { type: TIMER_EVENT_TYPE.SKIP, continueSession: true },
+      { type: TIMER_EVENT_TYPE.SKIP },
       time,
     );
+    expect(state.status).toBe('completed');
+
+    // User chooses to continue
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, time);
     expect(state.status).toBe('focusing');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 3 }));
 
-    // Session 3: focus -> break -> reflection -> SUBMIT(continueSession: false) -> completed
+    // Session 3: focus -> break -> reflection -> SUBMIT -> completed -> FINISH (done)
     result = completeFocus(state, time);
     state = result.state;
     time = result.time;
@@ -2237,14 +2156,13 @@ describe('transition — full 4-session lifecycle integration', () => {
     expect(state.status).toBe('reflection');
     expect(state).toEqual(expect.objectContaining({ sessionNumber: 3 }));
 
-    // User submits reflection and chooses to stop
+    // User submits reflection -> completed
     time += 1;
     state = transition(
       state,
       {
         type: TIMER_EVENT_TYPE.SUBMIT,
         data: { focusQuality: 'decent', distractionType: 'thoughts_wandering' },
-        continueSession: false,
       },
       time,
     );
@@ -2253,6 +2171,179 @@ describe('transition — full 4-session lifecycle integration', () => {
       sessionNumber: 3,
       reflectionData: { focusQuality: 'decent', distractionType: 'thoughts_wandering' },
     }));
+
+    // User chooses to finish (stays completed)
+    time += 1;
+    state = transition(state, { type: TIMER_EVENT_TYPE.FINISH }, time);
+    expect(state.status).toBe('completed');
+    expect(state).toEqual(expect.objectContaining({ sessionNumber: 3 }));
+  });
+});
+
+describe('transition — CONTINUE event', () => {
+  it('transitions from completed to focusing with sessionNumber + 1', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.COMPLETED,
+      sessionNumber: 2,
+      config: defaultConfig,
+    };
+    const now = 5000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, now);
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: defaultConfig.focusDuration,
+      startedAt: now,
+      sessionNumber: 3,
+      config: defaultConfig,
+    });
+  });
+
+  it('uses focusDuration from config when continuing', () => {
+    const customConfig: TimerConfig = { ...defaultConfig, focusDuration: 3000 };
+    const state: TimerState = {
+      status: TIMER_STATUS.COMPLETED,
+      sessionNumber: 1,
+      config: customConfig,
+    };
+    const now = 4000;
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, now);
+    expect(result).toEqual({
+      status: 'focusing',
+      timeRemaining: 3000,
+      startedAt: now,
+      sessionNumber: 2,
+      config: customConfig,
+    });
+  });
+
+  it('returns state unchanged when CONTINUE from idle', () => {
+    const state: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 1000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from focusing', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 1200,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 2000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.PAUSED,
+      timeRemaining: 900,
+      pausedAt: 1600,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 2000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from short_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.SHORT_BREAK,
+      timeRemaining: 300,
+      startedAt: 2500,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from long_break', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.LONG_BREAK,
+      timeRemaining: 900,
+      startedAt: 3000,
+      sessionNumber: 4,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 4000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from break_paused', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.BREAK_PAUSED,
+      timeRemaining: 200,
+      pausedAt: 2700,
+      breakType: 'short',
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from reflection', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.REFLECTION,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 3000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when CONTINUE from abandoned', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.ABANDONED,
+      sessionNumber: 1,
+      abandonedAt: 5000,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.CONTINUE }, 6000);
+    expect(result).toBe(state);
+  });
+});
+
+describe('transition — FINISH event', () => {
+  it('returns completed state unchanged (user is done)', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.COMPLETED,
+      sessionNumber: 3,
+      config: defaultConfig,
+      reflectionData: { focusQuality: 'locked_in' },
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.FINISH }, 5000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when FINISH from idle', () => {
+    const state: TimerState = { status: TIMER_STATUS.IDLE, config: defaultConfig };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.FINISH }, 1000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when FINISH from focusing', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.FOCUSING,
+      timeRemaining: 1200,
+      startedAt: 1000,
+      sessionNumber: 1,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.FINISH }, 2000);
+    expect(result).toBe(state);
+  });
+
+  it('returns state unchanged when FINISH from abandoned', () => {
+    const state: TimerState = {
+      status: TIMER_STATUS.ABANDONED,
+      sessionNumber: 1,
+      abandonedAt: 5000,
+      config: defaultConfig,
+    };
+    const result = transition(state, { type: TIMER_EVENT_TYPE.FINISH }, 6000);
+    expect(result).toBe(state);
   });
 });
 
@@ -2275,5 +2366,7 @@ describe('transition — unhandled events return state unchanged', () => {
     expect(transition(idle, { type: TIMER_EVENT_TYPE.SKIP_BREAK }, now)).toBe(idle);
     expect(transition(idle, { type: TIMER_EVENT_TYPE.ABANDON }, now)).toBe(idle);
     expect(transition(idle, { type: TIMER_EVENT_TYPE.RESET }, now)).toBe(idle);
+    expect(transition(idle, { type: TIMER_EVENT_TYPE.CONTINUE }, now)).toBe(idle);
+    expect(transition(idle, { type: TIMER_EVENT_TYPE.FINISH }, now)).toBe(idle);
   });
 });

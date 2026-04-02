@@ -131,7 +131,7 @@ describe('rehydrate', () => {
       ]);
     });
 
-    it('skips reflection if disabled', () => {
+    it('goes to completed if reflection disabled', () => {
       const noReflectionConfig: TimerConfig = {
         ...defaultConfig,
         reflectionEnabled: false,
@@ -147,7 +147,7 @@ describe('rehydrate', () => {
       const now = 2400;
       const result = rehydrate(state, now);
 
-      expect(result.state.status).toBe(TIMER_STATUS.FOCUSING);
+      expect(result.state.status).toBe(TIMER_STATUS.COMPLETED);
       expect(result.missedTransitions).toEqual([
         { type: TIMER_EVENT_TYPE.TIMER_DONE },
       ]);

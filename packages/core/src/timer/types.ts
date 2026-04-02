@@ -29,6 +29,8 @@ export const TIMER_EVENT_TYPE = {
   SKIP_BREAK: 'SKIP_BREAK',
   ABANDON: 'ABANDON',
   RESET: 'RESET',
+  CONTINUE: 'CONTINUE',
+  FINISH: 'FINISH',
 } as const;
 
 export type TimerEventType = (typeof TIMER_EVENT_TYPE)[keyof typeof TIMER_EVENT_TYPE];
@@ -108,7 +110,7 @@ export type TimerState =
       config: TimerConfig;
     };
 
-// ── Timer Events (10 event types per ADR-004) ──
+// ── Timer Events (12 event types per ADR-004) ──
 
 export type TimerEvent =
   | { type: typeof TIMER_EVENT_TYPE.START }
@@ -116,8 +118,10 @@ export type TimerEvent =
   | { type: typeof TIMER_EVENT_TYPE.RESUME }
   | { type: typeof TIMER_EVENT_TYPE.TICK }
   | { type: typeof TIMER_EVENT_TYPE.TIMER_DONE }
-  | { type: typeof TIMER_EVENT_TYPE.SKIP; continueSession?: boolean }
-  | { type: typeof TIMER_EVENT_TYPE.SUBMIT; data: ReflectionData; continueSession?: boolean }
+  | { type: typeof TIMER_EVENT_TYPE.SKIP }
+  | { type: typeof TIMER_EVENT_TYPE.SUBMIT; data: ReflectionData }
   | { type: typeof TIMER_EVENT_TYPE.SKIP_BREAK }
   | { type: typeof TIMER_EVENT_TYPE.ABANDON }
-  | { type: typeof TIMER_EVENT_TYPE.RESET };
+  | { type: typeof TIMER_EVENT_TYPE.RESET }
+  | { type: typeof TIMER_EVENT_TYPE.CONTINUE }
+  | { type: typeof TIMER_EVENT_TYPE.FINISH };
