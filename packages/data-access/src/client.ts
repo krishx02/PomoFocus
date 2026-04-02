@@ -1,5 +1,5 @@
 import createClient from 'openapi-fetch';
-import type { Client } from 'openapi-fetch';
+import type { Client, Middleware } from 'openapi-fetch';
 import type { paths } from './generated/api-types';
 import { createTokenProvider } from './auth/token-refresh';
 import type { TokenRefreshDeps } from './auth/token-refresh';
@@ -11,33 +11,31 @@ type ApiClientOptions = {
   readonly auth?: TokenRefreshDeps;
 };
 
-function createApiClient(baseUrl: string, auth?: TokenRefreshDeps): ApiClient {
-  if (auth === undefined) {
-    return createClient<paths>({ baseUrl });
-  }
-
+function createAuthMiddleware(auth: TokenRefreshDeps): Middleware {
   const getToken = createTokenProvider(auth);
 
-  // Wrap the global fetch to inject the Authorization header after
-  // ensuring the token is fresh. openapi-fetch expects the standard
-  // (input: Request) => Promise<Response> signature.
-  const authenticatedFetch = async (input: Request): Promise<Response> => {
-    const token = await getToken();
+  return {
+    async onRequest({ request }) {
+      const token = await getToken();
 
-    if (token === undefined) {
-      return globalThis.fetch(input);
-    }
+      if (token === undefined) {
+        return undefined;
+      }
 
-    // Clone the request with the Authorization header injected
-    const authenticatedRequest = new Request(input, {
-      headers: new Headers(input.headers),
-    });
-    authenticatedRequest.headers.set('Authorization', `Bearer ${token}`);
-
-    return globalThis.fetch(authenticatedRequest);
+      request.headers.set('Authorization', `Bearer ${token}`);
+      return request;
+    },
   };
+}
 
-  return createClient<paths>({ baseUrl, fetch: authenticatedFetch });
+function createApiClient(baseUrl: string, auth?: TokenRefreshDeps): ApiClient {
+  const client = createClient<paths>({ baseUrl });
+
+  if (auth !== undefined) {
+    client.use(createAuthMiddleware(auth));
+  }
+
+  return client;
 }
 
 export { createApiClient };
