@@ -458,6 +458,7 @@ static uint8_t partialRefreshCount = 0;
 // or terminal state), it redraws the complete timer layout using these
 // cached values so session number, phase label, and goal are preserved.
 static uint32_t cachedSessionNumber = 0;
+static TimerPhase cachedPhase = TimerPhase::idle;
 static char cachedGoalBuf[GOAL_MAX_CHARS + 1] = {};
 static int16_t cachedGoalX = 0;
 static bool cachedHasGoal = false;
@@ -556,10 +557,13 @@ void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
 
     // Cache context for updateTimerPartial full-refresh redraws.
     cachedSessionNumber = sessionNumber;
+    cachedPhase = phase;
     cachedHasGoal = hasGoal;
     if (hasGoal) {
         memcpy(cachedGoalBuf, goalBuf, sizeof(cachedGoalBuf));
         cachedGoalX = goalX;
+    } else {
+        cachedGoalBuf[0] = '\0';
     }
 
     // Render using paged drawing (low RAM usage, same pattern as showTestPattern).
@@ -572,6 +576,7 @@ void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
                           sessionNumber, goalBuf, goalX, hasGoal);
     } while (display.nextPage());
 
+    partialRefreshCount = 0;
     Serial.println("Timer screen displayed");
 }
 
@@ -581,10 +586,18 @@ void updateTimerPartial(uint32_t minutes, uint32_t seconds, TimerPhase phase) {
     bool isTerminal = (phase == TimerPhase::completed ||
                        phase == TimerPhase::abandoned);
 
+    // Force full refresh when phase changes (e.g. focusing → paused) so
+    // the phase label is redrawn immediately, not stale for N partials.
+    bool phaseChanged = (phase != cachedPhase);
+    if (phaseChanged) {
+        cachedPhase = phase;
+    }
+
     // Determine if this update should be a full refresh for ghosting
     // management. Every FULL_REFRESH_INTERVAL partials we do a full
-    // refresh, or when the timer reaches a terminal state.
-    bool doFullRefresh = isTerminal ||
+    // refresh, or when the timer reaches a terminal state, or when the
+    // phase changes.
+    bool doFullRefresh = isTerminal || phaseChanged ||
                          (partialRefreshCount >= FULL_REFRESH_INTERVAL - 1);
 
     // Format time string into a fixed stack buffer (NAT-F01).
