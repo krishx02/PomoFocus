@@ -22,3 +22,5 @@ export {
   shouldRetry,
   DEFAULT_RETRY_POLICY,
 } from './retry.js';
+export { getNextPending, dequeueForUpload, getQueueDepth } from './queue.js';
+export type { DequeueResult, QueueDepth } from './queue.js';
