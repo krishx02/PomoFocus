@@ -9,6 +9,8 @@ export { peakFocusWindow } from './tier2/index.js';
 export type { PeakFocusWindowResult } from './tier2/index.js';
 export { perGoalBreakdown } from './tier2/index.js';
 export type { GoalBreakdownEntry } from './tier2/index.js';
+export { tierTwoMetrics } from './tier2/index.js';
+export type { TierTwoResult } from './tier2/index.js';
 
 // ── Tier 3: Monthly trends ──
 export type { TrendResult, DistractionPattern, GoalBreakdown, MonthlyResponse } from './tier3/index.js';
