@@ -6,3 +6,5 @@ export type { TimerStore, TimerStoreInstance } from './timer/index.js';
 export { useSessions, sessionsQueryOptions, useCreateSession } from './hooks/index.js';
 export { createQueryClient } from './query-client.js';
 export { QueryProvider } from './providers.js';
+export { createAuthStore, useAuth, useUser, useIsAuthenticated, AuthProvider, AuthStoreContext } from './auth/index.js';
+export type { AuthStore, AuthStoreInstance, AuthState, AuthActions, AuthOperations, UseAuthReturn, AuthProviderProps } from './auth/index.js';
