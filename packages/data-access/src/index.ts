@@ -1,7 +1,7 @@
 // Server interaction: OpenAPI client, auth token management, sync drivers.
 // All auth imports live here. Core never imports this.
 export { createApiClient } from './client';
-export type { ApiClient } from './client';
+export type { ApiClient, ApiClientOptions } from './client';
 export { isApiError, handleApiError } from './errors';
 export type { ApiError, ErrorResponseInput } from './errors';
 export { createSession, getSessions } from './sessions';
@@ -49,3 +49,9 @@ export type {
 } from './auth/oauth';
 export { signUpWithEmail, signInWithEmail } from './auth/email';
 export type { SignUpResult, SignInResult } from './auth/email';
+export {
+  createTokenProvider,
+  isTokenExpiringSoon,
+  REFRESH_BUFFER_SECONDS,
+} from './auth/token-refresh';
+export type { TokenRefreshDeps } from './auth/token-refresh';
