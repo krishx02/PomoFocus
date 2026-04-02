@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import type { AppEnv } from '../types.js';
 
 /**
  * Zod schema for the health check response.
@@ -30,7 +31,7 @@ export const healthRoute = createRoute({
 /**
  * Registers the health route on the given OpenAPIHono app.
  */
-export function registerHealthRoute(app: OpenAPIHono): void {
+export function registerHealthRoute(app: OpenAPIHono<AppEnv>): void {
   app.openapi(healthRoute, (c) => {
     return c.json(
       {

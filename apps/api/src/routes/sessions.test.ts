@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { authMiddleware } from '../middleware/auth.js';
+import type { AuthVariables } from '../middleware/auth.js';
+import type { SupabaseEnv } from '../lib/supabase.js';
 import { registerSessionsRoute, CreateSessionBodySchema, ListSessionsQuerySchema } from './sessions.js';
 
 /**
@@ -17,26 +20,34 @@ const mockRange = vi.fn();
 const mockOrder = vi.fn(() => ({ range: mockRange }));
 const mockQuerySelect = vi.fn(() => ({ order: mockOrder }));
 
-vi.mock('../lib/supabase.js', () => ({
-  createSupabaseClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      insert: mockInsert,
-      select: mockQuerySelect,
-    })),
-  })),
+const mockGetUser = vi.fn();
+
+const { mockCreateUserClient } = vi.hoisted(() => ({
+  mockCreateUserClient: vi.fn(),
 }));
 
-/**
- * Fake Supabase env bindings for test requests.
- * These are never sent to a real Supabase instance — the module is mocked.
- */
-const FAKE_ENV = {
+vi.mock('../lib/supabase.js', () => ({
+  createUserClient: mockCreateUserClient,
+}));
+
+const FAKE_ENV: SupabaseEnv = {
   SUPABASE_URL: 'https://fake.supabase.co',
+  SUPABASE_ANON_KEY: 'fake-anon-key',
   SUPABASE_SERVICE_ROLE_KEY: 'fake-service-role-key',
 };
 
-function createTestApp(): OpenAPIHono {
-  const app = new OpenAPIHono({
+const FAKE_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyJ9.fake';
+
+const FAKE_USER_ID = 'aaaa1111-0000-0000-0000-000000000001';
+
+const FAKE_USER = {
+  id: FAKE_USER_ID,
+  email: 'alice@example.com',
+  created_at: '2026-03-01T00:00:00.000Z',
+};
+
+function createTestApp(): OpenAPIHono<{ Bindings: SupabaseEnv; Variables: AuthVariables }> {
+  const app = new OpenAPIHono<{ Bindings: SupabaseEnv; Variables: AuthVariables }>({
     defaultHook: (result, c) => {
       if (!result.success) {
         return c.json(
@@ -46,6 +57,7 @@ function createTestApp(): OpenAPIHono {
       }
     },
   });
+  app.use('/v1/*', authMiddleware);
   registerSessionsRoute(app);
   return app;
 }
@@ -59,7 +71,7 @@ function validSessionBody(): Record<string, unknown> {
 
 const FAKE_SESSION_ROW = {
   id: '11111111-1111-1111-1111-111111111111',
-  user_id: '00000000-0000-0000-0000-000000000000',
+  user_id: FAKE_USER_ID,
   process_goal_id: '00000000-0000-0000-0000-000000000000',
   intention_text: null,
   started_at: '2026-03-17T10:00:00.000Z',
@@ -72,13 +84,45 @@ const FAKE_SESSION_ROW = {
   created_at: '2026-03-17T10:25:01.000Z',
 };
 
+function authHeaders(): Record<string, string> {
+  return { Authorization: `Bearer ${FAKE_JWT}` };
+}
+
 describe('POST /v1/sessions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    mockGetUser.mockResolvedValue({
+      data: { user: FAKE_USER },
+      error: null,
+    });
+
+    mockCreateUserClient.mockReturnValue({
+      from: vi.fn(() => ({
+        insert: mockInsert,
+        select: mockQuerySelect,
+      })),
+      auth: { getUser: mockGetUser },
+    });
   });
 
-  it('returns 201 with created session for valid body', async () => {
+  it('returns 401 without authorization header', async () => {
+    const app = createTestApp();
+    const res = await app.request(
+      '/v1/sessions',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validSessionBody()),
+      },
+      FAKE_ENV,
+    );
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 201 with created session for valid body and auth', async () => {
     mockSingle.mockResolvedValueOnce({ data: FAKE_SESSION_ROW, error: null });
 
     const app = createTestApp();
@@ -86,7 +130,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(validSessionBody()),
       },
       FAKE_ENV,
@@ -115,7 +159,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           ...validSessionBody(),
           focus_quality: 'locked_in',
@@ -139,7 +183,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(bodyWithoutStartedAt),
       },
       FAKE_ENV,
@@ -158,7 +202,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(bodyWithoutEndedAt),
       },
       FAKE_ENV,
@@ -176,7 +220,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           ...validSessionBody(),
           focus_quality: 'invalid_value',
@@ -198,7 +242,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           ...validSessionBody(),
           distraction_type: 'invalid_value',
@@ -219,7 +263,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           ...validSessionBody(),
           started_at: 'not-a-date',
@@ -233,7 +277,7 @@ describe('POST /v1/sessions', () => {
     expect(body.error).toBe('Validation failed');
   });
 
-  it('passes correct data to Supabase insert', async () => {
+  it('passes authenticated user_id to Supabase insert', async () => {
     mockSingle.mockResolvedValueOnce({ data: FAKE_SESSION_ROW, error: null });
 
     const app = createTestApp();
@@ -241,7 +285,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           ...validSessionBody(),
           focus_quality: 'decent',
@@ -252,7 +296,7 @@ describe('POST /v1/sessions', () => {
     );
 
     expect(mockInsert).toHaveBeenCalledWith({
-      user_id: 'aaaa1111-0000-0000-0000-000000000001',
+      user_id: FAKE_USER_ID,
       process_goal_id: 'eeee0001-0000-0000-0000-000000000001',
       started_at: '2026-03-17T10:00:00.000Z',
       ended_at: '2026-03-17T10:25:00.000Z',
@@ -280,7 +324,7 @@ describe('POST /v1/sessions', () => {
       '/v1/sessions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(validSessionBody()),
       },
       FAKE_ENV,
@@ -316,6 +360,19 @@ describe('GET /v1/sessions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    mockGetUser.mockResolvedValue({
+      data: { user: FAKE_USER },
+      error: null,
+    });
+
+    mockCreateUserClient.mockReturnValue({
+      from: vi.fn(() => ({
+        insert: mockInsert,
+        select: mockQuerySelect,
+      })),
+      auth: { getUser: mockGetUser },
+    });
   });
 
   const FAKE_SESSIONS_LIST = [
@@ -327,6 +384,13 @@ describe('GET /v1/sessions', () => {
     FAKE_SESSION_ROW,
   ];
 
+  it('returns 401 without authorization header', async () => {
+    const app = createTestApp();
+    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+
+    expect(res.status).toBe(401);
+  });
+
   it('returns 200 with default pagination (limit=20, offset=0)', async () => {
     mockRange.mockResolvedValueOnce({
       data: FAKE_SESSIONS_LIST,
@@ -335,7 +399,11 @@ describe('GET /v1/sessions', () => {
     });
 
     const app = createTestApp();
-    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+    const res = await app.request(
+      '/v1/sessions',
+      { method: 'GET', headers: authHeaders() },
+      FAKE_ENV,
+    );
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -358,7 +426,7 @@ describe('GET /v1/sessions', () => {
     const app = createTestApp();
     const res = await app.request(
       '/v1/sessions?limit=5&offset=10',
-      { method: 'GET' },
+      { method: 'GET', headers: authHeaders() },
       FAKE_ENV,
     );
 
@@ -400,7 +468,11 @@ describe('GET /v1/sessions', () => {
     });
 
     const app = createTestApp();
-    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+    const res = await app.request(
+      '/v1/sessions',
+      { method: 'GET', headers: authHeaders() },
+      FAKE_ENV,
+    );
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -423,7 +495,11 @@ describe('GET /v1/sessions', () => {
       );
     });
 
-    const res = await app.request('/v1/sessions', { method: 'GET' }, FAKE_ENV);
+    const res = await app.request(
+      '/v1/sessions',
+      { method: 'GET', headers: authHeaders() },
+      FAKE_ENV,
+    );
 
     expect(res.status).toBe(500);
   });

@@ -1,4 +1,6 @@
 import type { Env } from 'hono';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@pomofocus/types';
 
 /**
  * Authenticated user object extracted from a verified Supabase JWT.
@@ -11,10 +13,11 @@ export type AuthUser = {
 
 /**
  * Hono context variables set by middleware.
- * Route handlers access these via `c.get('user')`.
+ * Route handlers access these via `c.get('user')` or `c.get('supabase')`.
  */
 export type AppVariables = {
   readonly user: AuthUser;
+  readonly supabase: SupabaseClient<Database>;
 };
 
 /**
@@ -23,6 +26,7 @@ export type AppVariables = {
  */
 export type AppBindings = {
   readonly SUPABASE_URL: string;
+  readonly SUPABASE_ANON_KEY: string;
   readonly SUPABASE_SERVICE_ROLE_KEY: string;
   readonly ALLOWED_ORIGINS?: string;
 };
