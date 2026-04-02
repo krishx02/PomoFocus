@@ -18,3 +18,9 @@ export type {
   AuthStateChangeCallback,
   Unsubscribe,
 } from './types';
+export {
+  createTokenProvider,
+  isTokenExpiringSoon,
+  REFRESH_BUFFER_SECONDS,
+} from './token-refresh';
+export type { TokenRefreshDeps } from './token-refresh';
