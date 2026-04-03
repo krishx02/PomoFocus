@@ -9,56 +9,13 @@
 #ifndef POMOFOCUS_BLE_SERVICES_H
 #define POMOFOCUS_BLE_SERVICES_H
 
+#include "ble_uuids.h"
+
 #include <cstdint>
 
 // Forward declaration — avoids pulling timer.h into the header.
 struct TimerState;
 enum class TimerEvent : uint8_t;
-
-// ── Timer Service Characteristic UUIDs (ADR-013 UUID scheme) ──
-// Timer State: 504D4643-0101-CAFE-FACE-DEAD00000000
-// Timer Command: 504D4643-0102-CAFE-FACE-DEAD00000000
-// Byte arrays in little-endian order for Bluefruit API.
-
-constexpr uint8_t TIMER_STATE_CHR_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x01, 0x01, 0x43, 0x46, 0x4D, 0x50
-};
-
-constexpr uint8_t TIMER_COMMAND_CHR_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x02, 0x01, 0x43, 0x46, 0x4D, 0x50
-};
-
-// ── Session Sync Service UUIDs ──
-// Service UUID: 504D4643-0003-CAFE-FACE-DEAD00000000
-// Byte arrays in little-endian order for Bluefruit API.
-
-constexpr uint8_t SESSION_SYNC_SERVICE_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x03, 0x00, 0x43, 0x46, 0x4D, 0x50
-};
-
-// Sync Status characteristic (0301): Read + Notify
-// Returns SyncStatus Protobuf (pending_sessions, total_stored, last_synced_id, state).
-constexpr uint8_t SYNC_STATUS_CHAR_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x01, 0x03, 0x43, 0x46, 0x4D, 0x50
-};
-
-// Session Data characteristic (0302): Notify
-// Device-to-phone bulk session transfer. Chunked protocol in 7A.7.
-constexpr uint8_t SESSION_DATA_CHAR_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x02, 0x03, 0x43, 0x46, 0x4D, 0x50
-};
-
-// Sync Control characteristic (0303): Write
-// Accepts SyncControl Protobuf from phone (START, ACK, NACK, ABORT, CURSOR_UPDATE).
-constexpr uint8_t SYNC_CONTROL_CHAR_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x03, 0x03, 0x43, 0x46, 0x4D, 0x50
-};
 
 // ── Callback type ──
 // Called when a valid Timer Command is received over BLE.

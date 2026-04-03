@@ -40,15 +40,15 @@ static uint8_t s_syncStatusBuf[pomofocus_ble_SyncStatus_size];
 
 // ── BLE objects — Timer Service ──
 // Static instances — Bluefruit requires persistent objects.
-static BLEService s_timerService(TIMER_SERVICE_UUID);
-static BLECharacteristic s_timerStateChr(TIMER_STATE_CHR_UUID);
-static BLECharacteristic s_timerCommandChr(TIMER_COMMAND_CHR_UUID);
+static BLEService s_timerService(UUID_TIMER_SERVICE);
+static BLECharacteristic s_timerStateChr(UUID_TIMER_STATE_CHAR);
+static BLECharacteristic s_timerCommandChr(UUID_TIMER_COMMAND_CHAR);
 
 // ── BLE objects — Session Sync Service ──
-static BLEService       s_syncService(SESSION_SYNC_SERVICE_UUID);
-static BLECharacteristic s_syncStatusChar(SYNC_STATUS_CHAR_UUID);
-static BLECharacteristic s_sessionDataChar(SESSION_DATA_CHAR_UUID);
-static BLECharacteristic s_syncControlChar(SYNC_CONTROL_CHAR_UUID);
+static BLEService       s_syncService(UUID_SESSION_SYNC_SERVICE);
+static BLECharacteristic s_syncStatusChar(UUID_SYNC_STATUS_CHAR);
+static BLECharacteristic s_sessionDataChar(UUID_SESSION_DATA_CHAR);
+static BLECharacteristic s_syncControlChar(UUID_SYNC_CONTROL_CHAR);
 
 // ── Standard service instances ──
 // Static module-level objects — zero dynamic allocation (NAT-F01).

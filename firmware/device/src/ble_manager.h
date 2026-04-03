@@ -1,28 +1,19 @@
 // PomoFocus Device Firmware — BLE SoftDevice Manager
 // Initializes nRF52840 BLE SoftDevice (S140) via Adafruit Bluefruit,
 // configures advertising with device name and Timer Service UUID,
-// and sets up LE Secure Connections (LESC) with Passkey Entry pairing.
+// registers custom GATT services, and sets up LE Secure Connections
+// (LESC) with Passkey Entry pairing.
 // See ADR-010 (hardware), ADR-012 (security), and ADR-013 (GATT protocol).
 
 #ifndef POMOFOCUS_BLE_MANAGER_H
 #define POMOFOCUS_BLE_MANAGER_H
 
-#include <cstdint>
+#include "ble_uuids.h"
 
 // ── Device identity ──
 
 // BLE advertised device name. Matches ADR-013 advertising spec.
 constexpr const char* BLE_DEVICE_NAME = "PomoFocus";
-
-// ── Timer Service UUID ──
-// Primary service UUID included in advertising packets for discovery.
-// Full 128-bit UUID: 504D4643-0001-CAFE-FACE-DEAD00000000
-// See ADR-013 UUID scheme: PMFC{XXXX}-CAFE-FACE-DEAD-P0M0F0CUS00
-// Byte array in little-endian order for Bluefruit API.
-constexpr uint8_t TIMER_SERVICE_UUID[16] = {
-    0x00, 0x00, 0x00, 0x00, 0xAD, 0xDE, 0xCE, 0xFA,
-    0xFE, 0xCA, 0x01, 0x00, 0x43, 0x46, 0x4D, 0x50
-};
 
 // ── Advertising parameters ──
 
