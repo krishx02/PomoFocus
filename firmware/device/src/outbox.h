@@ -116,6 +116,48 @@ uint32_t getCapacityRemaining();
 // Return a copy of the current queue metadata (for BLE sync status).
 QueueMeta getQueueMeta();
 
+// ── Chunked transfer protocol (ADR-013) ──
+// Bulk transfer of pending sessions to phone via BLE notifications.
+// Phone controls the flow: START initiates, ACK confirms receipt,
+// NACK requests retransmission, ABORT cancels, CURSOR_UPDATE marks synced.
+// Each chunk has a 4-byte header: SeqNum(1) Total(1) Flags(1) Reserved(1).
+
+// Chunk header flag bits.
+constexpr uint8_t CHUNK_FLAG_FIRST = 0x01; // Bit 0: first chunk of session
+constexpr uint8_t CHUNK_FLAG_LAST  = 0x02; // Bit 1: last chunk of session
+constexpr uint8_t CHUNK_FLAG_FINAL = 0x04; // Bit 2: last session in batch
+
+// Begin bulk transfer of all pending sessions.
+// chunkPayloadSize: max Protobuf payload per chunk (effective_mtu - 3 - 4).
+// Returns the number of sessions to transfer, or 0 if none pending.
+uint32_t transferStart(uint16_t chunkPayloadSize);
+
+// Prepare the next chunk for BLE transmission.
+// Writes 4-byte chunk header + payload into buf.
+// bufSize: available bytes in buf (must be >= 4 + chunkPayloadSize).
+// Returns total bytes written (header + payload), or 0 if transfer done.
+uint16_t transferNextChunk(uint8_t* buf, uint16_t bufSize);
+
+// Phone acknowledged receipt of ackCount sessions.
+// Does not modify flash — sessions remain pending until CURSOR_UPDATE.
+void transferAck(uint32_t ackCount);
+
+// Phone requests retransmission starting from session index position.
+void transferNack(uint32_t position);
+
+// Cancel the current transfer. Resets to idle.
+void transferAbort();
+
+// Permanently mark count sessions as synced in flash.
+// Called when the phone has uploaded sessions to the cloud.
+void transferCursorUpdate(uint32_t count);
+
+// Returns true if a bulk transfer is in progress (sending or awaiting ACK).
+bool transferIsActive();
+
+// Returns true if all chunks have been sent and device awaits phone ACK.
+bool transferIsAwaitingAck();
+
 } // namespace Outbox
 
 #endif // POMOFOCUS_OUTBOX_H

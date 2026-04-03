@@ -88,4 +88,9 @@ void goal_service_set_selected(uint8_t index);
 // when in GOAL_SELECT mode without the BLE callback controlling the display.
 bool goal_service_goals_dirty();
 
+// Poll the chunked transfer state machine. If a transfer is active,
+// prepares and sends the next chunk via Session Data (0302) notification.
+// Call once per loop() iteration. Safe to call when no transfer is active.
+void ble_services_poll_transfer();
+
 #endif // POMOFOCUS_BLE_SERVICES_H
