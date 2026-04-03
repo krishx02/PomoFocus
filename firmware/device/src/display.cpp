@@ -246,6 +246,42 @@ static void drawCenteredText(const char* text, uint8_t textSize, int16_t y) {
     display.print(text);
 }
 
+void showPasskeyScreen(const uint8_t passkey[6]) {
+    // Layout (centered on 800x480):
+    //   "BLE Pairing" at size 3        — heading
+    //   "Enter this code:" at size 2   — instruction
+    //   "NNNNNN" at size 10            — large passkey digits
+    //   "on your phone" at size 2      — footer instruction
+
+    constexpr int16_t Y_HEADING     = 80;
+    constexpr int16_t Y_INSTRUCTION = 160;
+    constexpr int16_t Y_PASSKEY     = 220;
+    constexpr int16_t Y_FOOTER      = 360;
+
+    // Copy 6 passkey bytes into a null-terminated buffer (NAT-F01).
+    char passKeyBuf[7];
+    memcpy(passKeyBuf, passkey, 6);
+    passKeyBuf[6] = '\0';
+
+    display.setTextColor(GxEPD_BLACK);
+    display.setFont(nullptr);  // default Adafruit GFX 5x7 font
+    display.setFullWindow();
+    display.firstPage();
+    do {
+        display.fillScreen(GxEPD_WHITE);
+
+        drawCenteredText("BLE Pairing", 3, Y_HEADING);
+        drawCenteredText("Enter this code:", 2, Y_INSTRUCTION);
+
+        // Large passkey: size 10 → 60x70 per char, 6 chars = 360px
+        drawCenteredText(passKeyBuf, 10, Y_PASSKEY);
+
+        drawCenteredText("on your phone", 2, Y_FOOTER);
+    } while (display.nextPage());
+
+    Serial.println("[display] passkey screen displayed");
+}
+
 void showIdleScreen(uint8_t sessionsToday, const char* currentGoalTitle) {
     // Layout (centered vertically on 480px):
     //   "PomoFocus" at size 3            — branding

@@ -1,7 +1,8 @@
 // PomoFocus Device Firmware — BLE SoftDevice Manager
 // Initializes nRF52840 BLE SoftDevice (S140) via Adafruit Bluefruit,
-// configures advertising with device name and Timer Service UUID.
-// See ADR-010 (hardware) and ADR-013 (GATT protocol) for design decisions.
+// configures advertising with device name and Timer Service UUID,
+// and sets up LE Secure Connections (LESC) with Passkey Entry pairing.
+// See ADR-010 (hardware), ADR-012 (security), and ADR-013 (GATT protocol).
 
 #ifndef POMOFOCUS_BLE_MANAGER_H
 #define POMOFOCUS_BLE_MANAGER_H
