@@ -13,6 +13,11 @@
 // Key (LTK) is persisted after the first pairing — subsequent connections
 // skip the passkey step.
 //
+// This file initializes BLE, registers custom GATT services with their
+// characteristics, and starts advertising. Timer and Session Sync services
+// have full Protobuf handlers in ble_services.cpp. Goal Service is
+// registered here as a placeholder — handlers are a separate issue.
+//
 // NOTE: This file is named ble_manager.cpp (not ble.cpp) because the Nordic
 // SoftDevice SDK ships its own ble.h. If our header were named ble.h, the
 // Bluefruit library's #include "ble.h" would resolve to ours instead of the
@@ -24,9 +29,20 @@
 
 #include <bluefruit.h>
 
-// Timer Service UUID object for advertising.
-// Constructed from the 128-bit UUID byte array defined in ble_manager.h.
-static BLEUuid s_timerServiceUuid(TIMER_SERVICE_UUID);
+// ── Timer Service UUID for advertising ──
+// Constructed from the 128-bit UUID byte array defined in ble_uuids.h.
+// The Timer Service BLEService object lives in ble_services.cpp.
+static BLEUuid s_timerServiceUuid(UUID_TIMER_SERVICE);
+
+// ── GATT Service and Characteristic objects ──
+// Static instances — zero dynamic allocation (NAT-F01).
+// Goal Service is registered in setupServices() as a placeholder.
+// Timer and Session Sync services are handled by ble_services.cpp.
+
+// Goal Service (0002) — phone pushes goals, device reports selection.
+static BLEService        s_goalService(UUID_GOAL_SERVICE);
+static BLECharacteristic s_goalListChar(UUID_GOAL_LIST_CHAR);
+static BLECharacteristic s_goalSelectedChar(UUID_GOAL_SELECTED_CHAR);
 
 // ── Connection state ──
 
@@ -135,6 +151,36 @@ static void onDisconnect(uint16_t connHandle, uint8_t reason) {
     Bluefruit.Advertising.start(ADV_TIMEOUT_SEC);
 }
 
+// ── GATT service registration (Goal Service) ──
+// Timer and Session Sync services are registered by ble_services_init()
+// in ble_services.cpp. This function registers the Goal Service as a
+// placeholder. Protobuf handlers for Goal Service are a separate issue.
+
+// Maximum Protobuf payload sizes from ADR-013 design doc.
+// Used to set characteristic fixed_len so the SoftDevice allocates
+// the right ATT attribute buffer. Sizes are generous upper bounds.
+constexpr uint16_t GOAL_LIST_MAX_LEN    = 512;  // GoalList chunked, max per write
+constexpr uint16_t GOAL_SELECTED_MAX_LEN = 20;  // SelectedGoal ~16 bytes + overhead
+
+static void setupServices() {
+    // ── Goal Service ──
+    s_goalService.begin();
+
+    // Goal List: Write (phone → device).
+    s_goalListChar.setProperties(CHR_PROPS_WRITE);
+    s_goalListChar.setPermission(SECMODE_NO_ACCESS, SECMODE_ENC_NO_MITM);
+    s_goalListChar.setMaxLen(GOAL_LIST_MAX_LEN);
+    s_goalListChar.begin();
+
+    // Selected Goal: Read + Notify (device → phone).
+    s_goalSelectedChar.setProperties(CHR_PROPS_READ | CHR_PROPS_NOTIFY);
+    s_goalSelectedChar.setPermission(SECMODE_ENC_NO_MITM, SECMODE_NO_ACCESS);
+    s_goalSelectedChar.setMaxLen(GOAL_SELECTED_MAX_LEN);
+    s_goalSelectedChar.begin();
+
+    Serial.println("[ble] Goal Service registered");
+}
+
 // ── Advertising configuration ──
 
 static void startAdvertising() {
@@ -148,8 +194,7 @@ static void startAdvertising() {
     Bluefruit.Advertising.addTxPower();
 
     // Include the Timer Service UUID so scanners (nRF Connect) can filter by it.
-    // Uses addUuid() to advertise the UUID without registering a full GATT service
-    // (GATT services are separate issues — out of scope here).
+    // Uses addUuid() because the BLEService object lives in ble_services.cpp.
     Bluefruit.Advertising.addUuid(s_timerServiceUuid);
 
     // Include the device name in the scan response packet.
@@ -227,6 +272,10 @@ void ble_init() {
     // Initialize all GATT services before advertising starts.
     // Services must be registered before Bluefruit.Advertising.start().
     ble_services_init();
+
+    // Register Goal Service (placeholder registration).
+    // Protobuf handlers for Goal Service are a separate issue.
+    setupServices();
 
     // Configure and start advertising.
     startAdvertising();
