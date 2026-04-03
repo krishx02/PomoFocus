@@ -3,6 +3,7 @@
 // Input-to-timer event mapping wired in loop() (issue #221).
 
 #include <Arduino.h>
+#include "ble_manager.h"
 #include "display.h"
 #include "input.h"
 #include "timer.h"
@@ -204,6 +205,9 @@ void setup() {
   digitalWrite(LED_BUILTIN, LOW);
   delay(LED_BLINK_MS);
   digitalWrite(LED_BUILTIN, HIGH);
+
+  // Initialize BLE SoftDevice and start advertising.
+  ble_init();
 
   // Initialize e-ink display and show idle screen.
   Display::init();
