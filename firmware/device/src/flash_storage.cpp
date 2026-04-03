@@ -79,26 +79,33 @@ bool isByteErased(uint32_t absoluteAddr) {
 
 void init() {
     // Scan the storage region to find the write offset.
-    // Walk forward from REGION_START, looking for the first 4-byte-aligned
-    // position where the record header reads as erased (0xFFFFFFFF).
+    // Walk forward from REGION_START, looking for committed records
+    // (RECORD_MAGIC present). Stop at erased space, incomplete writes,
+    // or corrupt data.
     g_writeOffset = 0;
 
     while (g_writeOffset + RECORD_HEADER_SIZE <= REGION_SIZE) {
         uint32_t addr = REGION_START + g_writeOffset;
-        uint32_t headerVal = *reinterpret_cast<const volatile uint32_t*>(addr);
+        uint32_t magic = *reinterpret_cast<const volatile uint32_t*>(addr);
 
-        if (headerVal == 0xFFFFFFFF) {
+        if (magic == 0xFFFFFFFF) {
             // Found erased space — this is the next write position.
             break;
         }
 
-        // Valid record header: skip past header + payload.
-        // Round up to 4-byte alignment for the next record.
-        uint32_t payloadLen = headerVal;
+        if (magic != RECORD_MAGIC) {
+            // Not a committed record — incomplete write or corruption.
+            // Stop scanning; outbox init will handle cleanup.
+            break;
+        }
+
+        // Valid magic — read payload length.
+        uint32_t payloadLen =
+            *reinterpret_cast<const volatile uint32_t*>(addr + 4);
 
         // Sanity check: if payloadLen is unreasonably large, the region
         // is corrupt. Stop scanning here.
-        if (payloadLen > REGION_SIZE) {
+        if (payloadLen == 0xFFFFFFFF || payloadLen > REGION_SIZE) {
             break;
         }
 
@@ -139,10 +146,14 @@ FlashResult writeRecord(uint32_t offset, const uint8_t* data, uint32_t len) {
         }
     }
 
-    // Write the header (4-byte length prefix)
-    writeWord(absAddr, len);
+    // Write order: length → payload → magic LAST (commit marker).
+    // If power is lost before the magic word is written, the record
+    // will be detected as incomplete on the next boot.
 
-    // Write the payload in 4-byte words.
+    // 1. Write the length at offset+4
+    writeWord(absAddr + 4, len);
+
+    // 2. Write the payload in 4-byte words at offset+8.
     // If len is not a multiple of 4, the last word is padded with 0xFF
     // (erased bits stay high, so writing 0xFF to already-erased bits is safe).
     uint32_t wordCount = (len + 3) / 4;
@@ -154,9 +165,13 @@ FlashResult writeRecord(uint32_t offset, const uint8_t* data, uint32_t len) {
         writeWord(absAddr + RECORD_HEADER_SIZE + (i * 4), word);
     }
 
-    // Verify the write by reading back
-    uint32_t readHeader = *reinterpret_cast<const volatile uint32_t*>(absAddr);
-    if (readHeader != len) {
+    // 3. Write the magic word at offset+0 — this commits the record.
+    writeWord(absAddr, RECORD_MAGIC);
+
+    // Verify the write by reading back magic and length
+    uint32_t readMagic = *reinterpret_cast<const volatile uint32_t*>(absAddr);
+    uint32_t readLen = *reinterpret_cast<const volatile uint32_t*>(absAddr + 4);
+    if (readMagic != RECORD_MAGIC || readLen != len) {
         return FlashResult::ERR_WRITE_FAILED;
     }
 
@@ -177,18 +192,26 @@ FlashResult readRecord(uint32_t offset, uint8_t* buf, uint32_t bufSize,
 
     uint32_t absAddr = REGION_START + offset;
 
-    // Read the header
-    uint32_t headerVal = *reinterpret_cast<const volatile uint32_t*>(absAddr);
+    // Read the magic word (first 4 bytes of header)
+    uint32_t magic = *reinterpret_cast<const volatile uint32_t*>(absAddr);
 
-    // Check if this location is erased (no record)
-    if (headerVal == 0xFFFFFFFF) {
+    // Check if this location is erased (no record) or incomplete
+    if (magic == 0xFFFFFFFF) {
         return FlashResult::ERR_INVALID_RECORD;
     }
 
-    uint32_t payloadLen = headerVal;
+    // Validate magic — reject incomplete or corrupt records
+    if (magic != RECORD_MAGIC) {
+        return FlashResult::ERR_INVALID_RECORD;
+    }
+
+    // Read payload length (second 4 bytes of header)
+    uint32_t payloadLen =
+        *reinterpret_cast<const volatile uint32_t*>(absAddr + 4);
 
     // Sanity check payload length
-    if (offset + RECORD_HEADER_SIZE + payloadLen > REGION_SIZE) {
+    if (payloadLen == 0xFFFFFFFF ||
+        offset + RECORD_HEADER_SIZE + payloadLen > REGION_SIZE) {
         return FlashResult::ERR_INVALID_RECORD;
     }
 
@@ -236,6 +259,41 @@ uint32_t getWriteOffset() {
 
 uint32_t getUsedBytes() {
     return g_writeOffset;
+}
+
+bool isValidRecord(uint32_t offset) {
+    if (offset + RECORD_HEADER_SIZE > REGION_SIZE) {
+        return false;
+    }
+
+    uint32_t absAddr = REGION_START + offset;
+    uint32_t magic = *reinterpret_cast<const volatile uint32_t*>(absAddr);
+
+    if (magic != RECORD_MAGIC) {
+        return false;
+    }
+
+    uint32_t payloadLen =
+        *reinterpret_cast<const volatile uint32_t*>(absAddr + 4);
+
+    if (payloadLen == 0xFFFFFFFF || payloadLen > REGION_SIZE) {
+        return false;
+    }
+
+    if (offset + RECORD_HEADER_SIZE + payloadLen > REGION_SIZE) {
+        return false;
+    }
+
+    return true;
+}
+
+uint32_t getRecordPayloadLength(uint32_t offset) {
+    if (!isValidRecord(offset)) {
+        return 0;
+    }
+
+    uint32_t absAddr = REGION_START + offset;
+    return *reinterpret_cast<const volatile uint32_t*>(absAddr + 4);
 }
 
 } // namespace FlashStorage

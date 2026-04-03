@@ -28,11 +28,14 @@ constexpr uint32_t REGION_END      = REGION_START + REGION_SIZE;
 constexpr uint32_t PAGE_COUNT      = REGION_SIZE / PAGE_SIZE; // 64 pages
 
 // ── Record header ──
-// Each record written to flash is prefixed with a 4-byte header containing
-// the payload length. This enables readRecord to know how many bytes to
-// return without the caller tracking sizes externally.
+// Each record written to flash has an 8-byte header:
+//   [magic: 4 bytes][length: 4 bytes]
+// The magic word (RECORD_MAGIC) is written LAST during writeRecord,
+// acting as an atomic commit marker. If power is lost before the magic
+// is written, the record is detected as incomplete on the next boot.
 
-constexpr uint32_t RECORD_HEADER_SIZE = 4; // uint32_t length prefix
+constexpr uint32_t RECORD_MAGIC       = 0x504D4652; // "PMFR" in ASCII
+constexpr uint32_t RECORD_HEADER_SIZE = 8;           // magic (4) + length (4)
 
 // Erased flash reads as 0xFF on nRF52840.
 constexpr uint8_t ERASED_BYTE = 0xFF;
@@ -58,7 +61,8 @@ enum class FlashResult : uint8_t {
 void init();
 
 // Write a record at the given byte offset within the storage region.
-// The record is stored as: [4-byte length][payload bytes].
+// The record is stored as: [4-byte magic][4-byte length][payload bytes].
+// The magic word is written LAST as an atomic commit marker.
 // offset is relative to REGION_START (0 = start of storage region).
 //
 // Returns OK on success, or an error if:
@@ -100,6 +104,15 @@ uint32_t getUsedBytes();
 
 // Return true if the byte at the given absolute flash address is erased (0xFF).
 bool isByteErased(uint32_t absoluteAddr);
+
+// Check if a valid, committed record exists at the given byte offset
+// within the storage region. Returns true only if the magic word and
+// length are both valid (record was fully written before power loss).
+bool isValidRecord(uint32_t offset);
+
+// Read the payload length from a committed record at the given offset.
+// Returns 0 if the record is invalid, incomplete, or erased.
+uint32_t getRecordPayloadLength(uint32_t offset);
 
 } // namespace FlashStorage
 
