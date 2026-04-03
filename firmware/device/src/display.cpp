@@ -60,32 +60,6 @@ constexpr uint16_t PAGE_HEIGHT = 20;
 static GxEPD2_BW<GxEPD2_426_GDEQ0426T82, PAGE_HEIGHT> display(
     GxEPD2_426_GDEQ0426T82(EPD_CS_PIN, EPD_DC_PIN, /*rst=*/-1, EPD_BUSY_PIN));
 
-// Tracks whether the display controller is in deep sleep mode.
-// Set true by hibernate(), cleared by wake().
-static bool displayHibernating = false;
-
-// SSD1677 deep sleep command (0x10) with mode byte 0x01.
-// GxEPD2's hibernate() skips this when rst < 0, but we manage RST
-// manually via the nRF GPIO HAL, so we send the command directly.
-// Protocol: DC low = command byte, DC high = data byte.
-static void sendDeepSleepCommand() {
-    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
-
-    // Send command byte 0x10 (Deep Sleep Mode)
-    digitalWrite(EPD_DC_PIN, LOW);
-    digitalWrite(EPD_CS_PIN, LOW);
-    SPI.transfer(0x10);
-    digitalWrite(EPD_CS_PIN, HIGH);
-    digitalWrite(EPD_DC_PIN, HIGH);
-
-    // Send data byte 0x01 (enter deep sleep)
-    digitalWrite(EPD_CS_PIN, LOW);
-    SPI.transfer(0x01);
-    digitalWrite(EPD_CS_PIN, HIGH);
-
-    SPI.endTransaction();
-}
-
 // Hardware reset of the display controller via nRF GPIO HAL.
 // Pulse RST low for 10ms, then wait 10ms for controller startup.
 static void hardwareReset() {
@@ -128,44 +102,12 @@ void clear() {
 }
 
 void hibernate() {
-    // Put the SSD1677 controller into deep sleep mode. Two-step process:
-    // 1. powerOff() — turns off panel driving voltages via GxEPD2
-    // 2. sendDeepSleepCommand() — sends SSD1677 deep sleep command (0x10)
-    //
-    // GxEPD2's own hibernate() skips step 2 when rst < 0 because it
-    // assumes it cannot wake the controller. Since we manage RST via
-    // the nRF GPIO HAL, we send the command directly.
-    //
-    // After deep sleep, SSD1677 draws near-zero current. The e-ink
-    // panel retains its last image (bistable). A hardware reset is
-    // required before any further SPI commands — call wake().
+    // Put the SSD1677 controller into deep sleep. Current draw drops to
+    // near zero. Requires a hardware reset to wake — call init() again.
+    // Note: GxEPD2 hibernate() is a no-op when rst < 0, so we call
+    // powerOff() instead which turns off panel driving voltages.
     display.powerOff();
-    sendDeepSleepCommand();
-    displayHibernating = true;
-    Serial.println("Display hibernating (deep sleep)");
-}
-
-void wake() {
-    if (!displayHibernating) {
-        return;
-    }
-
-    // Hardware reset wakes the SSD1677 from deep sleep. The nRF GPIO
-    // HAL toggles RST (P1.13) since GxEPD2 cannot reach this pin.
-    hardwareReset();
-
-    // Reinitialize the GxEPD2 driver. initial=false tells the driver
-    // this is a wake-from-sleep, not a cold start — it skips the
-    // initial full-screen buffer clear, preserving the e-ink image.
-    display.init(115200, /*initial=*/false);
-    display.setRotation(0);
-
-    displayHibernating = false;
-    Serial.println("Display awake");
-}
-
-bool isHibernating() {
-    return displayHibernating;
+    Serial.println("Display powered off");
 }
 
 void showTestPattern() {
@@ -505,66 +447,6 @@ constexpr uint8_t  TIME_BUF_LEN     = 6;
 // Fixed buffer for session label "Session NN\0" (max 11 bytes).
 constexpr uint8_t  SESSION_BUF_LEN  = 12;
 
-// ---------- Partial refresh state ----------
-// Tracks the number of partial refreshes since the last full refresh.
-// When this reaches FULL_REFRESH_INTERVAL, the next update does a full
-// refresh to clear accumulated e-ink ghosting, then resets to zero.
-static uint8_t partialRefreshCount = 0;
-
-// Cached timer screen context from the last showTimerScreen call.
-// When updateTimerPartial needs to do a full refresh (ghosting clear
-// or terminal state), it redraws the complete timer layout using these
-// cached values so session number, phase label, and goal are preserved.
-static uint32_t cachedSessionNumber = 0;
-static TimerPhase cachedPhase = TimerPhase::idle;
-static char cachedGoalBuf[GOAL_MAX_CHARS + 1] = {};
-static int16_t cachedGoalX = 0;
-static bool cachedHasGoal = false;
-
-// Partial refresh window: bounding box around the MM:SS time region.
-// Includes a small vertical margin above and below for e-ink pixel
-// alignment and to prevent visual clipping at scaled text boundaries.
-constexpr int16_t  PARTIAL_Y_MARGIN = 4;
-constexpr int16_t  PARTIAL_X        = TIME_X;
-constexpr int16_t  PARTIAL_Y        = TIME_Y - PARTIAL_Y_MARGIN;
-constexpr int16_t  PARTIAL_W        = TIME_STR_W;
-constexpr int16_t  PARTIAL_H        = TIME_CHAR_H + 2 * PARTIAL_Y_MARGIN;
-
-// Helper: draw the full timer layout into the current paged-drawing
-// iteration. Factored out so both showTimerScreen and the full-refresh
-// path in updateTimerPartial can reuse the same rendering logic.
-static void renderTimerLayout(const char* timeBuf, const char* phaseLbl,
-                              int16_t phaseX, const char* sessionBuf,
-                              int16_t sessionX, uint32_t sessionNumber,
-                              const char* goalBuf, int16_t goalX,
-                              bool hasGoal) {
-    display.fillScreen(GxEPD_WHITE);
-
-    // Session number (above time)
-    if (sessionNumber > 0) {
-        display.setTextSize(SESSION_TEXT_SIZE);
-        display.setCursor(sessionX, SESSION_Y);
-        display.print(sessionBuf);
-    }
-
-    // Large MM:SS countdown (center)
-    display.setTextSize(TIME_TEXT_SIZE);
-    display.setCursor(TIME_X, TIME_Y);
-    display.print(timeBuf);
-
-    // Phase indicator (below time)
-    display.setTextSize(PHASE_TEXT_SIZE);
-    display.setCursor(phaseX, PHASE_Y);
-    display.print(phaseLbl);
-
-    // Goal name (near bottom, if set)
-    if (hasGoal) {
-        display.setTextSize(GOAL_TEXT_SIZE);
-        display.setCursor(goalX, GOAL_Y);
-        display.print(goalBuf);
-    }
-}
-
 void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
                      uint32_t sessionNumber, const char* goalName) {
     // Format time as "MM:SS" into a stack buffer (NAT-F01: no dynamic alloc).
@@ -613,108 +495,40 @@ void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
         goalX = (Display::WIDTH - goalStrW) / 2;
     }
 
-    // Cache context for updateTimerPartial full-refresh redraws.
-    cachedSessionNumber = sessionNumber;
-    cachedPhase = phase;
-    cachedHasGoal = hasGoal;
-    if (hasGoal) {
-        memcpy(cachedGoalBuf, goalBuf, sizeof(cachedGoalBuf));
-        cachedGoalX = goalX;
-    } else {
-        cachedGoalBuf[0] = '\0';
-    }
-
     // Render using paged drawing (low RAM usage, same pattern as showTestPattern).
     display.setTextColor(GxEPD_BLACK);
     display.setFont(nullptr);  // default Adafruit GFX 5x7 font
     display.setFullWindow();
     display.firstPage();
     do {
-        renderTimerLayout(timeBuf, phaseLbl, phaseX, sessionBuf, sessionX,
-                          sessionNumber, goalBuf, goalX, hasGoal);
+        display.fillScreen(GxEPD_WHITE);
+
+        // Session number (above time)
+        if (sessionNumber > 0) {
+            display.setTextSize(SESSION_TEXT_SIZE);
+            display.setCursor(sessionX, SESSION_Y);
+            display.print(sessionBuf);
+        }
+
+        // Large MM:SS countdown (center)
+        display.setTextSize(TIME_TEXT_SIZE);
+        display.setCursor(TIME_X, TIME_Y);
+        display.print(timeBuf);
+
+        // Phase indicator (below time)
+        display.setTextSize(PHASE_TEXT_SIZE);
+        display.setCursor(phaseX, PHASE_Y);
+        display.print(phaseLbl);
+
+        // Goal name (near bottom, if set)
+        if (hasGoal) {
+            display.setTextSize(GOAL_TEXT_SIZE);
+            display.setCursor(goalX, GOAL_Y);
+            display.print(goalBuf);
+        }
     } while (display.nextPage());
 
-    partialRefreshCount = 0;
     Serial.println("Timer screen displayed");
-}
-
-void updateTimerPartial(uint32_t minutes, uint32_t seconds, TimerPhase phase) {
-    // Timer completion or abandonment: force a full-screen refresh as a
-    // visual "done" signal (the black-white flash is intentional per ADR-010).
-    bool isTerminal = (phase == TimerPhase::completed ||
-                       phase == TimerPhase::abandoned);
-
-    // Force full refresh when phase changes (e.g. focusing → paused) so
-    // the phase label is redrawn immediately, not stale for N partials.
-    bool phaseChanged = (phase != cachedPhase);
-    if (phaseChanged) {
-        cachedPhase = phase;
-    }
-
-    // Determine if this update should be a full refresh for ghosting
-    // management. Every FULL_REFRESH_INTERVAL partials we do a full
-    // refresh, or when the timer reaches a terminal state, or when the
-    // phase changes.
-    bool doFullRefresh = isTerminal || phaseChanged ||
-                         (partialRefreshCount >= FULL_REFRESH_INTERVAL - 1);
-
-    // Format time string into a fixed stack buffer (NAT-F01).
-    char timeBuf[TIME_BUF_LEN];
-    snprintf(timeBuf, TIME_BUF_LEN, "%02lu:%02lu",
-             static_cast<unsigned long>(minutes),
-             static_cast<unsigned long>(seconds));
-
-    display.setTextColor(GxEPD_BLACK);
-    display.setFont(nullptr);
-
-    if (doFullRefresh) {
-        // Full refresh: redraw entire timer screen layout using cached
-        // context from the last showTimerScreen call. This preserves
-        // session number, phase label, and goal name on screen.
-        const char* phaseLbl = phaseLabel(phase);
-        uint16_t phaseLblLen = static_cast<uint16_t>(strlen(phaseLbl));
-        int16_t phaseStrW = static_cast<int16_t>(phaseLblLen) * PHASE_CHAR_W;
-        int16_t phaseX = (Display::WIDTH - phaseStrW) / 2;
-
-        char sessionBuf[SESSION_BUF_LEN];
-        snprintf(sessionBuf, SESSION_BUF_LEN, "Session %lu",
-                 static_cast<unsigned long>(cachedSessionNumber));
-        uint16_t sessionLblLen = static_cast<uint16_t>(strlen(sessionBuf));
-        int16_t sessionStrW = static_cast<int16_t>(sessionLblLen) * SESSION_CHAR_W;
-        int16_t sessionX = (Display::WIDTH - sessionStrW) / 2;
-
-        display.setFullWindow();
-        display.firstPage();
-        do {
-            renderTimerLayout(timeBuf, phaseLbl, phaseX, sessionBuf,
-                              sessionX, cachedSessionNumber,
-                              cachedGoalBuf, cachedGoalX, cachedHasGoal);
-        } while (display.nextPage());
-
-        partialRefreshCount = 0;
-        Serial.println("Timer partial update (full refresh for ghosting clear)");
-    } else {
-        // Partial refresh: update only the time region bounding box.
-        // GxEPD2 setPartialWindow clips drawing to the specified rect
-        // and uses the panel's partial update waveform (~0.42s).
-        display.setPartialWindow(PARTIAL_X, PARTIAL_Y,
-                                 PARTIAL_W, PARTIAL_H);
-        display.firstPage();
-        do {
-            display.fillScreen(GxEPD_WHITE);
-
-            display.setTextSize(TIME_TEXT_SIZE);
-            display.setCursor(TIME_X, TIME_Y);
-            display.print(timeBuf);
-        } while (display.nextPage());
-
-        partialRefreshCount++;
-        Serial.println("Timer partial update (partial refresh)");
-    }
-}
-
-void resetPartialRefreshCount() {
-    partialRefreshCount = 0;
 }
 
 } // namespace Display

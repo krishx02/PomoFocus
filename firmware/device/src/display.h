@@ -45,29 +45,9 @@ void init();
 // Clear the entire screen to white using a full refresh.
 void clear();
 
-// Put the SSD1677 controller into deep sleep mode for minimum power
-// draw (~0 uA from the display controller). The e-ink panel retains
-// its last image (bistable). Requires wake() before any further
-// display operations.
-//
-// Integration point for power.cpp (7A.8): call hibernate() when
-// entering System ON sleep, before sd_app_evt_wait().
+// Put the display controller into deep sleep for minimum power use.
+// Requires a hardware reset (via init()) to wake.
 void hibernate();
-
-// Wake the display controller from deep sleep. Performs a hardware
-// reset via the nRF GPIO HAL and reinitializes the GxEPD2 driver.
-// The e-ink panel retains its last image — no screen flash or
-// corruption occurs. After wake(), normal drawing operations
-// (showTimerScreen, updateTimerPartial, etc.) work again.
-//
-// Integration point for power.cpp (7A.8): call wake() when resuming
-// from System ON sleep, after the wake interrupt fires.
-void wake();
-
-// Returns true if the display is in deep sleep (after hibernate(),
-// before wake()). Useful for power.cpp to avoid drawing while
-// the controller is asleep.
-bool isHibernating();
 
 // Draw centered "PomoFocus" test pattern for hardware validation.
 void showTestPattern();
@@ -95,35 +75,6 @@ void showSessionComplete(const SessionSummary& summary);
 //   goalName      — optional goal text (nullptr if none); truncated to fit
 void showTimerScreen(uint32_t minutes, uint32_t seconds, TimerPhase phase,
                      uint32_t sessionNumber, const char* goalName);
-
-// Number of partial refreshes before a full refresh to clear ghosting.
-// Per ADR-010: "Every ~5 partial refreshes: full refresh to clear
-// accumulated ghosting."
-constexpr uint8_t FULL_REFRESH_INTERVAL = 5;
-
-// Update the timer countdown using a partial refresh of the time region
-// only. Much faster than showTimerScreen (~0.42s vs ~3.5s) and avoids
-// the full-screen black-white flash.
-//
-// Ghosting management: tracks how many partial refreshes have occurred.
-// Every FULL_REFRESH_INTERVAL partials, performs a full refresh instead
-// to clear accumulated ghosting artifacts. Timer completion (phase ==
-// completed or abandoned) always triggers a full refresh as a visual
-// "done" signal.
-//
-// Refresh rate is controlled by the caller (timer driver), not the
-// display. ADR-010 specifies: 1/min for minutes 25-1, every 10s for
-// the last 60 seconds.
-//
-//   minutes       — minutes remaining (0–99)
-//   seconds       — seconds remaining (0–59)
-//   phase         — current timer phase (for completion detection)
-void updateTimerPartial(uint32_t minutes, uint32_t seconds, TimerPhase phase);
-
-// Reset the partial refresh ghosting counter. Call when entering or
-// leaving the timer screen (e.g., on timer start, after completion)
-// so the counter starts fresh for the next session.
-void resetPartialRefreshCount();
 
 } // namespace Display
 

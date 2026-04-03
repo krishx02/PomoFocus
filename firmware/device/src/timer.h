@@ -102,17 +102,6 @@ constexpr TimerState createIdleState(TimerConfig config) {
   };
 }
 
-// ── Guard Functions ──
-// Port of packages/core/src/timer/guards.ts.
-// Used by transition function for break-type selection and session flow.
-
-// Returns true when sessionNumber is a multiple of sessionsBeforeLongBreak.
-// Session 0 and invalid config (sessionsBeforeLongBreak < 1) return false.
-bool isLongBreak(uint32_t sessionNumber, const TimerConfig& config);
-
-// Returns true when reflection is enabled in the config.
-bool isReflectionEnabled(const TimerConfig& config);
-
 // ── Transition Function ──
 // Pure function: transition(state, event, now) -> newState.
 // Direct port of packages/core/src/timer/transition.ts.
