@@ -75,4 +75,43 @@ void input_poll();
 // Return the cumulative signed step count (CW increments, CCW decrements).
 int32_t input_step_count();
 
+// --- Input-to-Timer Event Mapping (issue #221) ---
+
+#include "timer.h"
+
+// Screen mode determines how encoder events are interpreted.
+// TIMER: press/long-press maps to timer FSM events per current phase.
+// GOAL_SELECT: rotation scrolls goals, press selects a goal.
+enum class ScreenMode : uint8_t {
+  TIMER,
+  GOAL_SELECT,
+};
+
+// Result of mapping an encoder press to a timer event.
+// valid=false means the press has no timer event mapping in the current state
+// (e.g., rotation during focusing, or press in a terminal state).
+struct MappedEvent {
+  bool valid;
+  TimerEvent event;
+};
+
+// Map a press event to a timer FSM event based on the current timer phase.
+// Only meaningful in TIMER screen mode.
+//
+// Mapping table (from issue #221 acceptance criteria):
+//   idle:         SHORT_PRESS -> START
+//   focusing:     SHORT_PRESS -> PAUSE,   LONG_PRESS -> ABANDON
+//   paused:       SHORT_PRESS -> RESUME,  LONG_PRESS -> ABANDON
+//   short_break:  SHORT_PRESS -> SKIP_BREAK, LONG_PRESS -> ABANDON
+//   long_break:   SHORT_PRESS -> SKIP_BREAK, LONG_PRESS -> ABANDON
+//   break_paused: SHORT_PRESS -> SKIP_BREAK, LONG_PRESS -> ABANDON
+//   reflection:   SHORT_PRESS -> SKIP (skip reflection on device)
+//   completed:    SHORT_PRESS -> RESET
+//   abandoned:    SHORT_PRESS -> RESET
+MappedEvent input_map_press(TimerPhase phase, PressEvent press);
+
+// Map a rotation event in GOAL_SELECT mode to a delta for the goal selection index.
+// Returns +1 for CW (next goal), -1 for CCW (previous goal), 0 for no rotation.
+int8_t input_map_rotation_to_goal_delta(RotationDir dir);
+
 #endif // POMOFOCUS_INPUT_H
