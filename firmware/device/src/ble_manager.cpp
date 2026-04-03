@@ -26,6 +26,7 @@
 #include "ble_manager.h"
 #include "ble_services.h"
 #include "display.h"
+#include "outbox.h"
 
 #include <bluefruit.h>
 
@@ -139,6 +140,11 @@ static void onDisconnect(uint16_t connHandle, uint8_t reason) {
     s_connHandle = BLE_CONN_HANDLE_INVALID;
     s_connected = false;
     s_effectiveMtu = BLE_DEFAULT_MTU;
+
+    // Clean up any in-flight BLE transfer so stale state doesn't persist
+    // across reconnections. Without this, the poll loop would keep trying
+    // to notify a disconnected client.
+    Outbox::transferAbort();
 
     Serial.print("[ble] disconnected: handle=");
     Serial.print(connHandle);

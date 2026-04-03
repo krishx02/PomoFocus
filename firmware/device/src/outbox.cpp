@@ -69,6 +69,55 @@ uint8_t g_decodeBuffer[Outbox::ENCODE_BUFFER_SIZE];
 // Current metadata entry index within the metadata page.
 uint32_t g_metaEntryIndex = 0;
 
+// ── Transfer state (chunked bulk transfer, ADR-013) ──
+
+enum class TransferPhase : uint8_t {
+    IDLE,          // No active transfer
+    SENDING,       // Streaming chunks to phone
+    AWAITING_ACK,  // All chunks sent, waiting for phone ACK
+};
+
+TransferPhase g_transferPhase = TransferPhase::IDLE;
+uint16_t g_chunkPayloadSize = 0;      // Max Protobuf bytes per chunk
+uint32_t g_totalToTransfer = 0;       // Sessions to transfer this batch
+uint32_t g_transferSessionIdx = 0;    // 0-based session within transfer
+uint32_t g_chunkIdx = 0;              // 0-based chunk within current session
+uint32_t g_totalChunks = 0;           // Total chunks for current session
+uint32_t g_currentEncodedSize = 0;    // Encoded bytes of current session
+uint32_t g_currentReadOffset = 0;     // Flash offset of current session
+
+// Load the session at g_transferSessionIdx from flash into g_decodeBuffer.
+// Sets g_currentEncodedSize, g_totalChunks, g_chunkIdx.
+// Returns true on success.
+bool loadTransferSession() {
+    uint32_t outLen = 0;
+    FlashStorage::FlashResult result =
+        FlashStorage::readRecord(g_currentReadOffset, g_decodeBuffer,
+                                 sizeof(g_decodeBuffer), outLen);
+    if (result != FlashStorage::FlashResult::OK) {
+        Serial.print("[outbox] transfer read failed at offset ");
+        Serial.println(g_currentReadOffset);
+        return false;
+    }
+
+    g_currentEncodedSize = outLen;
+    g_totalChunks = (outLen + g_chunkPayloadSize - 1) / g_chunkPayloadSize;
+    if (g_totalChunks == 0) {
+        g_totalChunks = 1;
+    }
+    g_chunkIdx = 0;
+
+    Serial.print("[outbox] loaded session ");
+    Serial.print(g_transferSessionIdx);
+    Serial.print(": ");
+    Serial.print(outLen);
+    Serial.print("B, ");
+    Serial.print(g_totalChunks);
+    Serial.println(" chunks");
+
+    return true;
+}
+
 // ── Metadata checksum ──
 
 uint32_t computeChecksum(const MetaEntry& entry) {
@@ -637,6 +686,184 @@ uint32_t getCapacityRemaining() {
 
 QueueMeta getQueueMeta() {
     return g_meta;
+}
+
+// ── Chunked transfer protocol ──
+
+uint32_t transferStart(uint16_t chunkPayloadSize) {
+    if (chunkPayloadSize == 0) {
+        return 0;
+    }
+
+    uint32_t pending = getPendingCount();
+    if (pending == 0) {
+        return 0;
+    }
+
+    g_chunkPayloadSize = chunkPayloadSize;
+    g_totalToTransfer = pending;
+    g_transferSessionIdx = 0;
+
+    // Walk to the first pending session (skip synced records).
+    g_currentReadOffset = walkToRecord(g_meta.head, g_meta.syncedCount);
+
+    if (!loadTransferSession()) {
+        return 0;
+    }
+
+    g_transferPhase = TransferPhase::SENDING;
+
+    Serial.print("[outbox] transfer started: ");
+    Serial.print(pending);
+    Serial.println(" sessions");
+
+    return pending;
+}
+
+uint16_t transferNextChunk(uint8_t* buf, uint16_t bufSize) {
+    if (g_transferPhase != TransferPhase::SENDING) {
+        return 0;
+    }
+
+    constexpr uint16_t HDR_SIZE = 4;
+    if (bufSize < HDR_SIZE + 1) {
+        return 0;
+    }
+
+    // Build 4-byte chunk header: SeqNum, Total, Flags, Reserved.
+    uint8_t flags = 0;
+    if (g_chunkIdx == 0) {
+        flags |= CHUNK_FLAG_FIRST;
+    }
+    bool lastChunk = (g_chunkIdx == g_totalChunks - 1);
+    if (lastChunk) {
+        flags |= CHUNK_FLAG_LAST;
+    }
+    bool lastSession = (g_transferSessionIdx == g_totalToTransfer - 1);
+    if (lastChunk && lastSession) {
+        flags |= CHUNK_FLAG_FINAL;
+    }
+
+    buf[0] = static_cast<uint8_t>(g_chunkIdx);    // SeqNum
+    buf[1] = static_cast<uint8_t>(g_totalChunks);  // Total
+    buf[2] = flags;
+    buf[3] = 0x00;                                  // Reserved
+
+    // Copy payload slice from the encoded session in g_decodeBuffer.
+    uint32_t payloadOffset = g_chunkIdx * g_chunkPayloadSize;
+    uint32_t remaining = g_currentEncodedSize - payloadOffset;
+    uint16_t payloadLen = (remaining < g_chunkPayloadSize)
+                          ? static_cast<uint16_t>(remaining)
+                          : g_chunkPayloadSize;
+
+    if (HDR_SIZE + payloadLen > bufSize) {
+        payloadLen = bufSize - HDR_SIZE;
+    }
+
+    memcpy(buf + HDR_SIZE, g_decodeBuffer + payloadOffset, payloadLen);
+
+    uint16_t totalLen = HDR_SIZE + payloadLen;
+
+    // Advance state.
+    g_chunkIdx++;
+    if (g_chunkIdx >= g_totalChunks) {
+        // Current session fully chunked — move to next.
+        g_transferSessionIdx++;
+        if (g_transferSessionIdx >= g_totalToTransfer) {
+            g_transferPhase = TransferPhase::AWAITING_ACK;
+            Serial.println("[outbox] all chunks sent, awaiting ACK");
+        } else {
+            // Advance flash read offset to next record.
+            uint32_t recSize = recordSizeAt(g_currentReadOffset);
+            g_currentReadOffset += recSize;
+            if (g_currentReadOffset >= DATA_REGION_SIZE) {
+                g_currentReadOffset = 0;
+            }
+
+            if (!loadTransferSession()) {
+                g_transferPhase = TransferPhase::IDLE;
+                return 0;
+            }
+        }
+    }
+
+    return totalLen;
+}
+
+void transferAck(uint32_t ackCount) {
+    (void)ackCount;
+    g_transferPhase = TransferPhase::IDLE;
+
+    Serial.print("[outbox] ACK ");
+    Serial.print(ackCount);
+    Serial.println(" sessions");
+}
+
+void transferNack(uint32_t position) {
+    if (g_transferPhase != TransferPhase::SENDING &&
+        g_transferPhase != TransferPhase::AWAITING_ACK) {
+        Serial.println("[outbox] NACK ignored: no active transfer");
+        return;
+    }
+
+    if (position >= g_totalToTransfer) {
+        position = 0;
+    }
+
+    g_transferSessionIdx = position;
+    g_currentReadOffset =
+        walkToRecord(g_meta.head, g_meta.syncedCount + position);
+
+    if (!loadTransferSession()) {
+        g_transferPhase = TransferPhase::IDLE;
+        return;
+    }
+
+    g_transferPhase = TransferPhase::SENDING;
+
+    Serial.print("[outbox] NACK: retransmit from session ");
+    Serial.println(position);
+}
+
+void transferAbort() {
+    g_transferPhase = TransferPhase::IDLE;
+    Serial.println("[outbox] transfer aborted");
+}
+
+void transferCursorUpdate(uint32_t count) {
+    if (g_transferPhase == TransferPhase::IDLE) {
+        Serial.println("[outbox] cursor update ignored: no active transfer");
+        return;
+    }
+
+    uint32_t pending = getPendingCount();
+    if (count > pending) {
+        Serial.print("[outbox] cursor update clamped from ");
+        Serial.print(count);
+        Serial.print(" to ");
+        Serial.println(pending);
+        count = pending;
+    }
+
+    for (uint32_t i = 0; i < count; i++) {
+        if (getPendingCount() == 0) {
+            break;
+        }
+        markSynced();
+    }
+    g_transferPhase = TransferPhase::IDLE;
+
+    Serial.print("[outbox] cursor update: ");
+    Serial.print(count);
+    Serial.println(" sessions permanently synced");
+}
+
+bool transferIsActive() {
+    return g_transferPhase != TransferPhase::IDLE;
+}
+
+bool transferIsAwaitingAck() {
+    return g_transferPhase == TransferPhase::AWAITING_ACK;
 }
 
 } // namespace Outbox
