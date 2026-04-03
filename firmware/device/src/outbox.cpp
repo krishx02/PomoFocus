@@ -800,6 +800,12 @@ void transferAck(uint32_t ackCount) {
 }
 
 void transferNack(uint32_t position) {
+    if (g_transferPhase != TransferPhase::SENDING &&
+        g_transferPhase != TransferPhase::AWAITING_ACK) {
+        Serial.println("[outbox] NACK ignored: no active transfer");
+        return;
+    }
+
     if (position >= g_totalToTransfer) {
         position = 0;
     }
@@ -825,6 +831,20 @@ void transferAbort() {
 }
 
 void transferCursorUpdate(uint32_t count) {
+    if (g_transferPhase == TransferPhase::IDLE) {
+        Serial.println("[outbox] cursor update ignored: no active transfer");
+        return;
+    }
+
+    uint32_t pending = getPendingCount();
+    if (count > pending) {
+        Serial.print("[outbox] cursor update clamped from ");
+        Serial.print(count);
+        Serial.print(" to ");
+        Serial.println(pending);
+        count = pending;
+    }
+
     for (uint32_t i = 0; i < count; i++) {
         if (getPendingCount() == 0) {
             break;
