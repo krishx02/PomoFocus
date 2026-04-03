@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.19.6",
+    "@pomofocus/analytics": "workspace:*",
+    "@pomofocus/core": "workspace:*",
     "@pomofocus/types": "workspace:*",
     "@supabase/supabase-js": "^2.49.8",
     "hono": "^4.7.11",
