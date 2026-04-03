@@ -72,6 +72,12 @@ bool isHibernating();
 // Draw centered "PomoFocus" test pattern for hardware validation.
 void showTestPattern();
 
+// Display a BLE pairing passkey on the e-ink screen.
+// Shows the 6-digit code large and centered so the user can enter it
+// on their phone during BLE Passkey Entry pairing (ADR-012).
+// passkey: exactly 6 ASCII digit characters (not null-terminated).
+void showPasskeyScreen(const uint8_t passkey[6]);
+
 // Idle screen: "Ready to focus" with today's session count and current goal.
 void showIdleScreen(uint8_t sessionsToday, const char* currentGoalTitle);
 
