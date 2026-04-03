@@ -1,4 +1,5 @@
 // PomoFocus — Session outbox implementation for nRF52840 firmware.
+// FIFO queue with flash backing, circular buffer, and sync cursor.
 // Encodes SessionRecord via Nanopb and writes to flash storage.
 // See outbox.h for API documentation.
 
@@ -7,6 +8,7 @@
 
 #include <Arduino.h>
 #include <pb_encode.h>
+#include <pb_decode.h>
 #include <cstring>
 
 // nRF52840 SoftDevice random number API.
@@ -21,13 +23,197 @@ extern "C" {
 
 namespace {
 
+// ── Flash layout constants ──
+
+// Data region: pages 0 through 62 (63 pages).
+constexpr uint32_t DATA_REGION_SIZE =
+    Outbox::DATA_REGION_PAGES * FlashStorage::PAGE_SIZE; // 258048 bytes
+
+// Metadata page: page 63 (absolute address).
+constexpr uint32_t META_PAGE_ADDR =
+    FlashStorage::REGION_START +
+    (Outbox::META_PAGE_INDEX * FlashStorage::PAGE_SIZE);
+
+// ── Metadata persistence ──
+// Queue metadata is stored as log-structured entries in the metadata page.
+// Each write appends a new entry. On init, the last valid entry is used.
+// When the page fills, it is erased and the current state is written fresh.
+
+// Magic number to validate metadata entries.
+constexpr uint32_t META_MAGIC = 0x504D4654; // "PMFT" in ASCII
+
+struct MetaEntry {
+    uint32_t magic;         // META_MAGIC for validation
+    uint32_t head;          // Byte offset of oldest record in data region
+    uint32_t tail;          // Byte offset of next write position
+    uint32_t count;         // Total records in queue
+    uint32_t syncedCount;   // Records synced from head
+    uint32_t checksum;      // XOR of all preceding fields
+};
+
+constexpr uint32_t META_ENTRY_SIZE = sizeof(MetaEntry); // 24 bytes
+constexpr uint32_t META_MAX_ENTRIES =
+    FlashStorage::PAGE_SIZE / META_ENTRY_SIZE; // 170 entries per page
+
 // ── Module state (all static, no dynamic allocation — NAT-F01) ──
 
-uint32_t g_recordCount = 0;
+Outbox::QueueMeta g_meta = {};
 uint32_t g_lastRecordSize = 0;
 
 // Static encode buffer — avoids heap allocation.
 uint8_t g_encodeBuffer[Outbox::ENCODE_BUFFER_SIZE];
+
+// Static decode buffer for reading records.
+uint8_t g_decodeBuffer[Outbox::ENCODE_BUFFER_SIZE];
+
+// Current metadata entry index within the metadata page.
+uint32_t g_metaEntryIndex = 0;
+
+// ── Transfer state (chunked bulk transfer, ADR-013) ──
+
+enum class TransferPhase : uint8_t {
+    IDLE,          // No active transfer
+    SENDING,       // Streaming chunks to phone
+    AWAITING_ACK,  // All chunks sent, waiting for phone ACK
+};
+
+TransferPhase g_transferPhase = TransferPhase::IDLE;
+uint16_t g_chunkPayloadSize = 0;      // Max Protobuf bytes per chunk
+uint32_t g_totalToTransfer = 0;       // Sessions to transfer this batch
+uint32_t g_transferSessionIdx = 0;    // 0-based session within transfer
+uint32_t g_chunkIdx = 0;              // 0-based chunk within current session
+uint32_t g_totalChunks = 0;           // Total chunks for current session
+uint32_t g_currentEncodedSize = 0;    // Encoded bytes of current session
+uint32_t g_currentReadOffset = 0;     // Flash offset of current session
+
+// Load the session at g_transferSessionIdx from flash into g_decodeBuffer.
+// Sets g_currentEncodedSize, g_totalChunks, g_chunkIdx.
+// Returns true on success.
+bool loadTransferSession() {
+    uint32_t outLen = 0;
+    FlashStorage::FlashResult result =
+        FlashStorage::readRecord(g_currentReadOffset, g_decodeBuffer,
+                                 sizeof(g_decodeBuffer), outLen);
+    if (result != FlashStorage::FlashResult::OK) {
+        Serial.print("[outbox] transfer read failed at offset ");
+        Serial.println(g_currentReadOffset);
+        return false;
+    }
+
+    g_currentEncodedSize = outLen;
+    g_totalChunks = (outLen + g_chunkPayloadSize - 1) / g_chunkPayloadSize;
+    if (g_totalChunks == 0) {
+        g_totalChunks = 1;
+    }
+    g_chunkIdx = 0;
+
+    Serial.print("[outbox] loaded session ");
+    Serial.print(g_transferSessionIdx);
+    Serial.print(": ");
+    Serial.print(outLen);
+    Serial.print("B, ");
+    Serial.print(g_totalChunks);
+    Serial.println(" chunks");
+
+    return true;
+}
+
+// ── Metadata checksum ──
+
+uint32_t computeChecksum(const MetaEntry& entry) {
+    return entry.magic ^ entry.head ^ entry.tail ^
+           entry.count ^ entry.syncedCount;
+}
+
+// ── Metadata flash operations ──
+
+// Read a metadata entry at the given index within the metadata page.
+// Returns true if the entry is valid (magic and checksum match).
+bool readMetaEntry(uint32_t index, MetaEntry& entry) {
+    if (index >= META_MAX_ENTRIES) {
+        return false;
+    }
+
+    uint32_t addr = META_PAGE_ADDR + (index * META_ENTRY_SIZE);
+    const volatile uint32_t* ptr =
+        reinterpret_cast<const volatile uint32_t*>(addr);
+
+    // Check if the slot is erased (first word = 0xFFFFFFFF)
+    if (*ptr == 0xFFFFFFFF) {
+        return false;
+    }
+
+    memcpy(&entry, reinterpret_cast<const void*>(addr), META_ENTRY_SIZE);
+
+    if (entry.magic != META_MAGIC) {
+        return false;
+    }
+
+    if (entry.checksum != computeChecksum(entry)) {
+        return false;
+    }
+
+    return true;
+}
+
+// Write a metadata entry at the given index within the metadata page.
+// Uses word-by-word flash writes (same as flash_storage).
+void writeMetaEntry(uint32_t index, const MetaEntry& entry) {
+    if (index >= META_MAX_ENTRIES) {
+        return;
+    }
+
+    uint32_t addr = META_PAGE_ADDR + (index * META_ENTRY_SIZE);
+
+    // Write word-by-word using the same NVMC technique as flash_storage.
+    // MetaEntry is 24 bytes = 6 words.
+    const uint32_t* words = reinterpret_cast<const uint32_t*>(&entry);
+    constexpr uint32_t WORD_COUNT = META_ENTRY_SIZE / 4;
+
+    // Enable NVMC write mode
+    constexpr uint32_t NVMC_BASE = 0x4001E000UL;
+    volatile uint32_t* nvmcConfig =
+        reinterpret_cast<volatile uint32_t*>(NVMC_BASE + 0x504);
+    volatile uint32_t* nvmcReady =
+        reinterpret_cast<volatile uint32_t*>(NVMC_BASE + 0x400);
+
+    for (uint32_t i = 0; i < WORD_COUNT; i++) {
+        *nvmcConfig = 1; // Write enable
+        __DSB();
+        *reinterpret_cast<volatile uint32_t*>(addr + (i * 4)) = words[i];
+        while (*nvmcReady == 0) {} // Wait for completion
+        *nvmcConfig = 0; // Read-only
+        __DSB();
+    }
+}
+
+// Erase the metadata page.
+void eraseMetaPage() {
+    // Use FlashStorage::erasePage which handles NVMC erase correctly.
+    FlashStorage::erasePage(Outbox::META_PAGE_INDEX);
+}
+
+// Persist the current queue metadata to flash.
+// Appends a new entry to the metadata page log. If the page is full,
+// erases it and writes fresh.
+void persistMeta() {
+    if (g_metaEntryIndex >= META_MAX_ENTRIES) {
+        // Page is full — erase and start fresh.
+        eraseMetaPage();
+        g_metaEntryIndex = 0;
+    }
+
+    MetaEntry entry = {};
+    entry.magic = META_MAGIC;
+    entry.head = g_meta.head;
+    entry.tail = g_meta.tail;
+    entry.count = g_meta.count;
+    entry.syncedCount = g_meta.syncedCount;
+    entry.checksum = computeChecksum(entry);
+
+    writeMetaEntry(g_metaEntryIndex, entry);
+    g_metaEntryIndex++;
+}
 
 // ── UUID generation ──
 
@@ -85,43 +271,159 @@ bool generateUuidV4(uint8_t uuid[16]) {
     return true;
 }
 
+// ── Record offset walking ──
+// Walk the data region from a starting offset, counting records.
+// Returns the byte offset of the record at the given index (0-based
+// from startOffset). Returns DATA_REGION_SIZE if not found.
+
+uint32_t walkToRecord(uint32_t startOffset, uint32_t skipCount) {
+    uint32_t offset = startOffset;
+    uint32_t skipped = 0;
+
+    while (skipped < skipCount && offset < DATA_REGION_SIZE) {
+        uint32_t absAddr = FlashStorage::REGION_START + offset;
+        uint32_t headerVal =
+            *reinterpret_cast<const volatile uint32_t*>(absAddr);
+
+        if (headerVal == 0xFFFFFFFF) {
+            // Reached erased space — wrap around to start of data region.
+            if (offset > 0 && startOffset > 0) {
+                // Try wrapping to the beginning (circular buffer).
+                offset = 0;
+                continue;
+            }
+            break;
+        }
+
+        if (headerVal > DATA_REGION_SIZE) {
+            break; // Corrupt
+        }
+
+        uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + headerVal;
+        totalSize = (totalSize + 3) & ~3U;
+        offset += totalSize;
+
+        // Wrap around if we hit the end of the data region
+        if (offset >= DATA_REGION_SIZE) {
+            offset = 0;
+        }
+
+        skipped++;
+    }
+
+    return offset;
+}
+
+// Get the byte size of the record at the given offset (header + payload, aligned).
+// Returns 0 if no valid record.
+uint32_t recordSizeAt(uint32_t offset) {
+    if (offset >= DATA_REGION_SIZE) {
+        return 0;
+    }
+
+    uint32_t absAddr = FlashStorage::REGION_START + offset;
+    uint32_t headerVal =
+        *reinterpret_cast<const volatile uint32_t*>(absAddr);
+
+    if (headerVal == 0xFFFFFFFF || headerVal > DATA_REGION_SIZE) {
+        return 0;
+    }
+
+    uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + headerVal;
+    return (totalSize + 3) & ~3U;
+}
+
 } // anonymous namespace
 
 namespace Outbox {
 
 void init() {
-    // Scan existing flash records to count them.
-    // Walk through flash from offset 0, counting valid records.
-    g_recordCount = 0;
+    // Try to restore queue metadata from the metadata flash page.
+    // Walk the log-structured metadata entries to find the last valid one.
+    g_meta = {};
     g_lastRecordSize = 0;
+    g_metaEntryIndex = 0;
 
-    uint32_t offset = 0;
-    while (offset + FlashStorage::RECORD_HEADER_SIZE <= FlashStorage::REGION_SIZE) {
-        uint32_t absAddr = FlashStorage::REGION_START + offset;
-        uint32_t headerVal = *reinterpret_cast<const volatile uint32_t*>(absAddr);
+    bool metaFound = false;
+    MetaEntry lastValid = {};
 
-        if (headerVal == 0xFFFFFFFF) {
-            // Reached erased space — no more records.
+    for (uint32_t i = 0; i < META_MAX_ENTRIES; i++) {
+        MetaEntry entry = {};
+        if (readMetaEntry(i, entry)) {
+            lastValid = entry;
+            metaFound = true;
+            g_metaEntryIndex = i + 1;
+        } else {
+            // First erased/invalid slot — no more entries.
             break;
         }
-
-        // Sanity check
-        if (headerVal > FlashStorage::REGION_SIZE) {
-            break;
-        }
-
-        g_recordCount++;
-        g_lastRecordSize = headerVal;
-
-        // Advance past this record (header + payload, aligned to 4 bytes)
-        uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + headerVal;
-        totalSize = (totalSize + 3) & ~3U;
-        offset += totalSize;
     }
 
-    Serial.print("[outbox] init: ");
-    Serial.print(g_recordCount);
-    Serial.println(" records found");
+    if (metaFound) {
+        g_meta.head = lastValid.head;
+        g_meta.tail = lastValid.tail;
+        g_meta.count = lastValid.count;
+        g_meta.syncedCount = lastValid.syncedCount;
+
+        // Validate: tail should be within data region
+        if (g_meta.tail > DATA_REGION_SIZE) {
+            g_meta.tail = 0;
+        }
+        if (g_meta.head > DATA_REGION_SIZE) {
+            g_meta.head = 0;
+        }
+
+        Serial.print("[outbox] init from meta: count=");
+        Serial.print(g_meta.count);
+        Serial.print(" synced=");
+        Serial.print(g_meta.syncedCount);
+        Serial.print(" head=");
+        Serial.print(g_meta.head);
+        Serial.print(" tail=");
+        Serial.println(g_meta.tail);
+    } else {
+        // No valid metadata — scan the data region to reconstruct.
+        // This handles first boot and corrupt metadata.
+        uint32_t offset = 0;
+        uint32_t count = 0;
+
+        while (offset + FlashStorage::RECORD_HEADER_SIZE <= DATA_REGION_SIZE) {
+            uint32_t absAddr = FlashStorage::REGION_START + offset;
+            uint32_t headerVal =
+                *reinterpret_cast<const volatile uint32_t*>(absAddr);
+
+            if (headerVal == 0xFFFFFFFF) {
+                break;
+            }
+
+            if (headerVal > DATA_REGION_SIZE) {
+                break;
+            }
+
+            count++;
+            g_lastRecordSize = headerVal;
+
+            uint32_t totalSize =
+                FlashStorage::RECORD_HEADER_SIZE + headerVal;
+            totalSize = (totalSize + 3) & ~3U;
+            offset += totalSize;
+        }
+
+        g_meta.head = 0;
+        g_meta.tail = offset;
+        g_meta.count = count;
+        g_meta.syncedCount = 0; // No sync info — treat all as pending.
+
+        // Persist the reconstructed metadata.
+        if (count > 0) {
+            persistMeta();
+        }
+
+        Serial.print("[outbox] init from scan: ");
+        Serial.print(count);
+        Serial.print(" records, tail=");
+        Serial.println(offset);
+    }
 }
 
 StoreResult storeSession(const SessionParams& params) {
@@ -161,7 +463,8 @@ StoreResult storeSession(const SessionParams& params) {
     // Left at zero/empty — device does not collect reflection data (out of scope).
 
     // 3. Encode via Nanopb into the static buffer
-    pb_ostream_t ostream = pb_ostream_from_buffer(g_encodeBuffer, sizeof(g_encodeBuffer));
+    pb_ostream_t ostream =
+        pb_ostream_from_buffer(g_encodeBuffer, sizeof(g_encodeBuffer));
     if (!pb_encode(&ostream, pomofocus_ble_SessionRecord_fields, &record)) {
         Serial.print("[outbox] ERR: encode failed: ");
         Serial.println(PB_GET_ERROR(&ostream));
@@ -170,29 +473,90 @@ StoreResult storeSession(const SessionParams& params) {
 
     uint32_t encodedSize = static_cast<uint32_t>(ostream.bytes_written);
 
-    // 4. Write encoded record to flash
-    uint32_t writeOffset = FlashStorage::getWriteOffset();
-
-    // Check if there is enough space (record header + payload)
+    // 4. Check capacity
     uint32_t totalNeeded = FlashStorage::RECORD_HEADER_SIZE + encodedSize;
     uint32_t alignedNeeded = (totalNeeded + 3) & ~3U;
-    if (writeOffset + alignedNeeded > FlashStorage::REGION_SIZE) {
-        Serial.println("[outbox] ERR: flash full");
-        return StoreResult::ERR_FLASH_FULL;
+
+    if (getCapacityRemaining() < alignedNeeded) {
+        // Try to reclaim synced pages at the head.
+        // If head < tail and there are synced records, erase head pages.
+        if (g_meta.syncedCount > 0) {
+            // Walk synced records to find which pages can be erased.
+            uint32_t reclaimOffset = g_meta.head;
+            uint32_t reclaimedRecords = 0;
+            uint32_t reclaimedPages = 0;
+            uint32_t currentPage = g_meta.head / FlashStorage::PAGE_SIZE;
+
+            while (reclaimedRecords < g_meta.syncedCount) {
+                uint32_t recSize = recordSizeAt(reclaimOffset);
+                if (recSize == 0) {
+                    break;
+                }
+
+                reclaimOffset += recSize;
+                if (reclaimOffset >= DATA_REGION_SIZE) {
+                    reclaimOffset = 0;
+                }
+                reclaimedRecords++;
+
+                // Check if we've moved past a page boundary
+                uint32_t newPage = reclaimOffset / FlashStorage::PAGE_SIZE;
+                while (currentPage != newPage &&
+                       reclaimedPages < DATA_REGION_PAGES) {
+                    FlashStorage::erasePage(currentPage);
+                    reclaimedPages++;
+                    currentPage++;
+                    if (currentPage >= DATA_REGION_PAGES) {
+                        currentPage = 0;
+                    }
+                }
+            }
+
+            if (reclaimedRecords > 0) {
+                g_meta.head = reclaimOffset;
+                g_meta.count -= reclaimedRecords;
+                g_meta.syncedCount -= reclaimedRecords;
+
+                Serial.print("[outbox] reclaimed ");
+                Serial.print(reclaimedPages);
+                Serial.print(" pages, ");
+                Serial.print(reclaimedRecords);
+                Serial.println(" records");
+            }
+        }
+
+        // Re-check capacity after reclaim
+        if (getCapacityRemaining() < alignedNeeded) {
+            Serial.println("[outbox] ERR: flash full");
+            return StoreResult::ERR_FLASH_FULL;
+        }
     }
+
+    // 5. Write encoded record to flash at tail position
+    uint32_t writeOffset = g_meta.tail;
 
     FlashStorage::FlashResult flashResult =
         FlashStorage::writeRecord(writeOffset, g_encodeBuffer, encodedSize);
 
     if (flashResult == FlashStorage::FlashResult::ERR_PAGE_BOUNDARY) {
         // Record would cross a page boundary — advance to next page and retry.
-        uint32_t nextPage = ((writeOffset / FlashStorage::PAGE_SIZE) + 1) * FlashStorage::PAGE_SIZE;
-        if (nextPage + alignedNeeded > FlashStorage::REGION_SIZE) {
+        uint32_t nextPage =
+            ((writeOffset / FlashStorage::PAGE_SIZE) + 1) *
+            FlashStorage::PAGE_SIZE;
+        if (nextPage >= DATA_REGION_SIZE) {
+            nextPage = 0; // Wrap around to start of data region
+        }
+
+        // Check if the target page is erased (it should be if properly reclaimed)
+        if (nextPage + alignedNeeded > DATA_REGION_SIZE && nextPage != 0) {
             Serial.println("[outbox] ERR: flash full after page advance");
             return StoreResult::ERR_FLASH_FULL;
         }
+
         Serial.println("[outbox] page boundary, advanced to next page");
-        flashResult = FlashStorage::writeRecord(nextPage, g_encodeBuffer, encodedSize);
+        writeOffset = nextPage;
+        flashResult =
+            FlashStorage::writeRecord(writeOffset, g_encodeBuffer, encodedSize);
     }
 
     if (flashResult != FlashStorage::FlashResult::OK) {
@@ -201,28 +565,305 @@ StoreResult storeSession(const SessionParams& params) {
         return StoreResult::ERR_FLASH_WRITE;
     }
 
-    // 5. Update tracking state
-    g_recordCount++;
+    // 6. Update queue metadata
+    uint32_t totalWritten = FlashStorage::RECORD_HEADER_SIZE + encodedSize;
+    totalWritten = (totalWritten + 3) & ~3U;
+
+    g_meta.tail = writeOffset + totalWritten;
+    if (g_meta.tail >= DATA_REGION_SIZE) {
+        g_meta.tail = 0; // Wrap around
+    }
+    g_meta.count++;
     g_lastRecordSize = encodedSize;
+
+    // Persist updated metadata
+    persistMeta();
 
     Serial.print("[outbox] stored session: ");
     Serial.print(encodedSize);
-    Serial.print(" bytes, total=");
-    Serial.println(g_recordCount);
+    Serial.print(" bytes, count=");
+    Serial.print(g_meta.count);
+    Serial.print(" pending=");
+    Serial.println(getPendingCount());
 
     return StoreResult::OK;
 }
 
 uint32_t getRecordCount() {
-    return g_recordCount;
+    return g_meta.count;
 }
 
 uint32_t getUsedBytes() {
-    return FlashStorage::getUsedBytes();
+    if (g_meta.count == 0) {
+        return 0;
+    }
+    if (g_meta.tail >= g_meta.head) {
+        return g_meta.tail - g_meta.head;
+    }
+    // Wrapped: data from head to end + start to tail
+    return (DATA_REGION_SIZE - g_meta.head) + g_meta.tail;
 }
 
 uint32_t getLastRecordSize() {
     return g_lastRecordSize;
+}
+
+uint32_t getPendingCount() {
+    if (g_meta.syncedCount >= g_meta.count) {
+        return 0;
+    }
+    return g_meta.count - g_meta.syncedCount;
+}
+
+ReadResult getNextPending(pomofocus_ble_SessionRecord& record) {
+    if (getPendingCount() == 0) {
+        return ReadResult::ERR_NO_PENDING;
+    }
+
+    // Walk from head, skipping syncedCount records to find the first
+    // un-synced record.
+    uint32_t offset = walkToRecord(g_meta.head, g_meta.syncedCount);
+    if (offset >= DATA_REGION_SIZE) {
+        return ReadResult::ERR_FLASH_READ;
+    }
+
+    // Read the record from flash
+    uint32_t outLen = 0;
+    FlashStorage::FlashResult flashResult =
+        FlashStorage::readRecord(offset, g_decodeBuffer,
+                                 sizeof(g_decodeBuffer), outLen);
+
+    if (flashResult != FlashStorage::FlashResult::OK) {
+        Serial.print("[outbox] ERR: read failed at offset ");
+        Serial.println(offset);
+        return ReadResult::ERR_FLASH_READ;
+    }
+
+    // Decode the Protobuf record
+    memset(&record, 0, sizeof(record));
+    pb_istream_t istream = pb_istream_from_buffer(g_decodeBuffer, outLen);
+    if (!pb_decode(&istream, pomofocus_ble_SessionRecord_fields, &record)) {
+        Serial.print("[outbox] ERR: decode failed: ");
+        Serial.println(PB_GET_ERROR(&istream));
+        return ReadResult::ERR_DECODE_FAILED;
+    }
+
+    return ReadResult::OK;
+}
+
+void markSynced() {
+    if (getPendingCount() == 0) {
+        return;
+    }
+
+    g_meta.syncedCount++;
+
+    // Check if we can reclaim completed pages at the head.
+    // If all records in the leading page(s) are synced, erase them
+    // and advance head to free space for new records.
+    if (g_meta.syncedCount == g_meta.count) {
+        // All records synced — we could reclaim everything.
+        // But defer actual erasure to storeSession when space is needed.
+        // This avoids unnecessary erase cycles (flash wear).
+    }
+
+    // Persist updated metadata
+    persistMeta();
+
+    Serial.print("[outbox] markSynced: synced=");
+    Serial.print(g_meta.syncedCount);
+    Serial.print(" pending=");
+    Serial.println(getPendingCount());
+}
+
+uint32_t getCapacityRemaining() {
+    uint32_t used = getUsedBytes();
+    if (used >= DATA_REGION_SIZE) {
+        return 0;
+    }
+    return DATA_REGION_SIZE - used;
+}
+
+QueueMeta getQueueMeta() {
+    return g_meta;
+}
+
+// ── Chunked transfer protocol ──
+
+uint32_t transferStart(uint16_t chunkPayloadSize) {
+    if (chunkPayloadSize == 0) {
+        return 0;
+    }
+
+    uint32_t pending = getPendingCount();
+    if (pending == 0) {
+        return 0;
+    }
+
+    g_chunkPayloadSize = chunkPayloadSize;
+    g_totalToTransfer = pending;
+    g_transferSessionIdx = 0;
+
+    // Walk to the first pending session (skip synced records).
+    g_currentReadOffset = walkToRecord(g_meta.head, g_meta.syncedCount);
+
+    if (!loadTransferSession()) {
+        return 0;
+    }
+
+    g_transferPhase = TransferPhase::SENDING;
+
+    Serial.print("[outbox] transfer started: ");
+    Serial.print(pending);
+    Serial.println(" sessions");
+
+    return pending;
+}
+
+uint16_t transferNextChunk(uint8_t* buf, uint16_t bufSize) {
+    if (g_transferPhase != TransferPhase::SENDING) {
+        return 0;
+    }
+
+    constexpr uint16_t HDR_SIZE = 4;
+    if (bufSize < HDR_SIZE + 1) {
+        return 0;
+    }
+
+    // Build 4-byte chunk header: SeqNum, Total, Flags, Reserved.
+    uint8_t flags = 0;
+    if (g_chunkIdx == 0) {
+        flags |= CHUNK_FLAG_FIRST;
+    }
+    bool lastChunk = (g_chunkIdx == g_totalChunks - 1);
+    if (lastChunk) {
+        flags |= CHUNK_FLAG_LAST;
+    }
+    bool lastSession = (g_transferSessionIdx == g_totalToTransfer - 1);
+    if (lastChunk && lastSession) {
+        flags |= CHUNK_FLAG_FINAL;
+    }
+
+    buf[0] = static_cast<uint8_t>(g_chunkIdx);    // SeqNum
+    buf[1] = static_cast<uint8_t>(g_totalChunks);  // Total
+    buf[2] = flags;
+    buf[3] = 0x00;                                  // Reserved
+
+    // Copy payload slice from the encoded session in g_decodeBuffer.
+    uint32_t payloadOffset = g_chunkIdx * g_chunkPayloadSize;
+    uint32_t remaining = g_currentEncodedSize - payloadOffset;
+    uint16_t payloadLen = (remaining < g_chunkPayloadSize)
+                          ? static_cast<uint16_t>(remaining)
+                          : g_chunkPayloadSize;
+
+    if (HDR_SIZE + payloadLen > bufSize) {
+        payloadLen = bufSize - HDR_SIZE;
+    }
+
+    memcpy(buf + HDR_SIZE, g_decodeBuffer + payloadOffset, payloadLen);
+
+    uint16_t totalLen = HDR_SIZE + payloadLen;
+
+    // Advance state.
+    g_chunkIdx++;
+    if (g_chunkIdx >= g_totalChunks) {
+        // Current session fully chunked — move to next.
+        g_transferSessionIdx++;
+        if (g_transferSessionIdx >= g_totalToTransfer) {
+            g_transferPhase = TransferPhase::AWAITING_ACK;
+            Serial.println("[outbox] all chunks sent, awaiting ACK");
+        } else {
+            // Advance flash read offset to next record.
+            uint32_t recSize = recordSizeAt(g_currentReadOffset);
+            g_currentReadOffset += recSize;
+            if (g_currentReadOffset >= DATA_REGION_SIZE) {
+                g_currentReadOffset = 0;
+            }
+
+            if (!loadTransferSession()) {
+                g_transferPhase = TransferPhase::IDLE;
+                return 0;
+            }
+        }
+    }
+
+    return totalLen;
+}
+
+void transferAck(uint32_t ackCount) {
+    (void)ackCount;
+    g_transferPhase = TransferPhase::IDLE;
+
+    Serial.print("[outbox] ACK ");
+    Serial.print(ackCount);
+    Serial.println(" sessions");
+}
+
+void transferNack(uint32_t position) {
+    if (g_transferPhase != TransferPhase::SENDING &&
+        g_transferPhase != TransferPhase::AWAITING_ACK) {
+        Serial.println("[outbox] NACK ignored: no active transfer");
+        return;
+    }
+
+    if (position >= g_totalToTransfer) {
+        position = 0;
+    }
+
+    g_transferSessionIdx = position;
+    g_currentReadOffset =
+        walkToRecord(g_meta.head, g_meta.syncedCount + position);
+
+    if (!loadTransferSession()) {
+        g_transferPhase = TransferPhase::IDLE;
+        return;
+    }
+
+    g_transferPhase = TransferPhase::SENDING;
+
+    Serial.print("[outbox] NACK: retransmit from session ");
+    Serial.println(position);
+}
+
+void transferAbort() {
+    g_transferPhase = TransferPhase::IDLE;
+    Serial.println("[outbox] transfer aborted");
+}
+
+void transferCursorUpdate(uint32_t count) {
+    if (g_transferPhase == TransferPhase::IDLE) {
+        Serial.println("[outbox] cursor update ignored: no active transfer");
+        return;
+    }
+
+    uint32_t pending = getPendingCount();
+    if (count > pending) {
+        Serial.print("[outbox] cursor update clamped from ");
+        Serial.print(count);
+        Serial.print(" to ");
+        Serial.println(pending);
+        count = pending;
+    }
+
+    for (uint32_t i = 0; i < count; i++) {
+        if (getPendingCount() == 0) {
+            break;
+        }
+        markSynced();
+    }
+    g_transferPhase = TransferPhase::IDLE;
+
+    Serial.print("[outbox] cursor update: ");
+    Serial.print(count);
+    Serial.println(" sessions permanently synced");
+}
+
+bool transferIsActive() {
+    return g_transferPhase != TransferPhase::IDLE;
+}
+
+bool transferIsAwaitingAck() {
+    return g_transferPhase == TransferPhase::AWAITING_ACK;
 }
 
 } // namespace Outbox
