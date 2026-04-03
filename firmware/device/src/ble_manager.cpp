@@ -224,7 +224,7 @@ void ble_init() {
 
     Serial.println("[ble] SoftDevice initialized");
 
-    // Initialize GATT services before advertising starts.
+    // Initialize all GATT services before advertising starts.
     // Services must be registered before Bluefruit.Advertising.start().
     ble_services_init();
 

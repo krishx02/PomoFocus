@@ -11,6 +11,10 @@
 //   Session Data (0302): Notify — device-to-phone bulk transfer (chunked protocol in 7A.7)
 //   Sync Control (0303): Write — phone sends sync commands (START, ACK, etc.)
 //
+// Standard services:
+//   Device Information (0x180A): read-only, set once at boot.
+//   Battery (0x180F): Read + Notify. Placeholder (100%) until ADC in 7A.8.
+//
 // Encoding uses Nanopb (static buffers only, NAT-F01).
 // Notifications use BLE NOTIFY (not INDICATE) per NAT-F07.
 // Full chunked transfer protocol is deferred to issue 7A.7.
@@ -45,6 +49,11 @@ static BLEService       s_syncService(SESSION_SYNC_SERVICE_UUID);
 static BLECharacteristic s_syncStatusChar(SYNC_STATUS_CHAR_UUID);
 static BLECharacteristic s_sessionDataChar(SESSION_DATA_CHAR_UUID);
 static BLECharacteristic s_syncControlChar(SYNC_CONTROL_CHAR_UUID);
+
+// ── Standard service instances ──
+// Static module-level objects — zero dynamic allocation (NAT-F01).
+static BLEDis s_deviceInfo;
+static BLEBas s_battery;
 
 // ── Command callback ──
 static BleTimerCommandCallback s_commandCallback = nullptr;
@@ -206,6 +215,26 @@ static void onSyncControlWrite(uint16_t connHandle, BLECharacteristic* chr,
 // ── Public API ──
 
 void ble_services_init() {
+  // ── Device Information Service (0x180A) ──
+  // BLEDis::begin() registers the service with the SoftDevice.
+  // Characteristics are set before begin() — Bluefruit copies the strings.
+  s_deviceInfo.setManufacturer(DIS_MANUFACTURER_NAME);
+  s_deviceInfo.setModel(DIS_MODEL_NUMBER);
+  s_deviceInfo.setFirmwareRev(DIS_FIRMWARE_REVISION);
+  s_deviceInfo.begin();
+
+  Serial.println("[ble_svc] Device Info Service 0x180A registered");
+
+  // ── Battery Service (0x180F) ──
+  // BLEBas::begin() registers the service and Battery Level characteristic
+  // (0x2A19) with Read + Notify permissions.
+  s_battery.begin();
+
+  // Set initial battery level to 100% (placeholder until ADC in 7A.8).
+  s_battery.write(100);
+
+  Serial.println("[ble_svc] Battery Service 0x180F registered (level=100%)");
+
   // ── Timer Service ──
   // Begin the Timer Service
   s_timerService.begin();
@@ -313,4 +342,10 @@ void ble_services_update_sync_status(uint32_t pending, uint32_t total,
     // If a central is subscribed, Bluefruit sends a notification automatically
     // when the characteristic value is updated via write().
     // Explicit notify() call is not needed — Bluefruit handles CCCD internally.
+}
+
+void ble_services_set_battery_level(uint8_t level) {
+  uint8_t clamped = level > 100 ? 100 : level;
+  s_battery.write(clamped);
+  s_battery.notify(clamped);
 }

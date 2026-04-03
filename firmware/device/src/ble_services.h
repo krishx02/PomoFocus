@@ -2,6 +2,7 @@
 // Timer Service: Timer State (Read+Notify) and Timer Command (Write).
 // Session Sync Service: Sync Status (Read+Notify), Session Data (Notify),
 //   and Sync Control (Write).
+// Standard services: Device Information (0x180A) and Battery (0x180F).
 // Protobuf-encoded payloads per ADR-013 GATT protocol design.
 // See ADR-013 for UUIDs, properties, and behavior spec.
 
@@ -65,9 +66,15 @@ constexpr uint8_t SYNC_CONTROL_CHAR_UUID[16] = {
 // ble_timer_notify_state() after the transition.
 using BleTimerCommandCallback = void (*)(TimerEvent event);
 
+// ── Device identity strings ──
+
+constexpr const char* DIS_MANUFACTURER_NAME = "PomoFocus";
+constexpr const char* DIS_MODEL_NUMBER      = "PF-001";
+constexpr const char* DIS_FIRMWARE_REVISION  = "0.1.0";
+
 // ── Public API ──
 
-// Initialize all BLE GATT services (Timer Service, Session Sync Service)
+// Initialize all BLE GATT services (Timer, Session Sync, Device Info, Battery)
 // and register them with the Bluefruit SoftDevice. Must be called after
 // Bluefruit.begin() and before Bluefruit.Advertising.start().
 void ble_services_init();
@@ -90,5 +97,10 @@ void ble_timer_notify_state(const TimerState& state);
 // state: current SyncState enum value (from pomofocus.pb.h).
 void ble_services_update_sync_status(uint32_t pending, uint32_t total,
                                      uint8_t state);
+
+// Update the battery level characteristic (0x2A19).
+// level: 0-100 percent. Values >100 are clamped to 100.
+// Sends a BLE notification to connected clients if notify is enabled.
+void ble_services_set_battery_level(uint8_t level);
 
 #endif // POMOFOCUS_BLE_SERVICES_H
