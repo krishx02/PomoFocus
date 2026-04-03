@@ -24,14 +24,9 @@ constexpr uint32_t TICK_INTERVAL_MS = 1000;
 
 static TimerState g_timerState = createIdleState(DEFAULT_TIMER_CONFIG);
 static ScreenMode g_screenMode = ScreenMode::TIMER;
-static uint8_t g_selectedGoal = 0;
 static uint8_t g_sessionsToday = 0;
 static unsigned long g_lastTickMs = 0;
 static bool g_displayDirty = true;  // Force initial display update
-
-// Goal data — synced from phone via BLE (stub for now).
-static Display::GoalInfo g_goals[Display::MAX_GOALS] = {};
-static uint8_t g_goalCount = 0;
 
 // Feedback driver
 static Feedback g_feedback;
@@ -56,16 +51,19 @@ static TimerStatus phaseToStatus(TimerPhase phase) {
 
 // Get the title of the currently selected goal, or nullptr if none.
 static const char* currentGoalTitle() {
-  if (g_goalCount == 0 || g_selectedGoal >= g_goalCount) {
+  uint8_t count = goal_service_goal_count();
+  uint8_t idx = goal_service_selected_index();
+  if (count == 0 || idx >= count) {
     return nullptr;
   }
-  return g_goals[g_selectedGoal].title;
+  return goal_service_goals()[idx].title;
 }
 
 // Refresh the display based on current screen mode and timer state.
 static void refreshDisplay() {
   if (g_screenMode == ScreenMode::GOAL_SELECT) {
-    Display::showGoalScreen(g_goals, g_goalCount, g_selectedGoal);
+    Display::showGoalScreen(goal_service_goals(), goal_service_goal_count(),
+                            goal_service_selected_index());
     return;
   }
 
@@ -145,24 +143,26 @@ static void onRotation(RotationDir direction, int32_t /* step_count */) {
     if (delta == 0) {
       return;
     }
-    int16_t newIdx = static_cast<int16_t>(g_selectedGoal) + delta;
+    uint8_t goalCount = goal_service_goal_count();
+    uint8_t currentIdx = goal_service_selected_index();
+    int16_t newIdx = static_cast<int16_t>(currentIdx) + delta;
     if (newIdx < 0) {
       newIdx = 0;
     }
-    if (newIdx >= g_goalCount) {
-      newIdx = g_goalCount > 0 ? g_goalCount - 1 : 0;
+    if (newIdx >= goalCount) {
+      newIdx = goalCount > 0 ? goalCount - 1 : 0;
     }
-    if (static_cast<uint8_t>(newIdx) != g_selectedGoal) {
-      g_selectedGoal = static_cast<uint8_t>(newIdx);
+    if (static_cast<uint8_t>(newIdx) != currentIdx) {
+      goal_service_set_selected(static_cast<uint8_t>(newIdx));
       g_displayDirty = true;
       Serial.print("[main] goal select idx=");
-      Serial.println(g_selectedGoal);
+      Serial.println(goal_service_selected_index());
     }
     return;
   }
 
   // In idle/timer mode, rotation while idle enters goal selection
-  if (g_timerState.phase == TimerPhase::idle && g_goalCount > 0) {
+  if (g_timerState.phase == TimerPhase::idle && goal_service_goal_count() > 0) {
     g_screenMode = ScreenMode::GOAL_SELECT;
     g_displayDirty = true;
     Serial.println("[main] entering goal select");
@@ -173,10 +173,12 @@ static void onPress(PressEvent press) {
   // Goal select mode: press = select goal and return to timer
   if (g_screenMode == ScreenMode::GOAL_SELECT) {
     if (press == PressEvent::SHORT_PRESS) {
+      // Confirm selection — notify phone via BLE.
+      goal_service_set_selected(goal_service_selected_index());
       g_screenMode = ScreenMode::TIMER;
       g_displayDirty = true;
       Serial.print("[main] goal selected idx=");
-      Serial.println(g_selectedGoal);
+      Serial.println(goal_service_selected_index());
     }
     return;
   }
@@ -228,7 +230,7 @@ void setup() {
   // Initialize BLE SoftDevice and start advertising.
   ble_init();
 
-  // Register GATT services (Timer + Session Sync). Must be called after ble_init().
+  // Register GATT services (Timer + Goal + Session Sync). Must be called after ble_init().
   ble_services_init();
 
   // Register BLE timer command handler — receives events from phone.
@@ -274,6 +276,12 @@ void loop() {
         applyTimerEvent(TimerEvent::TIMER_DONE);
       }
     }
+  }
+
+  // Check if the goal list was updated via BLE. Mark display dirty so
+  // refreshDisplay() re-renders (it decides WHAT to show based on g_screenMode).
+  if (goal_service_goals_dirty()) {
+    g_displayDirty = true;
   }
 
   // Update LED based on current timer state.
