@@ -232,25 +232,17 @@ uint32_t walkToRecord(uint32_t startOffset, uint32_t skipCount) {
     uint32_t skipped = 0;
 
     while (skipped < skipCount && offset < DATA_REGION_SIZE) {
-        uint32_t absAddr = FlashStorage::REGION_START + offset;
-        uint32_t headerVal =
-            *reinterpret_cast<const volatile uint32_t*>(absAddr);
-
-        if (headerVal == 0xFFFFFFFF) {
-            // Reached erased space — wrap around to start of data region.
+        if (!FlashStorage::isValidRecord(offset)) {
+            // Erased, incomplete, or corrupt — try wrapping.
             if (offset > 0 && startOffset > 0) {
-                // Try wrapping to the beginning (circular buffer).
                 offset = 0;
                 continue;
             }
             break;
         }
 
-        if (headerVal > DATA_REGION_SIZE) {
-            break; // Corrupt
-        }
-
-        uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + headerVal;
+        uint32_t payloadLen = FlashStorage::getRecordPayloadLength(offset);
+        uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + payloadLen;
         totalSize = (totalSize + 3) & ~3U;
         offset += totalSize;
 
@@ -266,21 +258,18 @@ uint32_t walkToRecord(uint32_t startOffset, uint32_t skipCount) {
 }
 
 // Get the byte size of the record at the given offset (header + payload, aligned).
-// Returns 0 if no valid record.
+// Returns 0 if no valid committed record.
 uint32_t recordSizeAt(uint32_t offset) {
     if (offset >= DATA_REGION_SIZE) {
         return 0;
     }
 
-    uint32_t absAddr = FlashStorage::REGION_START + offset;
-    uint32_t headerVal =
-        *reinterpret_cast<const volatile uint32_t*>(absAddr);
-
-    if (headerVal == 0xFFFFFFFF || headerVal > DATA_REGION_SIZE) {
+    if (!FlashStorage::isValidRecord(offset)) {
         return 0;
     }
 
-    uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + headerVal;
+    uint32_t payloadLen = FlashStorage::getRecordPayloadLength(offset);
+    uint32_t totalSize = FlashStorage::RECORD_HEADER_SIZE + payloadLen;
     return (totalSize + 3) & ~3U;
 }
 
@@ -324,6 +313,31 @@ void init() {
             g_meta.head = 0;
         }
 
+        // Check for incomplete write at the tail position.
+        // If power was lost after writing length+payload but before the
+        // magic commit word, non-erased data sits at tail. Erase that
+        // page so the next storeSession can write there.
+        if (g_meta.tail + FlashStorage::RECORD_HEADER_SIZE <=
+            DATA_REGION_SIZE) {
+            uint32_t tailAddr =
+                FlashStorage::REGION_START + g_meta.tail;
+            uint32_t tailWord =
+                *reinterpret_cast<const volatile uint32_t*>(tailAddr);
+
+            if (tailWord != 0xFFFFFFFF &&
+                tailWord != FlashStorage::RECORD_MAGIC) {
+                // Non-erased, non-committed data — incomplete write.
+                uint32_t pageIdx =
+                    g_meta.tail / FlashStorage::PAGE_SIZE;
+                FlashStorage::erasePage(pageIdx);
+                // Snap tail to the start of the erased page.
+                g_meta.tail = pageIdx * FlashStorage::PAGE_SIZE;
+                persistMeta();
+                Serial.print("[outbox] cleaned incomplete write at page ");
+                Serial.println(pageIdx);
+            }
+        }
+
         Serial.print("[outbox] init from meta: count=");
         Serial.print(g_meta.count);
         Serial.print(" synced=");
@@ -339,23 +353,34 @@ void init() {
         uint32_t count = 0;
 
         while (offset + FlashStorage::RECORD_HEADER_SIZE <= DATA_REGION_SIZE) {
-            uint32_t absAddr = FlashStorage::REGION_START + offset;
-            uint32_t headerVal =
-                *reinterpret_cast<const volatile uint32_t*>(absAddr);
+            if (!FlashStorage::isValidRecord(offset)) {
+                // Not a committed record. Check if this is an incomplete
+                // write (power lost mid-write) vs erased space.
+                uint32_t absAddr = FlashStorage::REGION_START + offset;
+                uint32_t firstWord =
+                    *reinterpret_cast<const volatile uint32_t*>(absAddr);
 
-            if (headerVal == 0xFFFFFFFF) {
+                if (firstWord != 0xFFFFFFFF) {
+                    // Non-erased but not a valid record — incomplete write.
+                    // Erase the page containing the partial data so the
+                    // space can be reused. Data loss accepted over crash.
+                    uint32_t pageIdx = offset / FlashStorage::PAGE_SIZE;
+                    FlashStorage::erasePage(pageIdx);
+                    Serial.print("[outbox] erased incomplete write at page ");
+                    Serial.println(pageIdx);
+                    // Set tail to start of the erased page (now clean).
+                    offset = pageIdx * FlashStorage::PAGE_SIZE;
+                }
                 break;
             }
 
-            if (headerVal > DATA_REGION_SIZE) {
-                break;
-            }
-
+            uint32_t payloadLen =
+                FlashStorage::getRecordPayloadLength(offset);
             count++;
-            g_lastRecordSize = headerVal;
+            g_lastRecordSize = payloadLen;
 
             uint32_t totalSize =
-                FlashStorage::RECORD_HEADER_SIZE + headerVal;
+                FlashStorage::RECORD_HEADER_SIZE + payloadLen;
             totalSize = (totalSize + 3) & ~3U;
             offset += totalSize;
         }
