@@ -6,8 +6,15 @@
 //   Timer State  (0101): Read + Notify — Protobuf-encoded TimerState
 //   Timer Command (0102): Write — Protobuf-encoded TimerCommand
 //
+// Session Sync Service (0003):
+//   Sync Status  (0301): Read + Notify — reports pending sessions and sync state
+//   Session Data (0302): Notify — device-to-phone bulk transfer (chunked protocol in 7A.7)
+//   Sync Control (0303): Write — phone sends sync commands (START, ACK, etc.)
+//
 // Encoding uses Nanopb (static buffers only, NAT-F01).
 // Notifications use BLE NOTIFY (not INDICATE) per NAT-F07.
+// Full chunked transfer protocol is deferred to issue 7A.7.
+// This file registers characteristics and provides a stub Sync Control write handler.
 
 #include "ble_services.h"
 #include "ble_manager.h"
@@ -18,16 +25,26 @@
 #include <pb_decode.h>
 #include "pomofocus.pb.h"
 
-// ── Static encode buffer ──
+// ── Static encode buffers ──
 // Max encoded size of TimerState is 38 bytes (from pomofocus.pb.h).
 // Use a fixed buffer to avoid dynamic allocation (NAT-F01).
 static uint8_t s_stateBuffer[pomofocus_ble_TimerState_size];
 
-// ── BLE objects ──
+// pomofocus_ble_SyncStatus_size is 32 bytes (from pomofocus.pb.h).
+// No dynamic allocation (NAT-F01).
+static uint8_t s_syncStatusBuf[pomofocus_ble_SyncStatus_size];
+
+// ── BLE objects — Timer Service ──
 // Static instances — Bluefruit requires persistent objects.
 static BLEService s_timerService(TIMER_SERVICE_UUID);
 static BLECharacteristic s_timerStateChr(TIMER_STATE_CHR_UUID);
 static BLECharacteristic s_timerCommandChr(TIMER_COMMAND_CHR_UUID);
+
+// ── BLE objects — Session Sync Service ──
+static BLEService       s_syncService(SESSION_SYNC_SERVICE_UUID);
+static BLECharacteristic s_syncStatusChar(SYNC_STATUS_CHAR_UUID);
+static BLECharacteristic s_sessionDataChar(SESSION_DATA_CHAR_UUID);
+static BLECharacteristic s_syncControlChar(SYNC_CONTROL_CHAR_UUID);
 
 // ── Command callback ──
 static BleTimerCommandCallback s_commandCallback = nullptr;
@@ -162,9 +179,34 @@ static void onTimerCommandWrite(uint16_t connHandle, BLECharacteristic* chr,
   }
 }
 
+// ── Sync Control write callback ──
+// Called when the phone writes a SyncControl Protobuf to characteristic 0303.
+// Decodes the command and logs it. Full command handling deferred to 7A.7.
+
+static void onSyncControlWrite(uint16_t connHandle, BLECharacteristic* chr,
+                               uint8_t* data, uint16_t len) {
+    (void)connHandle;
+    (void)chr;
+
+    pomofocus_ble_SyncControl ctrl = pomofocus_ble_SyncControl_init_zero;
+    pb_istream_t stream = pb_istream_from_buffer(data, len);
+
+    if (!pb_decode(&stream, pomofocus_ble_SyncControl_fields, &ctrl)) {
+        Serial.print("[sync] decode error: ");
+        Serial.println(PB_GET_ERROR(&stream));
+        return;
+    }
+
+    Serial.print("[sync] control cmd=");
+    Serial.print(static_cast<int>(ctrl.command));
+    Serial.print(" ack_count=");
+    Serial.println(ctrl.ack_count);
+}
+
 // ── Public API ──
 
 void ble_services_init() {
+  // ── Timer Service ──
   // Begin the Timer Service
   s_timerService.begin();
 
@@ -191,6 +233,40 @@ void ble_services_init() {
   s_timerCommandChr.begin();
 
   Serial.println("[ble_svc] Timer Service initialized");
+
+  // ── Session Sync Service ──
+  // Begin the Session Sync Service.
+  s_syncService.begin();
+
+  // Sync Status (0301): Read + Notify.
+  // Phone reads on connection to check pending sessions.
+  // Device notifies on state changes during sync.
+  s_syncStatusChar.setProperties(CHR_PROPS_READ | CHR_PROPS_NOTIFY);
+  s_syncStatusChar.setPermission(SECMODE_ENC_NO_MITM, SECMODE_NO_ACCESS);
+  s_syncStatusChar.setMaxLen(pomofocus_ble_SyncStatus_size);
+  s_syncStatusChar.begin();
+
+  // Set initial sync status: idle, 0 pending, 0 total.
+  ble_services_update_sync_status(0, 0,
+      static_cast<uint8_t>(pomofocus_ble_SyncState_SYNC_STATE_IDLE));
+
+  // Session Data (0302): Notify only.
+  // Device sends session records to phone during bulk transfer.
+  // No read property — data is streamed via notifications only.
+  s_sessionDataChar.setProperties(CHR_PROPS_NOTIFY);
+  s_sessionDataChar.setPermission(SECMODE_ENC_NO_MITM, SECMODE_NO_ACCESS);
+  s_sessionDataChar.setMaxLen(pomofocus_ble_SessionRecord_size);
+  s_sessionDataChar.begin();
+
+  // Sync Control (0303): Write.
+  // Phone writes sync commands (START, ACK, NACK, ABORT, CURSOR_UPDATE).
+  s_syncControlChar.setProperties(CHR_PROPS_WRITE);
+  s_syncControlChar.setPermission(SECMODE_NO_ACCESS, SECMODE_ENC_NO_MITM);
+  s_syncControlChar.setMaxLen(pomofocus_ble_SyncControl_size);
+  s_syncControlChar.setWriteCallback(onSyncControlWrite);
+  s_syncControlChar.begin();
+
+  Serial.println("[sync] session sync service registered");
 }
 
 void ble_set_timer_command_callback(BleTimerCommandCallback cb) {
@@ -214,4 +290,27 @@ void ble_timer_notify_state(const TimerState& state) {
   Serial.print(static_cast<int>(state.phase));
   Serial.print(" remaining=");
   Serial.println(state.timeRemaining);
+}
+
+void ble_services_update_sync_status(uint32_t pending, uint32_t total,
+                                     uint8_t state) {
+    pomofocus_ble_SyncStatus status = pomofocus_ble_SyncStatus_init_zero;
+    status.pending_sessions = pending;
+    status.total_stored = total;
+    status.state = static_cast<pomofocus_ble_SyncState>(state);
+
+    pb_ostream_t stream = pb_ostream_from_buffer(s_syncStatusBuf,
+                                                  sizeof(s_syncStatusBuf));
+    if (!pb_encode(&stream, pomofocus_ble_SyncStatus_fields, &status)) {
+        Serial.print("[sync] encode error: ");
+        Serial.println(PB_GET_ERROR(&stream));
+        return;
+    }
+
+    s_syncStatusChar.write(s_syncStatusBuf,
+                           static_cast<uint16_t>(stream.bytes_written));
+
+    // If a central is subscribed, Bluefruit sends a notification automatically
+    // when the characteristic value is updated via write().
+    // Explicit notify() call is not needed — Bluefruit handles CCCD internally.
 }

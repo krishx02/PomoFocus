@@ -228,6 +228,9 @@ void setup() {
   // Initialize BLE SoftDevice and start advertising.
   ble_init();
 
+  // Register GATT services (Timer + Session Sync). Must be called after ble_init().
+  ble_services_init();
+
   // Register BLE timer command handler — receives events from phone.
   ble_set_timer_command_callback(onBleTimerCommand);
 
