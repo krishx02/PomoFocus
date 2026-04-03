@@ -36,11 +36,49 @@ constexpr uint16_t ADV_TIMEOUT_SEC = 0;
 // without excessive battery drain.
 constexpr int8_t ADV_TX_POWER = 0;
 
+// ── MTU parameters ──
+
+// Maximum MTU the device supports. ADR-013: adaptive MTU, device up to 247 bytes.
+// nRF52840 SoftDevice S140 supports up to 247 bytes.
+constexpr uint16_t BLE_MAX_MTU = 247;
+
+// BLE 4.0 default MTU before negotiation.
+constexpr uint16_t BLE_DEFAULT_MTU = 23;
+
+// ATT protocol header overhead (3 bytes: 1 opcode + 2 handle).
+constexpr uint16_t ATT_HEADER_SIZE = 3;
+
+// Application-level chunk header overhead (4 bytes: sequence + flags + length).
+// See ADR-013: chunk_payload_size = mtu - 3 ATT - 4 chunk header.
+constexpr uint16_t CHUNK_HEADER_SIZE = 4;
+
+// ── Connection parameters ──
+
+// Connection supervision timeout in units of 10ms.
+// 1000 * 10ms = 10 seconds. If no packets are exchanged within this window,
+// the connection is considered lost. The BLE stack handles keep-alive
+// automatically via empty PDUs within this window, so idle connections
+// survive indefinitely as long as both devices are in range.
+constexpr uint16_t CONN_SUPERVISION_TIMEOUT = 1000;
+
 // ── Public API ──
 
 // Initialize BLE SoftDevice, configure advertising, and start advertising.
 // Call once from setup() after Serial.begin().
 // Logs initialization progress and any errors to Serial.
 void ble_init();
+
+// Returns true if a central device is currently connected.
+bool ble_isConnected();
+
+// Returns the effective MTU negotiated with the connected central.
+// Returns BLE_DEFAULT_MTU (23) if no connection is active or MTU
+// has not been negotiated yet.
+uint16_t ble_getEffectiveMtu();
+
+// Returns the maximum chunk payload size for session sync transfers.
+// Calculated as: effective_mtu - ATT_HEADER_SIZE - CHUNK_HEADER_SIZE.
+// See ADR-013: chunk_payload_size = mtu - 3 - 4.
+uint16_t ble_getChunkPayloadSize();
 
 #endif // POMOFOCUS_BLE_MANAGER_H
