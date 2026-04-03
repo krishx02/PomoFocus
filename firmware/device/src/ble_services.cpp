@@ -6,6 +6,10 @@
 //   Timer State  (0101): Read + Notify — Protobuf-encoded TimerState
 //   Timer Command (0102): Write — Protobuf-encoded TimerCommand
 //
+// Goal Service (0002):
+//   Goal List (0201): Write — phone pushes GoalList Protobuf (full replace).
+//   Selected Goal (0202): Read + Notify — device reports current selection.
+//
 // Session Sync Service (0003):
 //   Sync Status  (0301): Read + Notify — reports pending sessions and sync state
 //   Session Data (0302): Notify — device-to-phone bulk transfer (chunked protocol in 7A.7)
@@ -23,6 +27,7 @@
 #include "ble_services.h"
 #include "ble_manager.h"
 #include "timer.h"
+#include "display.h"
 
 #include <bluefruit.h>
 #include <pb_encode.h>
@@ -44,6 +49,11 @@ static BLEService s_timerService(UUID_TIMER_SERVICE);
 static BLECharacteristic s_timerStateChr(UUID_TIMER_STATE_CHAR);
 static BLECharacteristic s_timerCommandChr(UUID_TIMER_COMMAND_CHAR);
 
+// ── BLE objects — Goal Service ──
+static BLEService s_goalService(UUID_GOAL_SERVICE);
+static BLECharacteristic s_goalListChar(UUID_GOAL_LIST_CHAR);
+static BLECharacteristic s_selectedGoalChar(UUID_GOAL_SELECTED_CHAR);
+
 // ── BLE objects — Session Sync Service ──
 static BLEService       s_syncService(UUID_SESSION_SYNC_SERVICE);
 static BLECharacteristic s_syncStatusChar(UUID_SYNC_STATUS_CHAR);
@@ -57,6 +67,28 @@ static BLEBas s_battery;
 
 // ── Command callback ──
 static BleTimerCommandCallback s_commandCallback = nullptr;
+
+// ── Goal Service static state ──
+
+// Raw goal data from phone (Protobuf-decoded).
+static pomofocus_ble_GoalList s_goalList = pomofocus_ble_GoalList_init_zero;
+
+// Display-friendly copy of goals (for e-ink rendering).
+static Display::GoalInfo s_displayGoals[Display::MAX_GOALS] = {};
+static uint8_t s_goalCount = 0;
+
+// Currently selected goal index.
+static uint8_t s_selectedIndex = 0;
+
+// Dirty flag: set when goals are updated via BLE, cleared by goal_service_goals_dirty().
+static bool s_goalsDirty = false;
+
+// ── Forward declarations ──
+static void updateSelectedGoalValue();
+
+// ══════════════════════════════════════════════════════════════════════
+// Timer Service helpers
+// ══════════════════════════════════════════════════════════════════════
 
 // ── Helper: map Protobuf TimerAction to firmware TimerEvent ──
 // Returns true if mapping succeeded, false for unknown actions.
@@ -149,12 +181,6 @@ static size_t encodeTimerState(const TimerState& state, uint8_t* buf, size_t buf
   return stream.bytes_written;
 }
 
-// ── Timer State read callback ──
-// Called by Bluefruit when the phone reads the Timer State characteristic.
-// We do NOT use this callback to set data — instead the characteristic
-// value is kept updated via ble_timer_notify_state(). Bluefruit returns
-// the last-written value automatically on read.
-
 // ── Timer Command write callback ──
 // Called by Bluefruit when the phone writes to the Timer Command characteristic.
 static void onTimerCommandWrite(uint16_t connHandle, BLECharacteristic* chr,
@@ -188,6 +214,111 @@ static void onTimerCommandWrite(uint16_t connHandle, BLECharacteristic* chr,
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// Goal Service helpers
+// ══════════════════════════════════════════════════════════════════════
+
+// Copy decoded Protobuf goals into Display::GoalInfo array.
+static void syncGoalsToDisplay() {
+    s_goalCount = static_cast<uint8_t>(s_goalList.goals_count);
+    if (s_goalCount > Display::MAX_GOALS) {
+        s_goalCount = Display::MAX_GOALS;
+    }
+
+    for (uint8_t i = 0; i < s_goalCount; i++) {
+        const pomofocus_ble_Goal& src = s_goalList.goals[i];
+        Display::GoalInfo& dst = s_displayGoals[i];
+
+        // Copy title, truncating to MAX_GOAL_TITLE_LEN.
+        strncpy(dst.title, src.title, Display::MAX_GOAL_TITLE_LEN);
+        dst.title[Display::MAX_GOAL_TITLE_LEN] = '\0';
+
+        dst.targetSessions = static_cast<uint8_t>(src.target_sessions);
+        dst.completedSessions = static_cast<uint8_t>(src.completed_today);
+    }
+
+    // Clamp selected index to valid range.
+    if (s_goalCount > 0 && s_selectedIndex >= s_goalCount) {
+        s_selectedIndex = s_goalCount - 1;
+    }
+}
+
+// Encode the current SelectedGoal into a static buffer and return
+// the encoded size. Returns 0 on encode failure.
+static uint8_t encodeSelectedGoal(uint8_t* buf, uint16_t bufSize) {
+    pomofocus_ble_SelectedGoal msg = pomofocus_ble_SelectedGoal_init_zero;
+
+    // Copy the goal_id from the selected goal (if any goals exist).
+    if (s_goalCount > 0 && s_selectedIndex < s_goalCount) {
+        const pomofocus_ble_Goal& goal = s_goalList.goals[s_selectedIndex];
+        msg.goal_id.size = goal.id.size;
+        memcpy(msg.goal_id.bytes, goal.id.bytes, goal.id.size);
+    }
+    // If no goals, goal_id stays zeroed (empty).
+
+    pb_ostream_t stream = pb_ostream_from_buffer(buf, bufSize);
+    if (!pb_encode(&stream, pomofocus_ble_SelectedGoal_fields, &msg)) {
+        Serial.print("[goal] encode SelectedGoal failed: ");
+        Serial.println(PB_GET_ERROR(&stream));
+        return 0;
+    }
+
+    return static_cast<uint8_t>(stream.bytes_written);
+}
+
+// ── Goal Service BLE callbacks ──
+
+// Called when the phone writes to the Goal List characteristic.
+static void onGoalListWrite(uint16_t connHandle, BLECharacteristic* chr,
+                            uint8_t* data, uint16_t len) {
+    (void)connHandle;
+    (void)chr;
+
+    Serial.print("[goal] GoalList write received, len=");
+    Serial.println(len);
+
+    // Decode the GoalList Protobuf message.
+    // Cannot use brace-init macro in assignment; zero the struct with memset.
+    memset(&s_goalList, 0, sizeof(s_goalList));
+    pb_istream_t stream = pb_istream_from_buffer(data, len);
+    if (!pb_decode(&stream, pomofocus_ble_GoalList_fields, &s_goalList)) {
+        Serial.print("[goal] decode GoalList failed: ");
+        Serial.println(PB_GET_ERROR(&stream));
+        return;
+    }
+
+    Serial.print("[goal] decoded ");
+    Serial.print(s_goalList.goals_count);
+    Serial.println(" goals");
+
+    // Sync to display format.
+    syncGoalsToDisplay();
+
+    // Update the Selected Goal characteristic value (selection may have
+    // been clamped if the new list is shorter).
+    updateSelectedGoalValue();
+
+    // Signal that goals were updated. main.cpp checks this flag and sets
+    // g_displayDirty when appropriate (e.g. only in GOAL_SELECT mode).
+    // We do NOT call Display::showGoalScreen() here — the BLE callback
+    // must not override the current screen (user may be mid-focus-session).
+    s_goalsDirty = true;
+}
+
+// Update the SelectedGoal characteristic value so BLE reads return
+// the current selection. Called after goal list changes or selection changes.
+static void updateSelectedGoalValue() {
+    uint8_t buf[SELECTED_GOAL_MAX_SIZE] = {};
+    uint8_t encoded = encodeSelectedGoal(buf, sizeof(buf));
+    if (encoded > 0) {
+        s_selectedGoalChar.write(buf, encoded);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Session Sync Service helpers
+// ══════════════════════════════════════════════════════════════════════
+
 // ── Sync Control write callback ──
 // Called when the phone writes a SyncControl Protobuf to characteristic 0303.
 // Decodes the command and logs it. Full command handling deferred to 7A.7.
@@ -212,7 +343,9 @@ static void onSyncControlWrite(uint16_t connHandle, BLECharacteristic* chr,
     Serial.println(ctrl.ack_count);
 }
 
-// ── Public API ──
+// ══════════════════════════════════════════════════════════════════════
+// Public API
+// ══════════════════════════════════════════════════════════════════════
 
 void ble_services_init() {
   // ── Device Information Service (0x180A) ──
@@ -262,6 +395,30 @@ void ble_services_init() {
   s_timerCommandChr.begin();
 
   Serial.println("[ble_svc] Timer Service initialized");
+
+  // ── Goal Service ──
+  s_goalService.begin();
+
+  // Goal List characteristic: Write.
+  s_goalListChar.setProperties(CHR_PROPS_WRITE);
+  s_goalListChar.setPermission(SECMODE_ENC_NO_MITM, SECMODE_ENC_NO_MITM);
+  // Max size is the full GoalList Protobuf (up to 10 goals).
+  s_goalListChar.setMaxLen(pomofocus_ble_GoalList_size);
+  s_goalListChar.setWriteCallback(onGoalListWrite);
+  s_goalListChar.begin();
+
+  // Selected Goal characteristic: Read + Notify.
+  // Bluefruit serves reads from the internal buffer -- no read callback needed.
+  // We update the value via updateSelectedGoalValue() when selection changes.
+  s_selectedGoalChar.setProperties(CHR_PROPS_READ | CHR_PROPS_NOTIFY);
+  s_selectedGoalChar.setPermission(SECMODE_ENC_NO_MITM, SECMODE_NO_ACCESS);
+  s_selectedGoalChar.setMaxLen(SELECTED_GOAL_MAX_SIZE);
+  s_selectedGoalChar.begin();
+
+  // Set initial value (empty selection).
+  updateSelectedGoalValue();
+
+  Serial.println("[ble_svc] Goal Service initialized");
 
   // ── Session Sync Service ──
   // Begin the Session Sync Service.
@@ -348,4 +505,43 @@ void ble_services_set_battery_level(uint8_t level) {
   uint8_t clamped = level > 100 ? 100 : level;
   s_battery.write(clamped);
   s_battery.notify(clamped);
+}
+
+// ── Goal Service public API ──
+
+uint8_t goal_service_goal_count() {
+    return s_goalCount;
+}
+
+const Display::GoalInfo* goal_service_goals() {
+    return s_displayGoals;
+}
+
+uint8_t goal_service_selected_index() {
+    return s_selectedIndex;
+}
+
+void goal_service_set_selected(uint8_t index) {
+    if (index >= s_goalCount && s_goalCount > 0) {
+        index = s_goalCount - 1;
+    }
+    s_selectedIndex = index;
+
+    // Encode and send notification to connected phone.
+    uint8_t buf[SELECTED_GOAL_MAX_SIZE] = {};
+    uint8_t encoded = encodeSelectedGoal(buf, sizeof(buf));
+    if (encoded > 0) {
+        s_selectedGoalChar.write(buf, encoded);
+        if (s_selectedGoalChar.notifyEnabled()) {
+            s_selectedGoalChar.notify(buf, encoded);
+            Serial.print("[goal] SelectedGoal notify sent, idx=");
+            Serial.println(s_selectedIndex);
+        }
+    }
+}
+
+bool goal_service_goals_dirty() {
+    bool dirty = s_goalsDirty;
+    s_goalsDirty = false;
+    return dirty;
 }
