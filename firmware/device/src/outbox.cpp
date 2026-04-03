@@ -184,6 +184,17 @@ StoreResult storeSession(const SessionParams& params) {
     FlashStorage::FlashResult flashResult =
         FlashStorage::writeRecord(writeOffset, g_encodeBuffer, encodedSize);
 
+    if (flashResult == FlashStorage::FlashResult::ERR_PAGE_BOUNDARY) {
+        // Record would cross a page boundary — advance to next page and retry.
+        uint32_t nextPage = ((writeOffset / FlashStorage::PAGE_SIZE) + 1) * FlashStorage::PAGE_SIZE;
+        if (nextPage + alignedNeeded > FlashStorage::REGION_SIZE) {
+            Serial.println("[outbox] ERR: flash full after page advance");
+            return StoreResult::ERR_FLASH_FULL;
+        }
+        Serial.println("[outbox] page boundary, advanced to next page");
+        flashResult = FlashStorage::writeRecord(nextPage, g_encodeBuffer, encodedSize);
+    }
+
     if (flashResult != FlashStorage::FlashResult::OK) {
         Serial.print("[outbox] ERR: flash write failed: ");
         Serial.println(static_cast<uint8_t>(flashResult));
