@@ -7,7 +7,6 @@ type CallbackStatus = 'exchanging' | 'success' | 'error';
 
 export default function AuthCallback(): React.JSX.Element {
   const router = useRouter();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- SupabaseClient type unresolvable in this project's tsconfig
   const authClient = useAuthClient();
   const [status, setStatus] = useState<CallbackStatus>('exchanging');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -24,11 +23,9 @@ export default function AuthCallback(): React.JSX.Element {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- SupabaseClient type unresolvable in this project's tsconfig
       const { error } = await authClient.auth.exchangeCodeForSession(code);
 
-      if (error !== null && error !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- SupabaseClient type unresolvable in this project's tsconfig
+      if (error) {
         setErrorMessage(error.message);
         setStatus('error');
         return;
