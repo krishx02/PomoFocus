@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include "ble_manager.h"
+#include "ble_services.h"
 #include "display.h"
 #include "input.h"
 #include "timer.h"
@@ -113,6 +114,7 @@ static void refreshDisplay() {
 }
 
 // Apply a timer event: run the FSM transition and mark display dirty if state changed.
+// Sends BLE notification on phase transitions (not per-tick countdown per ADR-013).
 static void applyTimerEvent(TimerEvent event) {
   TimerPhase prevPhase = g_timerState.phase;
   uint32_t prevTime = g_timerState.timeRemaining;
@@ -121,6 +123,12 @@ static void applyTimerEvent(TimerEvent event) {
 
   if (g_timerState.phase != prevPhase || g_timerState.timeRemaining != prevTime) {
     g_displayDirty = true;
+  }
+
+  // Send BLE notification only on phase transitions — no per-second countdown
+  // notifications. Phone calculates countdown from remaining_seconds + local clock.
+  if (g_timerState.phase != prevPhase) {
+    ble_timer_notify_state(g_timerState);
   }
 
   // Track completed sessions
@@ -189,6 +197,17 @@ static void onPress(PressEvent press) {
   }
 }
 
+// ---------- BLE command handler ----------
+
+// Called when a Timer Command is received over BLE.
+// Applies the event to the timer FSM — applyTimerEvent handles
+// the state transition, display dirty flag, and BLE notification.
+static void onBleTimerCommand(TimerEvent event) {
+  Serial.print("[main] BLE timer event: ");
+  Serial.println(static_cast<uint8_t>(event));
+  applyTimerEvent(event);
+}
+
 // ---------- Arduino entry points ----------
 
 void setup() {
@@ -208,6 +227,9 @@ void setup() {
 
   // Initialize BLE SoftDevice and start advertising.
   ble_init();
+
+  // Register BLE timer command handler — receives events from phone.
+  ble_set_timer_command_callback(onBleTimerCommand);
 
   // Initialize e-ink display and show idle screen.
   Display::init();

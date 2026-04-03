@@ -15,6 +15,7 @@
 // SoftDevice's, causing compilation failures.
 
 #include "ble_manager.h"
+#include "ble_services.h"
 
 #include <bluefruit.h>
 
@@ -99,6 +100,10 @@ void ble_init() {
     Bluefruit.Periph.setDisconnectCallback(onDisconnect);
 
     Serial.println("[ble] SoftDevice initialized");
+
+    // Initialize GATT services before advertising starts.
+    // Services must be registered before Bluefruit.Advertising.start().
+    ble_services_init();
 
     // Configure and start advertising.
     startAdvertising();
