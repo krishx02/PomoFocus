@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createTimerStore } from './timer-store.js';
+import { createTimerStore, TIMER_STORAGE_KEY } from './timer-store.js';
+import type { TimerStorage } from './timer-store.js';
 import type { TimerConfig, ReflectionData } from '@pomofocus/core';
-import { TIMER_STATUS } from '@pomofocus/core';
+import { TIMER_STATUS, serializeState, SERIALIZATION_VERSION } from '@pomofocus/core';
 
 const defaultConfig: TimerConfig = {
   focusDuration: 1500,
@@ -12,7 +13,7 @@ const defaultConfig: TimerConfig = {
 };
 
 function createStore(config: TimerConfig = defaultConfig): ReturnType<typeof createTimerStore> {
-  return createTimerStore(config);
+  return createTimerStore({ config, storage: null });
 }
 
 describe('timer store', () => {
@@ -447,6 +448,177 @@ describe('timer store', () => {
       // Reset → goes back to idle
       store.getState().reset();
       expect(store.getState().state.status).toBe(TIMER_STATUS.IDLE);
+    });
+  });
+
+  describe('persistence', () => {
+    function createMockStorage(): TimerStorage & { store: Map<string, string> } {
+      const store = new Map<string, string>();
+      return {
+        store,
+        getItem: (key: string): string | null => store.get(key) ?? null,
+        setItem: (key: string, value: string): void => { store.set(key, value); },
+        removeItem: (key: string): void => { store.delete(key); },
+      };
+    }
+
+    it('initializes to idle when no persisted state exists', () => {
+      const storage = createMockStorage();
+      const store = createTimerStore({ config: defaultConfig, storage, now: 1000 });
+
+      expect(store.getState().state.status).toBe(TIMER_STATUS.IDLE);
+      expect(store.getState().state.config).toEqual(defaultConfig);
+    });
+
+    it('serializes timer state to storage on every transition', () => {
+      const storage = createMockStorage();
+      const store = createTimerStore({ config: defaultConfig, storage, now: 1000 });
+
+      // Initially storage is empty (no write for initial state — subscription fires on changes)
+      store.getState().start();
+
+      const raw = storage.getItem(TIMER_STORAGE_KEY);
+      expect(raw).not.toBeNull();
+
+      const parsed = JSON.parse(raw as string) as { version: number; state: { status: string } };
+      expect(parsed.version).toBe(SERIALIZATION_VERSION);
+      expect(parsed.state.status).toBe(TIMER_STATUS.FOCUSING);
+    });
+
+    it('updates storage on each subsequent transition', () => {
+      const storage = createMockStorage();
+      const store = createTimerStore({ config: defaultConfig, storage, now: 1000 });
+
+      store.getState().start();
+
+      const afterStart = JSON.parse(storage.getItem(TIMER_STORAGE_KEY) as string) as { state: { status: string } };
+      expect(afterStart.state.status).toBe(TIMER_STATUS.FOCUSING);
+
+      vi.setSystemTime(2000);
+      store.getState().pause();
+
+      const afterPause = JSON.parse(storage.getItem(TIMER_STORAGE_KEY) as string) as { state: { status: string } };
+      expect(afterPause.state.status).toBe(TIMER_STATUS.PAUSED);
+    });
+
+    it('rehydrates from persisted state on initialization', () => {
+      const storage = createMockStorage();
+      const pausedState = {
+        status: TIMER_STATUS.PAUSED,
+        timeRemaining: 500,
+        pausedAt: 1000,
+        sessionNumber: 1,
+        config: defaultConfig,
+      };
+      storage.setItem(
+        TIMER_STORAGE_KEY,
+        JSON.stringify(serializeState(pausedState)),
+      );
+
+      const store = createTimerStore({ config: defaultConfig, storage, now: 2000 });
+
+      const { state } = store.getState();
+      expect(state.status).toBe(TIMER_STATUS.PAUSED);
+      if (state.status === TIMER_STATUS.PAUSED) {
+        expect(state.timeRemaining).toBe(500);
+        expect(state.sessionNumber).toBe(1);
+      }
+    });
+
+    it('rehydrates focusing state and adjusts time remaining for elapsed time', () => {
+      const storage = createMockStorage();
+      const focusingState = {
+        status: TIMER_STATUS.FOCUSING,
+        timeRemaining: 1000,
+        startedAt: 0,
+        sessionNumber: 1,
+        config: defaultConfig,
+      };
+      storage.setItem(
+        TIMER_STORAGE_KEY,
+        JSON.stringify(serializeState(focusingState)),
+      );
+
+      // 200 seconds have passed since startedAt
+      const store = createTimerStore({ config: defaultConfig, storage, now: 200 });
+
+      const { state } = store.getState();
+      expect(state.status).toBe(TIMER_STATUS.FOCUSING);
+      if (state.status === TIMER_STATUS.FOCUSING) {
+        expect(state.timeRemaining).toBe(800);
+      }
+    });
+
+    it('auto-abandons when persisted session has expired beyond max duration', () => {
+      const storage = createMockStorage();
+      // Focus duration is 1500s. Auto-abandon threshold is 2 * 1500 = 3000s.
+      const focusingState = {
+        status: TIMER_STATUS.FOCUSING,
+        timeRemaining: 1500,
+        startedAt: 0,
+        sessionNumber: 2,
+        config: defaultConfig,
+      };
+      storage.setItem(
+        TIMER_STORAGE_KEY,
+        JSON.stringify(serializeState(focusingState)),
+      );
+
+      // 3500 seconds elapsed — beyond 2x focus duration
+      const store = createTimerStore({ config: defaultConfig, storage, now: 3500 });
+
+      const { state } = store.getState();
+      expect(state.status).toBe(TIMER_STATUS.ABANDONED);
+      if (state.status === TIMER_STATUS.ABANDONED) {
+        expect(state.sessionNumber).toBe(2);
+        expect(state.abandonedAt).toBe(3500);
+      }
+    });
+
+    it('falls back to idle when persisted data is invalid JSON', () => {
+      const storage = createMockStorage();
+      storage.setItem(TIMER_STORAGE_KEY, 'not-valid-json{{{');
+
+      const store = createTimerStore({ config: defaultConfig, storage, now: 1000 });
+
+      expect(store.getState().state.status).toBe(TIMER_STATUS.IDLE);
+      // Invalid data should be cleaned up
+      expect(storage.getItem(TIMER_STORAGE_KEY)).toBeNull();
+    });
+
+    it('falls back to idle when persisted data has wrong version', () => {
+      const storage = createMockStorage();
+      storage.setItem(
+        TIMER_STORAGE_KEY,
+        JSON.stringify({ version: 999, state: { status: 'idle', config: defaultConfig } }),
+      );
+
+      const store = createTimerStore({ config: defaultConfig, storage, now: 1000 });
+
+      expect(store.getState().state.status).toBe(TIMER_STATUS.IDLE);
+      expect(storage.getItem(TIMER_STORAGE_KEY)).toBeNull();
+    });
+
+    it('falls back to idle when persisted state fails validation', () => {
+      const storage = createMockStorage();
+      storage.setItem(
+        TIMER_STORAGE_KEY,
+        JSON.stringify({ version: SERIALIZATION_VERSION, state: { status: 'invalid_status' } }),
+      );
+
+      const store = createTimerStore({ config: defaultConfig, storage, now: 1000 });
+
+      expect(store.getState().state.status).toBe(TIMER_STATUS.IDLE);
+      expect(storage.getItem(TIMER_STORAGE_KEY)).toBeNull();
+    });
+
+    it('does not write to storage when storage is null', () => {
+      const store = createTimerStore({ config: defaultConfig, storage: null, now: 1000 });
+
+      store.getState().start();
+
+      // No crash, no writes — just works without persistence
+      expect(store.getState().state.status).toBe(TIMER_STATUS.FOCUSING);
     });
   });
 });
