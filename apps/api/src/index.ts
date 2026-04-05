@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/error-handler.js';
 import { registerHealthRoute } from './routes/health.js';
 import { registerMeRoute } from './routes/me.js';
 import { registerSessionsRoute } from './routes/sessions.js';
+import { registerTapsRoute } from './routes/taps.js';
 import type { AppEnv } from './types.js';
 
 const app = new OpenAPIHono<AppEnv>({
@@ -25,6 +26,7 @@ app.use('/v1/*', authMiddleware);
 registerHealthRoute(app);
 registerMeRoute(app);
 registerSessionsRoute(app);
+registerTapsRoute(app);
 
 app.doc('/openapi.json', {
   openapi: '3.1.0',
