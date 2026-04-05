@@ -55,3 +55,11 @@ export {
   REFRESH_BUFFER_SECONDS,
 } from './auth/token-refresh';
 export type { TokenRefreshDeps } from './auth/token-refresh';
+export { uploadEntry, isRetryableStatus, getSupportedEntityTypes } from './sync';
+export type {
+  UploadResult,
+  UploadSuccess,
+  UploadFailure,
+  EntityPayload,
+  SessionPayload,
+} from './sync';
