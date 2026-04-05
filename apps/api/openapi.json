@@ -5,6 +5,14 @@
     "version": "0.1.0"
   },
   "components": {
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase JWT access token"
+      }
+    },
     "schemas": {},
     "parameters": {}
   },
@@ -43,6 +51,11 @@
     },
     "/v1/me": {
       "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Current user profile",
@@ -54,14 +67,40 @@
                     "id": {
                       "type": "string"
                     },
-                    "created_at": {
+                    "email": {
                       "type": "string",
-                      "format": "date-time"
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string"
                     }
                   },
                   "required": [
                     "id",
+                    "email",
                     "created_at"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "status"
                   ]
                 }
               }
@@ -72,6 +111,11 @@
     },
     "/v1/sessions": {
       "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -196,6 +240,28 @@
               }
             }
           },
+          "401": {
+            "description": "Missing or invalid authorization token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation failed",
             "content": {
@@ -220,6 +286,11 @@
         }
       },
       "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
         "parameters": [
           {
             "schema": {
@@ -341,6 +412,28 @@
               }
             }
           },
+          "401": {
+            "description": "Missing or invalid authorization token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation failed",
             "content": {
@@ -357,6 +450,86 @@
                   },
                   "required": [
                     "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/friends/focusing": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of friends with active focus sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "friends": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "avatar_url": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "started_at": {
+                            "type": "string"
+                          },
+                          "work_duration": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "display_name",
+                          "avatar_url",
+                          "started_at",
+                          "work_duration"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "friends"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "status"
                   ]
                 }
               }
