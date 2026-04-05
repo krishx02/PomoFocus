@@ -17,6 +17,7 @@ export default mergeConfig(
         'react-native': resolve(packageRoot, 'node_modules/react-native-web'),
         '@pomofocus/types': resolve(workspaceRoot, 'packages/types/src/index.ts'),
         '@pomofocus/ui': resolve(workspaceRoot, 'packages/ui/src/index.ts'),
+        'react-native': 'react-native-web',
       },
     },
   }),
