@@ -217,16 +217,21 @@ export function createTimerStore(options: TimerStoreOptions = {}): TimerStoreIns
   return store;
 }
 
+function isTimerStorage(value: unknown): value is TimerStorage {
+  return (
+    value != null &&
+    typeof (value as TimerStorage).getItem === 'function' &&
+    typeof (value as TimerStorage).setItem === 'function' &&
+    typeof (value as TimerStorage).removeItem === 'function'
+  );
+}
+
 function getDefaultStorage(): TimerStorage | null {
   try {
-    const ls = globalThis.localStorage;
-    if (
-      ls != null &&
-      typeof ls.getItem === 'function' &&
-      typeof ls.setItem === 'function' &&
-      typeof ls.removeItem === 'function'
-    ) {
-      return ls;
+    // localStorage may not exist at runtime (Node.js, sandboxed contexts).
+    // Use 'in' check to avoid TypeScript assuming globalThis.localStorage is always Storage.
+    if ('localStorage' in globalThis && isTimerStorage(globalThis.localStorage)) {
+      return globalThis.localStorage;
     }
   } catch {
     // localStorage access may throw in sandboxed contexts

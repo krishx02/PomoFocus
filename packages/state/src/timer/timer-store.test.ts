@@ -480,7 +480,8 @@ describe('timer store', () => {
       const raw = storage.getItem(TIMER_STORAGE_KEY);
       expect(raw).not.toBeNull();
 
-      const parsed = JSON.parse(raw as string) as { version: number; state: { status: string } };
+      if (raw === null) return; // narrowing for type-checker (assertion above guarantees this path is unreachable)
+      const parsed = JSON.parse(raw) as { version: number; state: { status: string } };
       expect(parsed.version).toBe(SERIALIZATION_VERSION);
       expect(parsed.state.status).toBe(TIMER_STATUS.FOCUSING);
     });
@@ -491,13 +492,15 @@ describe('timer store', () => {
 
       store.getState().start();
 
-      const afterStart = JSON.parse(storage.getItem(TIMER_STORAGE_KEY) as string) as { state: { status: string } };
+      const startRaw = storage.getItem(TIMER_STORAGE_KEY) ?? '{}';
+      const afterStart = JSON.parse(startRaw) as { state: { status: string } };
       expect(afterStart.state.status).toBe(TIMER_STATUS.FOCUSING);
 
       vi.setSystemTime(2000);
       store.getState().pause();
 
-      const afterPause = JSON.parse(storage.getItem(TIMER_STORAGE_KEY) as string) as { state: { status: string } };
+      const pauseRaw = storage.getItem(TIMER_STORAGE_KEY) ?? '{}';
+      const afterPause = JSON.parse(pauseRaw) as { state: { status: string } };
       expect(afterPause.state.status).toBe(TIMER_STATUS.PAUSED);
     });
 
