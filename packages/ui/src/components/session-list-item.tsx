@@ -15,6 +15,10 @@ function focusQualityLabel(quality: FocusQuality): string {
       return 'Decent';
     case 'struggled':
       return 'Struggled';
+    default: {
+      const _exhaustive: never = quality;
+      return _exhaustive;
+    }
   }
 }
 
