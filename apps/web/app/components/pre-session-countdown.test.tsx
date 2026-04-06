@@ -138,17 +138,17 @@ describe('PreSessionCountdown', () => {
         />,
       );
 
-      // At start, width should be 0%.
-      const initialFill = screen.getByTestId('pre-session-countdown-progress-fill');
-      expect(initialFill).toBeDefined();
+      const fill = screen.getByTestId('pre-session-countdown-progress-fill');
+
+      // At start (0 of 4 seconds elapsed), width should be 0px.
+      expect(fill.style.width).toBe('0px');
 
       act(() => {
         vi.advanceTimersByTime(2000);
       });
 
-      // After 2 of 4 seconds, progress should be 50%.
-      const midFill = screen.getByTestId('pre-session-countdown-progress-fill');
-      expect(midFill).toBeDefined();
+      // After 2 of 4 seconds, progress should be 50% of 240px = 120px.
+      expect(fill.style.width).toBe('120px');
     });
   });
 

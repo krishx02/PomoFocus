@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export const DEFAULT_COUNTDOWN_SECONDS = 30;
@@ -25,10 +25,12 @@ export function PreSessionCountdown(
   } = props;
 
   const [remaining, setRemaining] = useState<number>(durationSeconds);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (remaining <= 0) {
-      onComplete(goalId, intentionText);
+      onCompleteRef.current(goalId, intentionText);
       return;
     }
 
@@ -39,7 +41,7 @@ export function PreSessionCountdown(
     return (): void => {
       clearInterval(handle);
     };
-  }, [remaining, goalId, intentionText, onComplete]);
+  }, [remaining, goalId, intentionText]);
 
   const progressPercent: number = Math.max(
     0,
