@@ -30,8 +30,8 @@ export function TimerDisplay({
 }: TimerDisplayProps): React.JSX.Element {
   return (
     <View style={[containerStyle, style]} testID={testID ?? 'timer-display'}>
-      <Text testID="timer-status">{status}</Text>
-      <Text testID="timer-countdown">{formatTime(timeRemaining)}</Text>
+      <Text testID={testID !== undefined ? `${testID}-status` : undefined}>{status}</Text>
+      <Text testID={testID !== undefined ? `${testID}-countdown` : undefined}>{formatTime(timeRemaining)}</Text>
     </View>
   );
 }

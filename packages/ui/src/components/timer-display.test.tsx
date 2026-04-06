@@ -39,7 +39,7 @@ describe('TimerDisplay', () => {
   });
 
   it('renders both status and countdown together', () => {
-    render(<TimerDisplay timeRemaining={720} status="Paused" />);
+    render(<TimerDisplay timeRemaining={720} status="Paused" testID="timer" />);
 
     expect(screen.getByTestId('timer-status')).toBeDefined();
     expect(screen.getByTestId('timer-countdown')).toBeDefined();
@@ -63,6 +63,8 @@ describe('TimerDisplay', () => {
     );
 
     expect(screen.getByTestId('my-timer')).toBeDefined();
+    expect(screen.getByTestId('my-timer-status')).toBeDefined();
+    expect(screen.getByTestId('my-timer-countdown')).toBeDefined();
   });
 });
 
