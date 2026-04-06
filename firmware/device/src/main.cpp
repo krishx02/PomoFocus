@@ -5,6 +5,8 @@
 #include <Arduino.h>
 #include "ble_manager.h"
 #include "ble_services.h"
+#include "flash_storage.h"
+#include "outbox.h"
 #include "display.h"
 #include "input.h"
 #include "timer.h"
@@ -236,6 +238,10 @@ void setup() {
   // Register BLE timer command handler — receives events from phone.
   ble_set_timer_command_callback(onBleTimerCommand);
 
+  // Initialize flash storage and session outbox (for BLE session sync).
+  FlashStorage::init();
+  Outbox::init();
+
   // Initialize e-ink display and show idle screen.
   Display::init();
 
@@ -277,6 +283,9 @@ void loop() {
       }
     }
   }
+
+  // Poll BLE chunked transfer — sends next chunk if transfer is active.
+  ble_services_poll_transfer();
 
   // Check if the goal list was updated via BLE. Mark display dirty so
   // refreshDisplay() re-renders (it decides WHAT to show based on g_screenMode).

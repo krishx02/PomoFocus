@@ -26,12 +26,14 @@
 
 #include "ble_services.h"
 #include "ble_manager.h"
+#include "outbox.h"
 #include "timer.h"
 #include "display.h"
 
 #include <bluefruit.h>
 #include <pb_encode.h>
 #include <pb_decode.h>
+#include <cstring>
 #include "pomofocus.pb.h"
 
 // ── Static encode buffers ──
@@ -319,9 +321,15 @@ static void updateSelectedGoalValue() {
 // Session Sync Service helpers
 // ══════════════════════════════════════════════════════════════════════
 
+// ── Session Sync transfer state ──
+// Chunk buffer for BLE notifications. Max = MTU - ATT header = 244 bytes.
+static uint8_t s_chunkBuf[BLE_MAX_MTU - ATT_HEADER_SIZE];
+static bool s_chunkPendingRetry = false;
+static uint16_t s_pendingChunkLen = 0;
+
 // ── Sync Control write callback ──
 // Called when the phone writes a SyncControl Protobuf to characteristic 0303.
-// Decodes the command and logs it. Full command handling deferred to 7A.7.
+// Dispatches START/ACK/NACK/ABORT/CURSOR_UPDATE to the outbox transfer API.
 
 static void onSyncControlWrite(uint16_t connHandle, BLECharacteristic* chr,
                                uint8_t* data, uint16_t len) {
@@ -337,10 +345,69 @@ static void onSyncControlWrite(uint16_t connHandle, BLECharacteristic* chr,
         return;
     }
 
-    Serial.print("[sync] control cmd=");
+    Serial.print("[sync] cmd=");
     Serial.print(static_cast<int>(ctrl.command));
     Serial.print(" ack_count=");
     Serial.println(ctrl.ack_count);
+
+    switch (ctrl.command) {
+        case pomofocus_ble_SyncCommand_SYNC_COMMAND_START: {
+            s_chunkPendingRetry = false;
+            uint16_t chunkPayload = ble_getChunkPayloadSize();
+            uint32_t count = Outbox::transferStart(chunkPayload);
+            if (count > 0) {
+                ble_services_update_sync_status(
+                    count, Outbox::getRecordCount(),
+                    static_cast<uint8_t>(
+                        pomofocus_ble_SyncState_SYNC_STATE_TRANSFERRING));
+            } else {
+                ble_services_update_sync_status(
+                    0, Outbox::getRecordCount(),
+                    static_cast<uint8_t>(
+                        pomofocus_ble_SyncState_SYNC_STATE_IDLE));
+            }
+            break;
+        }
+
+        case pomofocus_ble_SyncCommand_SYNC_COMMAND_ACK:
+            Outbox::transferAck(ctrl.ack_count);
+            ble_services_update_sync_status(
+                Outbox::getPendingCount(), Outbox::getRecordCount(),
+                static_cast<uint8_t>(
+                    pomofocus_ble_SyncState_SYNC_STATE_COMPLETE));
+            break;
+
+        case pomofocus_ble_SyncCommand_SYNC_COMMAND_NACK:
+            s_chunkPendingRetry = false;
+            Outbox::transferNack(ctrl.ack_count);
+            ble_services_update_sync_status(
+                Outbox::getPendingCount(), Outbox::getRecordCount(),
+                static_cast<uint8_t>(
+                    pomofocus_ble_SyncState_SYNC_STATE_TRANSFERRING));
+            break;
+
+        case pomofocus_ble_SyncCommand_SYNC_COMMAND_ABORT:
+            s_chunkPendingRetry = false;
+            Outbox::transferAbort();
+            ble_services_update_sync_status(
+                Outbox::getPendingCount(), Outbox::getRecordCount(),
+                static_cast<uint8_t>(
+                    pomofocus_ble_SyncState_SYNC_STATE_IDLE));
+            break;
+
+        case pomofocus_ble_SyncCommand_SYNC_COMMAND_CURSOR_UPDATE:
+            Outbox::transferCursorUpdate(ctrl.ack_count);
+            ble_services_update_sync_status(
+                Outbox::getPendingCount(), Outbox::getRecordCount(),
+                static_cast<uint8_t>(
+                    pomofocus_ble_SyncState_SYNC_STATE_IDLE));
+            break;
+
+        default:
+            Serial.print("[sync] unknown cmd: ");
+            Serial.println(static_cast<int>(ctrl.command));
+            break;
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -437,11 +504,11 @@ void ble_services_init() {
       static_cast<uint8_t>(pomofocus_ble_SyncState_SYNC_STATE_IDLE));
 
   // Session Data (0302): Notify only.
-  // Device sends session records to phone during bulk transfer.
-  // No read property — data is streamed via notifications only.
+  // Device streams chunked session data to phone via notifications.
+  // Max notification payload = MTU - ATT header = 244 bytes.
   s_sessionDataChar.setProperties(CHR_PROPS_NOTIFY);
   s_sessionDataChar.setPermission(SECMODE_ENC_NO_MITM, SECMODE_NO_ACCESS);
-  s_sessionDataChar.setMaxLen(pomofocus_ble_SessionRecord_size);
+  s_sessionDataChar.setMaxLen(BLE_MAX_MTU - ATT_HEADER_SIZE);
   s_sessionDataChar.begin();
 
   // Sync Control (0303): Write.
@@ -544,4 +611,43 @@ bool goal_service_goals_dirty() {
     bool dirty = s_goalsDirty;
     s_goalsDirty = false;
     return dirty;
+}
+
+// ── Chunked transfer polling ──
+
+void ble_services_poll_transfer() {
+    if (!Outbox::transferIsActive() || Outbox::transferIsAwaitingAck()) {
+        return;
+    }
+
+    uint16_t chunkLen;
+
+    if (s_chunkPendingRetry) {
+        // Retry the chunk that failed to send last time.
+        chunkLen = s_pendingChunkLen;
+    } else {
+        chunkLen = Outbox::transferNextChunk(s_chunkBuf, sizeof(s_chunkBuf));
+        if (chunkLen == 0) {
+            return;
+        }
+    }
+
+    // Send chunk via Session Data (0302) notification.
+    uint16_t sent = s_sessionDataChar.notify(s_chunkBuf, chunkLen);
+    if (sent == 0) {
+        // TX buffer full — save for retry on next poll.
+        s_chunkPendingRetry = true;
+        s_pendingChunkLen = chunkLen;
+        return;
+    }
+
+    s_chunkPendingRetry = false;
+
+    // If all chunks sent, update sync status to COMPLETE.
+    if (Outbox::transferIsAwaitingAck()) {
+        ble_services_update_sync_status(
+            Outbox::getPendingCount(), Outbox::getRecordCount(),
+            static_cast<uint8_t>(
+                pomofocus_ble_SyncState_SYNC_STATE_COMPLETE));
+    }
 }
