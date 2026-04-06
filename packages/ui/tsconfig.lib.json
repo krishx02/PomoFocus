@@ -4,10 +4,12 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
+    "jsx": "react-jsx",
+    "lib": ["esnext", "dom"],
     "types": [],
     "paths": {
       "@pomofocus/types": ["../types/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

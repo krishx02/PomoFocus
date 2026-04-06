@@ -1,3 +1,6 @@
 // Shared React/RN components.
 // Depends on types only.
-export {};
+export { Button, BUTTON_VARIANT } from './components/button.js';
+export type { ButtonProps, ButtonVariant } from './components/button.js';
+export { TextInput } from './components/text-input.js';
+export type { TextInputProps } from './components/text-input.js';
