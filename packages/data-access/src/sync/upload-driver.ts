@@ -28,6 +28,17 @@ type SessionPayload =
 
 type EntityPayload = SessionPayload;
 
+// ── Minimal Response Shape ──
+// openapi-fetch returns `Response` (DOM type) which is unresolvable without
+// "dom" in tsconfig lib. This package intentionally omits "dom" (it runs in
+// Node/CF Workers). We define only the fields we read so the compiler can
+// verify access without pulling in the DOM lib.
+
+type MinimalResponse = {
+  readonly status: number;
+  readonly statusText: string;
+};
+
 // ── Upload Logic ──
 
 /**
@@ -44,7 +55,7 @@ async function uploadEntry(
 ): Promise<UploadResult> {
   switch (entry.entityType) {
     case 'sessions':
-      return uploadSession(client, payload as SessionPayload);
+      return uploadSession(client, payload);
     case 'breaks':
     case 'encouragement_taps':
     case 'user_preferences':
@@ -67,14 +78,17 @@ async function uploadSession(
   client: ApiClient,
   payload: SessionPayload,
 ): Promise<UploadResult> {
-  const { data, error, response } = await client.POST('/v1/sessions', {
+  const result = await client.POST('/v1/sessions', {
     body: payload,
   });
 
-  if (data !== undefined) {
+  if (result.data !== undefined) {
     return { ok: true };
   }
 
+  // Cast to minimal shape — openapi-fetch response is always a standard
+  // Response at runtime; the DOM type is just unresolvable in our tsconfig.
+  const response = result.response as unknown as MinimalResponse;
   const status = response.status;
 
   // Server returns 409 for duplicate UUID — treat as success (idempotent write)
@@ -82,7 +96,8 @@ async function uploadSession(
     return { ok: true };
   }
 
-  const message = extractErrorMessage(error) ?? (response.statusText || 'Upload failed');
+  const message =
+    extractErrorMessage(result.error) ?? (response.statusText !== '' ? response.statusText : 'Upload failed');
 
   return {
     ok: false,
