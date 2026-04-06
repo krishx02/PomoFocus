@@ -55,3 +55,9 @@ export {
   REFRESH_BUFFER_SECONDS,
 } from './auth/token-refresh';
 export type { TokenRefreshDeps } from './auth/token-refresh';
+export {
+  persistEntry,
+  loadPendingEntries,
+  markUploaded,
+  markFailed,
+} from './sync/persistence-driver';
