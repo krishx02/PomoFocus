@@ -61,7 +61,7 @@ describe('Button', () => {
 
       const button = screen.getByTestId('btn-primary');
       expect(button).toBeDefined();
-      // Primary background is dark (#1F2937 → rgb(31, 55, 71))
+      // Primary background is dark (#1F2937 → rgb(31, 41, 55))
       expect(button.style.backgroundColor).toBe('rgb(31, 41, 55)');
     });
 
