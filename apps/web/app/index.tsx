@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { createApiClient } from '@pomofocus/data-access';
 import { TimerDisplay } from './components/timer-display';
 import { TimerControls } from './components/timer-controls';
+import { IntentionInput } from './components/intention-input';
 import { SessionList } from './components/session-list';
 
 const API_BASE_URL: string =
@@ -10,12 +11,14 @@ const API_BASE_URL: string =
 
 export default function HomeScreen(): React.JSX.Element {
   const client = useMemo(() => createApiClient(API_BASE_URL), []);
+  const [intention, setIntention] = useState('');
 
   return (
     <View style={styles.container}>
       <View style={styles.timerSection}>
         <Text style={styles.title}>PomoFocus</Text>
         <TimerDisplay />
+        <IntentionInput value={intention} onChangeText={setIntention} />
         <TimerControls />
       </View>
       <View style={styles.sessionsSection}>
