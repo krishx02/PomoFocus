@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 // IndexedDB-backed persistence driver for the sync outbox queue (ADR-006).
 // Web platform only. No React imports (PKG-D04).
 
