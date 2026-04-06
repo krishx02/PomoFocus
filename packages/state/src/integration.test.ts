@@ -76,7 +76,7 @@ describe('state package integration', () => {
         sessionsBeforeLongBreak: 4,
         reflectionEnabled: true,
       };
-      const store = createTimerStore(config);
+      const store = createTimerStore({ config, storage: null });
 
       // Initial state is idle
       expect(store.getState().state.status).toBe(TIMER_STATUS.IDLE);
@@ -142,7 +142,7 @@ describe('state package integration', () => {
         sessionsBeforeLongBreak: 4,
         reflectionEnabled: true,
       };
-      const store = createTimerStore(config);
+      const store = createTimerStore({ config, storage: null });
 
       store.getState().start();
       startTimer(store);
@@ -254,7 +254,7 @@ describe('state package integration', () => {
         sessionsBeforeLongBreak: 4,
         reflectionEnabled: false,
       };
-      const store = createTimerStore(config);
+      const store = createTimerStore({ config, storage: null });
 
       store.getState().start();
       startTimer(store);

@@ -23,6 +23,8 @@ export type {
   TimerState,
   TimerEvent,
 } from './timer/index.js';
+export { rehydrate, serializeState, deserializeState, SERIALIZATION_VERSION } from './timer/index.js';
+export type { RehydrationResult, SerializedTimerState } from './timer/index.js';
 export { QUEUE_ITEM_STATUS, SYNC_EVENT_TYPE, processQueue, createEmptyQueue } from './sync/index.js';
 export type {
   QueueItemStatus,

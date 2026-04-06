@@ -13,7 +13,7 @@ const defaultConfig: TimerConfig = {
 };
 
 function createStore(config: TimerConfig = defaultConfig): ReturnType<typeof createTimerStore> {
-  return createTimerStore(config);
+  return createTimerStore({ config, storage: null });
 }
 
 describe('timer driver', () => {
