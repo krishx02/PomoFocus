@@ -2,27 +2,25 @@
 // Uses navigator.onLine + online/offline events for web.
 // No React imports (PKG-D04).
 //
-// Minimal global augmentation for browser APIs used by this module.
-// The project uses lib: ["esnext"] without DOM, so navigator/addEventListener
-// are not typed on globalThis. These declarations cover only what we use.
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-  interface Window {
-    navigator?: { readonly onLine: boolean };
-    addEventListener?(type: string, listener: () => void): void;
-    removeEventListener?(type: string, listener: () => void): void;
-  }
-
-  // Augment globalThis with the same shape
-  var navigator: { readonly onLine: boolean } | undefined;
-  function addEventListener(type: string, listener: () => void): void;
-  function removeEventListener(type: string, listener: () => void): void;
-}
+// Runtime feature-detection only — no `declare global` augmentation.
+// The data-access package uses lib: ["esnext"] without DOM types, but
+// downstream consumers (apps/web, packages/state) include DOM. A global
+// augmentation that narrows `navigator` to `{ readonly onLine: boolean }`
+// conflicts with the full `Navigator` type from lib.dom.d.ts, breaking
+// type-check in those packages. Instead we access browser globals through
+// `globalThis` cast to `unknown` and use runtime typeof guards.
 
 type NetworkCallback = () => void;
 
 type Unsubscribe = () => void;
+
+// Typed accessor for globalThis in environments that may or may not have DOM.
+// Cast through `unknown` avoids conflict with both DOM and non-DOM tsconfigs.
+const _global = globalThis as unknown as {
+  navigator?: { readonly onLine: boolean };
+  addEventListener?: (type: string, listener: () => void) => void;
+  removeEventListener?: (type: string, listener: () => void) => void;
+};
 
 /**
  * Synchronous check for current network connectivity.
@@ -30,11 +28,11 @@ type Unsubscribe = () => void;
  * (assumes online in non-browser environments like Node.js).
  */
 function isOnline(): boolean {
-  if (typeof navigator === 'undefined') {
+  if (typeof _global.navigator === 'undefined') {
     return true;
   }
 
-  return navigator.onLine;
+  return _global.navigator.onLine;
 }
 
 /**
@@ -46,15 +44,17 @@ function isOnline(): boolean {
  * Returns an unsubscribe function to remove the listener.
  */
 function onNetworkAvailable(callback: NetworkCallback): Unsubscribe {
-  if (typeof globalThis.addEventListener !== 'function') {
+  if (typeof _global.addEventListener !== 'function') {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     return () => {};
   }
 
-  globalThis.addEventListener('online', callback);
+  _global.addEventListener('online', callback);
 
   return () => {
-    globalThis.removeEventListener('online', callback);
+    if (typeof _global.removeEventListener === 'function') {
+      _global.removeEventListener('online', callback);
+    }
   };
 }
 

@@ -33,18 +33,16 @@ describe('onNetworkAvailable', () => {
   it('registers an online event listener and fires callback on online event', () => {
     const listeners: { type: string; callback: () => void }[] = [];
 
-    vi.stubGlobal(
-      'addEventListener',
-      vi.fn((type: string, callback: () => void) => {
-        listeners.push({ type, callback });
-      }),
-    );
+    const addSpy = vi.fn((type: string, callback: () => void) => {
+      listeners.push({ type, callback });
+    });
+    vi.stubGlobal('addEventListener', addSpy);
     vi.stubGlobal('removeEventListener', vi.fn());
 
     const callback = vi.fn();
     onNetworkAvailable(callback);
 
-    expect(globalThis.addEventListener).toHaveBeenCalledWith('online', callback);
+    expect(addSpy).toHaveBeenCalledWith('online', callback);
 
     const listener = listeners.find((l) => l.type === 'online');
     expect(listener).toBeDefined();
@@ -53,15 +51,17 @@ describe('onNetworkAvailable', () => {
   });
 
   it('returns an unsubscribe function that removes the listener', () => {
-    vi.stubGlobal('addEventListener', vi.fn());
-    vi.stubGlobal('removeEventListener', vi.fn());
+    const addSpy = vi.fn();
+    const removeSpy = vi.fn();
+    vi.stubGlobal('addEventListener', addSpy);
+    vi.stubGlobal('removeEventListener', removeSpy);
 
     const callback = vi.fn();
     const unsubscribe = onNetworkAvailable(callback);
 
     unsubscribe();
 
-    expect(globalThis.removeEventListener).toHaveBeenCalledWith('online', callback);
+    expect(removeSpy).toHaveBeenCalledWith('online', callback);
   });
 
   it('returns a no-op unsubscribe when addEventListener is not available', () => {
@@ -90,12 +90,10 @@ describe('onNetworkAvailable', () => {
   it('allows multiple callbacks to be registered independently', () => {
     const listeners: { type: string; callback: () => void }[] = [];
 
-    vi.stubGlobal(
-      'addEventListener',
-      vi.fn((type: string, callback: () => void) => {
-        listeners.push({ type, callback });
-      }),
-    );
+    const addSpy = vi.fn((type: string, callback: () => void) => {
+      listeners.push({ type, callback });
+    });
+    vi.stubGlobal('addEventListener', addSpy);
     vi.stubGlobal('removeEventListener', vi.fn());
 
     const callback1 = vi.fn();
@@ -104,7 +102,7 @@ describe('onNetworkAvailable', () => {
     onNetworkAvailable(callback1);
     onNetworkAvailable(callback2);
 
-    expect(globalThis.addEventListener).toHaveBeenCalledTimes(2);
+    expect(addSpy).toHaveBeenCalledTimes(2);
 
     for (const listener of listeners) {
       listener.callback();
@@ -115,8 +113,10 @@ describe('onNetworkAvailable', () => {
   });
 
   it('unsubscribing one callback does not affect others', () => {
-    vi.stubGlobal('addEventListener', vi.fn());
-    vi.stubGlobal('removeEventListener', vi.fn());
+    const addSpy = vi.fn();
+    const removeSpy = vi.fn();
+    vi.stubGlobal('addEventListener', addSpy);
+    vi.stubGlobal('removeEventListener', removeSpy);
 
     const callback1 = vi.fn();
     const callback2 = vi.fn();
@@ -126,7 +126,7 @@ describe('onNetworkAvailable', () => {
 
     unsubscribe1();
 
-    expect(globalThis.removeEventListener).toHaveBeenCalledWith('online', callback1);
-    expect(globalThis.removeEventListener).not.toHaveBeenCalledWith('online', callback2);
+    expect(removeSpy).toHaveBeenCalledWith('online', callback1);
+    expect(removeSpy).not.toHaveBeenCalledWith('online', callback2);
   });
 });
