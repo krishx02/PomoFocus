@@ -55,3 +55,5 @@ export {
   REFRESH_BUFFER_SECONDS,
 } from './auth/token-refresh';
 export type { TokenRefreshDeps } from './auth/token-refresh';
+export { isOnline, onNetworkAvailable } from './sync/network-detector';
+export type { NetworkCallback, Unsubscribe as NetworkUnsubscribe } from './sync/network-detector';
