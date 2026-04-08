@@ -10,3 +10,12 @@ export {
   type TimerDisplayProps,
   formatTime,
 } from './components/timer-display.js';
+
+export { GoalPicker } from './components/goal-picker.js';
+export type {
+  GoalPickerItem,
+  GoalPickerProps,
+} from './components/goal-picker.js';
+
+export { SessionListItem } from './components/session-list-item.js';
+export type { SessionListItemProps } from './components/session-list-item.js';
